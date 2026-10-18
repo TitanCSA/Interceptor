@@ -1,0 +1,27 @@
+Interceptor demo driver - binary distribution terms
+Copyright (c) 2026 TitanCSA. All rights reserved.
+
+These terms cover the prebuilt Interceptor kernel driver, its INF files and
+signed catalogs distributed with this demo. The MIT source license does not
+grant rights to the kernel driver's source code or unrestricted edition.
+
+You may install and use this demo, and redistribute complete, unmodified demo
+packages with these terms and the supplied notices. Keep the driver signatures,
+catalogs, integrity manifests and demo limitation intact. This permission does
+not grant a right to redistribute the unrestricted edition.
+
+The demo permits capture and injection for two hours from the first successful
+capture in each Windows kernel boot. The allowance is shared by all applications.
+Expiry releases capture and leaves physical input in passthrough. Windows
+Restart begins a new allowance. No claim is made that every device model or
+connection is supported.
+
+For the full version without the demo time limit, contact titancsa on Discord.
+
+THE DEMO IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+INCLUDING WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. TO THE EXTENT PERMITTED BY APPLICABLE LAW, THE AUTHOR IS NOT
+LIABLE FOR CLAIMS OR DAMAGES ARISING FROM ITS USE.
+
+Microsoft's signature identifies the publisher of the signed driver package;
+it does not change ownership or license these binaries under the MIT license.

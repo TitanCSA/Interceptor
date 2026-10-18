@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+ <ItemGroup Label="ProjectConfigurations"><ProjectConfiguration Include="Release|x64"><Configuration>Release</Configuration><Platform>x64</Platform></ProjectConfiguration></ItemGroup>
+ <PropertyGroup Label="Globals"><ProjectGuid>{D43FDFDC-1BDA-4910-A2CB-85311BAE3B66}</ProjectGuid><WindowsTargetPlatformVersion>10.0.26100.0</WindowsTargetPlatformVersion></PropertyGroup>
+ <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props"/>
+ <PropertyGroup Label="Configuration"><ConfigurationType>DynamicLibrary</ConfigurationType><PlatformToolset>v143</PlatformToolset><CharacterSet>Unicode</CharacterSet><UseDebugLibraries>false</UseDebugLibraries></PropertyGroup>
+ <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props"/>
+ <PropertyGroup><OutDir>$(MSBuildThisFileDirectory)..\..\bin\ExampleUIBridge\</OutDir><IntDir>$(MSBuildThisFileDirectory)..\..\obj\ExampleUIBridge\</IntDir><TargetName>InterceptorViewerBridge</TargetName><LinkIncremental>false</LinkIncremental></PropertyGroup>
+ <ItemDefinitionGroup>
+  <ClCompile><WarningLevel>Level4</WarningLevel><TreatWarningAsError>true</TreatWarningAsError><LanguageStandard>stdcpp17</LanguageStandard><RuntimeLibrary>MultiThreaded</RuntimeLibrary><Optimization>MaxSpeed</Optimization><ExceptionHandling>Sync</ExceptionHandling><PreprocessorDefinitions>UNICODE;_UNICODE;NOMINMAX;VIEWER_BRIDGE_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions></ClCompile>
+  <Link><AdditionalDependencies>user32.lib;%(AdditionalDependencies)</AdditionalDependencies><AdditionalOptions>/PDBALTPATH:%_PDB% %(AdditionalOptions)</AdditionalOptions><GenerateDebugInformation>true</GenerateDebugInformation><ProgramDatabaseFile>$(IntDir)$(TargetName).pdb</ProgramDatabaseFile><OptimizeReferences>true</OptimizeReferences><EnableCOMDATFolding>true</EnableCOMDATFolding></Link>
+ </ItemDefinitionGroup>
+ <ItemDefinitionGroup Condition="'$(ExperimentalNative)'=='true'"><ClCompile><PreprocessorDefinitions>INTERCEPTOR_EXPERIMENTAL_XUSB;INTERCEPTOR_EXPERIMENTAL_XINPUTHID;INTERCEPTOR_EXPERIMENTAL_GIP;%(PreprocessorDefinitions)</PreprocessorDefinitions></ClCompile></ItemDefinitionGroup>
+ <ItemGroup><ClCompile Include="ViewerBridge.cpp"/><ClCompile Include="ViewerDecoder.cpp"/><ClCompile Include="..\..\PublicAPI\Interceptor.cpp"/><ClCompile Include="..\..\PublicAPI\InitDevices.cpp"/></ItemGroup>
+ <ItemGroup><ClInclude Include="ViewerBridge.h"/><ClInclude Include="ViewerDecoder.h"/><ClInclude Include="PublicationCadence.h"/></ItemGroup>
+ <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets"/>
+</Project>

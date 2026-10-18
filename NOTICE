@@ -1,0 +1,13 @@
+Interceptor is developed by TitanCSA.
+
+Acknowledgment: the original Interception project by Francisco Lopes (oblitum)
+popularized a native Windows input-interception API:
+https://github.com/oblitum/Interception
+
+Interceptor uses its own implementation and API. It is an independent project,
+not an official Interception release, an affiliated project, or an ABI-compatible
+replacement. This distribution does not relicense the original Interception
+project. Consult its repository for its own source and licensing terms.
+
+Windows, Microsoft, Xbox, XInput and other product names are the trademarks of
+their respective owners. References describe platform/protocol compatibility.

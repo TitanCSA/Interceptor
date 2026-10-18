@@ -1,0 +1,38 @@
+[Version]
+Signature="$WINDOWS NT$"
+Class=Keyboard
+ClassGuid={4D36E96B-E325-11CE-BFC1-08002BE10318}
+Provider=%Provider%
+CatalogFile=InterceptorKeyboard.cat
+DriverVer=10/18/2026,1.4.15.0
+PnpLockdown=1
+[Manufacturer]
+%Provider%=Models,NTamd64.10.0...16299
+[Models.NTamd64.10.0...16299]
+%Name%=Mapper,HID_DEVICE_SYSTEM_KEYBOARD
+[Mapper.NT]
+CopyFiles=Files
+[Mapper.NT.Services]
+AddService=Interceptor,2,Service
+[Service]
+DisplayName=%ServiceName%
+ServiceType=1
+StartType=3
+ErrorControl=1
+ServiceBinary=%13%\Interceptor.sys
+[Mapper.NT.Wdf]
+KmdfService=Interceptor,Wdf
+[Wdf]
+KmdfLibraryVersion=1.15
+[DestinationDirs]
+Files=13
+[Files]
+Interceptor.sys
+[SourceDisksNames]
+1=%Provider%,,,
+[SourceDisksFiles]
+Interceptor.sys=1
+[Strings]
+Provider="Interceptor Project"
+Name="Interceptor HID Keyboard Mapper"
+ServiceName="Interceptor"

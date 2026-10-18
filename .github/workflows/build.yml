@@ -1,0 +1,28 @@
+name: Build user-mode SDK and applications
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  windows-x64:
+    runs-on: windows-2022
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Build SDK, examples and applications
+        shell: powershell
+        run: .\Build.ps1 -SkipInstallers
+      - name: Upload user-mode build
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: interceptor-user-mode-windows-x64
+          path: |
+            bin/Native/*.exe
+            bin/Native/InterceptorViewerBridge.dll
+            bin/ExampleUI/InterceptorExampleUI.exe
+            bin/SDK/InterceptorSDK.lib
+          if-no-files-found: error
