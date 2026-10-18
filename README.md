@@ -1,4 +1,4 @@
-# Interceptor — Windows Kernel Driver
+# Interceptor — Windows Kernel Filter Driver
 
 **Microsoft-signed Windows kernel-mode input filter driver for keyboards, mice
 and HID / XInput / GIP game controllers, with a C++17 SDK.**
