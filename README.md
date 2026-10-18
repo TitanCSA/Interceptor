@@ -1,4 +1,4 @@
-# Interceptor — Windows Kernel Filter Driver
+# Interceptor — Windows Kernel Filter Driver for Keyboard, Mouse & Gamepad
 
 **Microsoft-signed Windows kernel-mode input filter driver for keyboards, mice
 and HID / XInput / GIP game controllers, with a C++17 SDK.**
@@ -7,6 +7,11 @@ Intercept physical input, identify its source, change or block it, then forward
 it to Windows through one API. Windows 10/11 **x64**; administrator rights required
 for installation and capture. See the [supported profiles](docs/COMPATIBILITY.md)
 for device and connection limits.
+
+USB gamepad families include **DualShock 4 (DS4 / PS4), DualSense (PS5), wired
+Xbox 360, Xbox One and Xbox Series X|S**, using compatible HID, XInput/XUSB or
+GIP input profiles. See the [controller matrix](docs/COMPATIBILITY.md#console-gamepads)
+for the required connection and profile.
 
 **[Download](https://github.com/TitanCSA/Interceptor/releases/latest)**
 · [Installation](docs/INSTALLATION.md) · [C++ API](docs/API.md)

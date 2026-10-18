@@ -26,6 +26,22 @@ Native Xbox wireless/radio/Bluetooth transports are **not covered by the wired
 XUSB/GIP profiles**. Rumble, force feedback, audio, firmware and proprietary feature
 reports are outside the input capture/modification API.
 
+## Console gamepads
+
+These familiar model names map to the input paths above. Support requires a
+compatible descriptor and protocol profile for the selected connection.
+
+| Controller family | Input connection/profile |
+| --- | --- |
+| PlayStation 4 **DualShock 4 / DS4** | USB HID gamepad collection |
+| PlayStation 5 **DualSense** | USB HID gamepad collection |
+| **Xbox 360** | Wired USB XInput/XUSB, compatible single-slot parent and validated HID mirror |
+| **Xbox One** | Compatible USB GIP gamepad profile |
+| **Xbox Series X\|S** | Compatible USB GIP gamepad profile |
+
+Model names do not establish support for every firmware revision, Bluetooth or
+wireless adapter. The validation scope below describes the tested protocol fixtures.
+
 ## Detection and capture are different
 
 The installer displays Windows nodes, associations and published interfaces.
