@@ -1,6 +1,7 @@
 # Device compatibility
 
-Interceptor targets **Windows 10/11 x64**. Support is based on descriptors and
+The Interceptor kernel-mode input driver targets **Windows 10/11 x64**.
+Support is based on descriptors and
 validated protocol profiles rather than a list of controller brands. A family
 being implemented does not mean every product, firmware or transport is supported.
 

@@ -1,4 +1,4 @@
-# Install, use and remove Interceptor
+# Install, use and remove the Interceptor kernel driver
 
 ## Requirements
 
@@ -6,7 +6,7 @@
 - Administrator rights for setup, device association and input capture/injection.
 - A supported device profile; see [compatibility](COMPATIBILITY.md).
 
-The setup EXEs are standalone. Their .NET Framework runtime is included with the
+The release setup EXEs are standalone. Their .NET Framework runtime is included with the
 supported Windows versions. The demo driver package is Microsoft-signed and does
 not require enabling Test Mode. The installer and example EXEs have their own
 signature status; they do not inherit the driver's Microsoft signature.
@@ -24,8 +24,7 @@ signature status; they do not inherit the driver's Microsoft signature.
 ![Installer dashboard](images/installer.png)
 
 **Refresh** updates the inventory, **Diagnose** opens quick diagnostics,
-and **Export diagnostics** saves
-the current information.
+and **Export diagnostics** saves the current information.
 
 An inventory row describes a Windows device node, so one physical controller can
 have several rows. **Control** is the software API endpoint. A blank service field
@@ -68,7 +67,8 @@ when asked. Inputs are forwarded while being displayed; **Stop** ends capture.
 Close other capture applications first. An idle controller is not an installation
 failure, and an unavailable protocol profile is reported separately.
 
-The console examples demonstrate H/J swapping, Ctrl+H typing `hello`, mouse axis
+The [console examples](../examples/console/README.md) demonstrate H/J swapping,
+Ctrl+H typing `hello`, mouse axis
 inversion, combined keyboard/mouse mapping, keyboard/mouse blocking monitors,
 HID controller axis inversion and a minimal batch loop. Blocking monitors
 intentionally suppress the selected input until stopped.
@@ -116,6 +116,7 @@ startup window. This recovery path can restart Windows when cleanup requires it.
 It is not a replacement for Windows recovery if the OS cannot boot.
 
 The demo expires two hours after the first successful capture in the current
-Windows boot, including time spent asleep. Closing applications or reinstalling does not reset it. Use Windows
+Windows boot, including time spent asleep. Closing applications or reinstalling
+does not reset it. Use Windows
 **Restart**, rather than sleep or Fast Startup shutdown, for another allowance.
 The full version is available by Discord DM to **`titancsa`**.

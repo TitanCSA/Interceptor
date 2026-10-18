@@ -30,33 +30,44 @@ $compiler=Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319\csc.exe'
 if(!(Test-Path -LiteralPath $compiler)){throw 'The Windows .NET Framework C# compiler was not found.'}
 $recovery=Join-Path $root 'bin\InstallerRecovery'
 New-Item -ItemType Directory -Path $recovery -Force|Out-Null
-& $compiler /nologo /target:exe /platform:x64 /optimize+ /warn:4 /warnaserror+ /utf8output /codepage:65001 ('/out:'+(Join-Path $recovery 'InterceptorRecovery.exe')) /reference:System.ServiceProcess.dll /reference:System.Management.dll /reference:System.Web.Extensions.dll (Join-Path $root 'InstallerRecovery\RecoveryService.cs') (Join-Path $root 'InstallerRecovery\DeviceState.cs')
+& $compiler /nologo /target:exe /platform:x64 /optimize+ /warn:4 /warnaserror+ /utf8output /codepage:65001 ('/out:'+(Join-Path $recovery 'InterceptorRecovery.exe')) /reference:System.ServiceProcess.dll /reference:System.Management.dll /reference:System.Web.Extensions.dll (Join-Path $root 'installer\recovery\RecoveryService.cs') (Join-Path $root 'installer\recovery\DeviceState.cs')
 if($LASTEXITCODE){throw 'Recovery service compilation failed.'}
 & (Join-Path $recovery 'InterceptorRecovery.exe') --self-test
 if($LASTEXITCODE){throw 'Recovery service self-test failed.'}
 Copy-Item -LiteralPath (Join-Path $native 'RecoveryBinding.dll') -Destination $recovery -Force
-& (Join-Path $root 'Tools\Build-ExampleUI.ps1') -BridgePath (Join-Path $native 'InterceptorViewerBridge.dll') -OutputDirectory (Join-Path $root 'bin\ExampleUI') -NoPublish
+& (Join-Path $root 'tools\Build-ExampleUI.ps1') -BridgePath (Join-Path $native 'InterceptorViewerBridge.dll') -OutputDirectory (Join-Path $root 'bin\ExampleUI')
 if($SkipInstallers){Write-Host 'All public user-mode sources built. Installer packaging skipped; no installation performed.';return}
 
-# Keep the Microsoft-signed kernel and catalogs exactly as distributed. Only the
-# newly built user-mode helper and recovery programs are refreshed for packaging.
-$payload=Join-Path $root 'Installeur\Payload'
-if(!(Test-Path -LiteralPath (Join-Path $payload 'SHA256.json'))){throw 'The signed binary payload is missing. Restore Installeur/Payload from this release before packaging installers.'}
-. (Join-Path $root 'Installeur\Common.ps1')
-$mode=Assert-InterceptorPayload $payload
-if($mode -ne 'Microsoft'){throw 'This public build requires the Microsoft-signed release payload.'}
-$kernelBefore=(Get-FileHash -LiteralPath (Join-Path $payload 'Interceptor.sys') -Algorithm SHA256).Hash
-Copy-Item -LiteralPath (Join-Path $native 'InterceptorExample.exe') -Destination (Join-Path $payload 'InterceptorExample.exe') -Force
-$hashes=Get-Content -LiteralPath (Join-Path $payload 'SHA256.json') -Raw|ConvertFrom-Json
-$hashes.'InterceptorExample.exe'=(Get-FileHash -LiteralPath (Join-Path $payload 'InterceptorExample.exe') -Algorithm SHA256).Hash
+# Verify signed source files first. Generated helper/recovery binaries and their
+# runtime manifest belong in the build directory, never the source tree.
+$engine=Join-Path $root 'installer\engine'
+$sourcePayload=Join-Path $engine 'Payload'
+$sourceManifest=Join-Path $sourcePayload 'SHA256.json'
+if(!(Test-Path -LiteralPath $sourceManifest)){throw 'The signed payload is missing. Restore installer/engine/Payload from this release before packaging installers.'}
+$expected=Get-Content -LiteralPath $sourceManifest -Raw|ConvertFrom-Json
+$signedFiles=@('Interceptor.sys','InterceptorKeyboard.inf','InterceptorMouse.inf','InterceptorControl.inf','InterceptorKeyboard.cat','InterceptorMouse.cat','InterceptorControl.cat','Signing.json')
+if(@($expected.PSObject.Properties).Count -ne $signedFiles.Count){throw 'The signed source manifest must contain exactly the distributed driver files and signing policy.'}
+$hashes=[ordered]@{}
+foreach($name in $signedFiles){
+    $path=Join-Path $sourcePayload $name
+    if(!(Test-Path -LiteralPath $path -PathType Leaf) -or $expected.$name -notmatch '^[0-9A-Fa-f]{64}$' -or (Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash -ne $expected.$name){throw "Signed source payload missing or modified: $name"}
+    $hashes[$name]=[string]$expected.$name
+}
+$package=Join-Path $BuildDirectory 'package'
+$payload=Join-Path $package 'Payload'
+$recoveryPayload=Join-Path $package 'Recovery'
+New-Item -ItemType Directory -Path $package,$payload,$recoveryPayload -Force|Out-Null
+foreach($name in @('Install.ps1','Uninstall.ps1','Associate.ps1','CompleteAssociation.ps1','Common.ps1','Lifecycle.ps1','EmergencyRecover.ps1','FinalizeUninstall.ps1')){Copy-Item -LiteralPath (Join-Path $engine $name) -Destination $package -Force}
+foreach($name in $signedFiles){Copy-Item -LiteralPath (Join-Path $sourcePayload $name) -Destination $payload -Force}
+Copy-Item -LiteralPath (Join-Path $native 'InterceptorExample.exe') -Destination $payload -Force
+$hashes['InterceptorExample.exe']=(Get-FileHash -LiteralPath (Join-Path $payload 'InterceptorExample.exe') -Algorithm SHA256).Hash
 $hashes|ConvertTo-Json|Set-Content -LiteralPath (Join-Path $payload 'SHA256.json') -Encoding UTF8
-$recoveryPayload=Join-Path $root 'Installeur\Recovery'
-New-Item -ItemType Directory -Path $recoveryPayload -Force|Out-Null
 foreach($name in @('InterceptorRecovery.exe','RecoveryBinding.dll')){Copy-Item -LiteralPath (Join-Path $recovery $name) -Destination $recoveryPayload -Force}
-& (Join-Path $root 'Tools\Build-InstallerUI.ps1') -DiagnosticWorkerPath (Join-Path $native 'InterceptorDiagnosticWorker.exe')
+. (Join-Path $package 'Common.ps1')
+if((Assert-InterceptorPayload $payload) -ne 'Microsoft'){throw 'This public build requires the Microsoft-signed release payload.'}
+& (Join-Path $root 'tools\Build-InstallerUI.ps1') -DiagnosticWorkerPath (Join-Path $native 'InterceptorDiagnosticWorker.exe') -PayloadDirectory $package
 $references=Join-Path ${env:ProgramFiles(x86)} 'Reference Assemblies\Microsoft\Framework\.NETFramework\v4.6'
 if(!(Test-Path -LiteralPath (Join-Path $references 'System.dll'))){$references=Join-Path $root 'obj\InstallerUI\net46\build\.NETFramework\v4.6'}
-& (Join-Path $root 'Tools\Build-InstallerConsole.ps1') -ReferenceDirectory $references
-if((Get-FileHash -LiteralPath (Join-Path $payload 'Interceptor.sys') -Algorithm SHA256).Hash -ne $kernelBefore){throw 'Unexpected change to the signed kernel.'}
+& (Join-Path $root 'tools\Build-InstallerConsole.ps1') -ReferenceDirectory $references
 Write-Host 'Built SDK, eight console examples, UI viewer, UI installer and console installer.'
 Write-Host 'All builds and self-tests were user-mode only. No driver installed and no Windows setting changed.'

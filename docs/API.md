@@ -1,26 +1,26 @@
 # C++ SDK
 
 The SDK targets Windows x64 and C++17. Include `Interceptor.h`; public functions
-are in `namespace Interceptor`. Install the signed driver first. Source files
-under `PublicAPI` and their relative `Shared` headers must stay together.
+are in `namespace Interceptor`. Install the signed kernel driver first. Keep the
+complete `sdk` folder, including its `internal` protocol headers, together.
 
 ## Build and link
 
 The SDK can be built without compiling any kernel code:
 
 ```powershell
-cmake -S PublicAPI -B build/sdk -A x64
+cmake -S sdk -B build/sdk -A x64
 cmake --build build/sdk --config Release
 ```
 
 This also builds the minimal keyboard example. To use it in your own CMake project:
 
 ```cmake
-add_subdirectory(path/to/Interceptor/PublicAPI interceptor-sdk)
+add_subdirectory(path/to/Interceptor/sdk interceptor-sdk)
 target_link_libraries(my_app PRIVATE Interceptor::SDK)
 ```
 
-Alternatively, compile `PublicAPI/Interceptor.cpp` and `PublicAPI/InitDevices.cpp`
+Alternatively, compile `sdk/Interceptor.cpp` and `sdk/InitDevices.cpp`
 into your project with the supplied headers. CMake supplies the required Windows
 libraries automatically. Run capture applications elevated.
 
@@ -44,7 +44,7 @@ const auto sent = Interceptor::Send_Input(inputs);
 // Check sent.error; sent.accepted counts entries accepted by this call.
 ```
 
-Use the [complete minimal example](../exemple-source/08_Clavier_Minimal.cpp) for
+Use the [complete minimal example](../examples/console/08_Clavier_Minimal.cpp) for
 initialization failure and exception handling.
 
 `Get_Input_With_Timeout(timeout = INFINITE, stopEvent = nullptr)` opens the internal

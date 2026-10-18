@@ -4,8 +4,8 @@ Copyright (c) 2026 TitanCSA
 
 This license applies to the user-mode source code, examples, build scripts and
 documentation in this repository. It does not apply to the prebuilt kernel
-driver, driver catalogs, or INF files under Installeur/Payload; those files are
-covered by BINARY-LICENSE.txt. Third-party names and projects retain their own
+driver, driver catalogs, or INF files under installer/engine/Payload; those files are
+covered by licenses/BINARY-LICENSE.txt. Third-party names and projects retain their own
 licenses and trademarks.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
