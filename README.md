@@ -10,7 +10,7 @@ for device and connection limits.
 
 **[Download](https://github.com/TitanCSA/Interceptor/releases/latest)**
 · [Installation](docs/INSTALLATION.md) · [C++ API](docs/API.md)
-· [Examples](examples/console/README.md)
+· [Examples](ExamplesConsole/README.md)
 
 | Setup and diagnostics | Controller viewer |
 | --- | --- |
@@ -43,10 +43,13 @@ that restart. [Installation, diagnostics and recovery](docs/INSTALLATION.md).
 
 `Get_Input_With_Timeout()` receives a mixed input batch. Modify typed fields or
 mark individual events blocked, then call `Send_Input(inputs)` to forward it.
-The library manages its session and infers send types and sizes. HID controller
-state exposes dynamic axes, triggers, hats and buttons from the device descriptor.
+The library is just [`Interceptor.h`](Interceptor/Interceptor.h) and
+[`Interceptor.cpp`](Interceptor/Interceptor.cpp): include the header and compile
+the source in your project. No prebuilt Interceptor `.lib` or DLL is required.
+Sessions, send types and sizes are automatic; HID controller state is decoded
+from the device descriptor.
 
-Start with the [complete H-to-J example](examples/console/08_Clavier_Minimal.cpp)
+Start with the [complete H-to-J example](ExamplesConsole/08_Clavier_Minimal.cpp)
 or the [API guide](docs/API.md). Forward untouched families too: receiving a batch
 consumes its input. Closing the application releases capture; physical
 **Ctrl+Alt+Delete** also revokes captures.
@@ -79,17 +82,20 @@ example EXEs.
 ## Source and build
 
 ```text
-sdk/         C++ library and internal protocol headers
-examples/    console examples and graphical viewer
-installer/   UI, console, recovery, helper and package engine
-tools/       user-mode build and packaging scripts
-docs/        API, installation, compatibility and images
-licenses/    driver binary terms and attribution
+Interceptor/       Standalone two-file C++ library
+ExamplesConsole/   Eight console examples
+ExamplesUI/        Graphical input viewer
+InstallerConsole/  Console installer
+InstallerUI/       GUI installer, shared package engine and recovery binaries
+docs/              API, installation, compatibility and images
+licenses/          Driver binary terms and attribution
 ```
 
 With Visual Studio 2022 C++ and the Windows SDK installed, run
-`powershell -ExecutionPolicy Bypass -File .\Build.ps1`. This builds user-mode
-components and reuses the pre-signed demo driver. **Kernel driver source and
+`powershell -ExecutionPolicy Bypass -File .\Build.ps1` to build everything.
+Each installer can also be built alone with `InstallerUI/Build.ps1` or
+`InstallerConsole/Build.ps1`. Builds reuse the pre-signed demo driver.
+**Kernel driver source and
 private signing material are not included.** User-mode source is [MIT](LICENSE);
 the driver binary has [separate terms](licenses/BINARY-LICENSE.txt).
 

@@ -15,7 +15,7 @@ jobs:
           persist-credentials: false
       - name: Build SDK, examples and applications
         shell: powershell
-        run: .\Build.ps1 -SkipInstallers
+        run: .\Build.ps1
       - name: Upload user-mode build
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
@@ -25,4 +25,6 @@ jobs:
             bin/Native/InterceptorViewerBridge.dll
             bin/ExampleUI/InterceptorExampleUI.exe
             bin/SDK/InterceptorSDK.lib
+            bin/InstallerUI/InterceptorSetup.exe
+            bin/InstallerConsole/InterceptorSetupConsole.exe
           if-no-files-found: error

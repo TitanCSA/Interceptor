@@ -67,7 +67,7 @@ when asked. Inputs are forwarded while being displayed; **Stop** ends capture.
 Close other capture applications first. An idle controller is not an installation
 failure, and an unavailable protocol profile is reported separately.
 
-The [console examples](../examples/console/README.md) demonstrate H/J swapping,
+The [console examples](../ExamplesConsole/README.md) demonstrate H/J swapping,
 Ctrl+H typing `hello`, mouse axis
 inversion, combined keyboard/mouse mapping, keyboard/mouse blocking monitors,
 HID controller axis inversion and a minimal batch loop. Blocking monitors
@@ -120,3 +120,20 @@ Windows boot, including time spent asleep. Closing applications or reinstalling
 does not reset it. Use Windows
 **Restart**, rather than sleep or Fast Startup shutdown, for another allowance.
 The full version is available by Discord DM to **`titancsa`**.
+
+## Build from the public source
+
+Install Visual Studio 2022 C++ and a Windows SDK. From the repository root,
+choose the build you need:
+
+```powershell
+.\Build.ps1 -Target All            # Everything
+.\InstallerUI\Build.ps1            # GUI installer only
+.\InstallerConsole\Build.ps1       # Console installer only
+```
+
+`All` is the default. The last two commands build the selected installer
+independently. The console installer uses the shared package engine without
+requiring a GUI installer EXE. Both reuse the supplied Microsoft-signed driver
+and precompiled recovery components under `InstallerUI/Package`; they do not
+compile kernel code or install anything on the build computer.

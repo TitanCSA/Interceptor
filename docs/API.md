@@ -1,28 +1,37 @@
 # C++ SDK
 
-The SDK targets Windows x64 and C++17. Include `Interceptor.h`; public functions
-are in `namespace Interceptor`. Install the signed kernel driver first. Keep the
-complete `sdk` folder, including its `internal` protocol headers, together.
+The library targets Windows x64 and C++17. It consists of exactly two files:
+[`Interceptor.h`](../Interceptor/Interceptor.h) and
+[`Interceptor.cpp`](../Interceptor/Interceptor.cpp). Include the header and
+compile the source once with your application. Public functions are in
+`namespace Interceptor`. Install the signed kernel driver before capturing input.
 
-## Build and link
+## Add the two files to your application
 
-The SDK can be built without compiling any kernel code:
+Copy both files into your project and add `Interceptor.cpp` to its C++ sources.
+There are no other local-header dependencies and no required prebuilt Interceptor
+`.lib` or DLL. With MSVC, the supplied pragmas link the Windows system libraries.
+For example, if you keep the `Interceptor` folder beside your `main.cpp`:
+
+```cmake
+add_executable(my_app main.cpp Interceptor/Interceptor.cpp)
+target_include_directories(my_app PRIVATE Interceptor)
+target_compile_features(my_app PRIVATE cxx_std_17)
+target_compile_definitions(my_app PRIVATE UNICODE _UNICODE NOMINMAX)
+```
+
+Run capture applications elevated. The header alone is not an implementation:
+compile `Interceptor.cpp` exactly once, rather than including it from multiple files.
+
+To build an optional static library from a full checkout, run at the repository root:
 
 ```powershell
-cmake -S sdk -B build/sdk -A x64
+cmake -S . -B build/sdk -A x64 -DINTERCEPTOR_BUILD_CLIENTS=OFF
 cmake --build build/sdk --config Release
 ```
 
-This also builds the minimal keyboard example. To use it in your own CMake project:
-
-```cmake
-add_subdirectory(path/to/Interceptor/sdk interceptor-sdk)
-target_link_libraries(my_app PRIVATE Interceptor::SDK)
-```
-
-Alternatively, compile `sdk/Interceptor.cpp` and `sdk/InitDevices.cpp`
-into your project with the supplied headers. CMake supplies the required Windows
-libraries automatically. Run capture applications elevated.
+The repository's CMake target is `Interceptor::SDK`. It is an alternative to
+compiling the source directly; no kernel source or driver rebuild is involved.
 
 ## Receive, change, forward
 
@@ -44,7 +53,7 @@ const auto sent = Interceptor::Send_Input(inputs);
 // Check sent.error; sent.accepted counts entries accepted by this call.
 ```
 
-Use the [complete minimal example](../examples/console/08_Clavier_Minimal.cpp) for
+Use the [complete minimal example](../ExamplesConsole/08_Clavier_Minimal.cpp) for
 initialization failure and exception handling.
 
 `Get_Input_With_Timeout(timeout = INFINITE, stopEvent = nullptr)` opens the internal

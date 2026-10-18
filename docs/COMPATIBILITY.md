@@ -1,8 +1,9 @@
 # Device compatibility
 
-The Interceptor kernel-mode input driver targets **Windows 10/11 x64**.
-Support is based on descriptors and
-validated protocol profiles rather than a list of controller brands. A family
+The Interceptor kernel-mode input driver targets **Windows 10/11 x64**. The
+two-file user-mode library uses this same signed driver; combining its source
+does not change device profiles. Support is based on descriptors and validated
+protocol profiles rather than a list of controller brands. A family
 being implemented does not mean every product, firmware or transport is supported.
 
 | Family | Supported path | Important limits |
