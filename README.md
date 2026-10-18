@@ -50,7 +50,8 @@ Sessions, send types and sizes are automatic; HID controller state is decoded
 from the device descriptor.
 
 Start with the [complete H-to-J example](ExamplesConsole/08_Clavier_Minimal.cpp)
-or the [API guide](docs/API.md). Forward untouched families too: receiving a batch
+or the [API guide](docs/API.md). Each console example contains its complete source
+and uses only the two library files. Forward untouched families too: receiving a batch
 consumes its input. Closing the application releases capture; physical
 **Ctrl+Alt+Delete** also revokes captures.
 

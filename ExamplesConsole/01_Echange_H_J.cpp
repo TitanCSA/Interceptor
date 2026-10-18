@@ -1,3 +1,109 @@
-#include "Behaviors.h"
-// Swap keyboard H/J; the runner forwards all untouched input families.
-int wmain(int argc,wchar_t** argv) { return Examples::Run(Examples::Mode::SwapHJ,argc,argv); }
+#include "Interceptor.h"
+#include <cwchar>
+#include <iostream>
+#include <stdexcept>
+#include <system_error>
+
+namespace {
+HANDLE stopRequested=nullptr,finished=nullptr;
+SRWLOCK consoleLock=SRWLOCK_INIT;
+
+BOOL WINAPI ConsoleControl(DWORD signal) {
+    AcquireSRWLockShared(&consoleLock);
+    if(stopRequested)SetEvent(stopRequested);
+    // Give main time to close capture before Windows terminates a closing console.
+    if(signal==CTRL_CLOSE_EVENT && finished)WaitForSingleObject(finished,2500);
+    ReleaseSRWLockShared(&consoleLock);
+    return TRUE;
+}
+
+struct ConsoleLifetime {
+    DWORD oldMode=0;bool changedMode=false;
+    ConsoleLifetime() {
+        finished=CreateEventW(nullptr,TRUE,FALSE,nullptr);
+        if(!finished)throw std::system_error(GetLastError(),std::system_category(),"Create finished event");
+        stopRequested=CreateEventW(nullptr,TRUE,FALSE,nullptr);
+        if(!stopRequested || !SetConsoleCtrlHandler(ConsoleControl,TRUE)) {
+            const DWORD error=GetLastError();
+            if(stopRequested)CloseHandle(stopRequested);
+            CloseHandle(finished);stopRequested=finished=nullptr;
+            throw std::system_error(static_cast<int>(error),std::system_category(),"Register console cancellation");
+        }
+        const HANDLE input=GetStdHandle(STD_INPUT_HANDLE);
+        if(GetConsoleMode(input,&oldMode))
+            changedMode=SetConsoleMode(input,(oldMode|ENABLE_EXTENDED_FLAGS)&~ENABLE_QUICK_EDIT_MODE)!=FALSE;
+    }
+    ~ConsoleLifetime() {
+        // Every batch has left scope before this destructor runs.
+        try {Interceptor::Destroy_Context();}catch(...){}
+        if(changedMode)SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE),oldMode);
+        SetEvent(finished);SetConsoleCtrlHandler(ConsoleControl,FALSE);
+        AcquireSRWLockExclusive(&consoleLock);
+        const HANDLE stop=stopRequested,done=finished;stopRequested=finished=nullptr;
+        ReleaseSRWLockExclusive(&consoleLock);
+        CloseHandle(stop);CloseHandle(done);
+    }
+    ConsoleLifetime(const ConsoleLifetime&)=delete;
+    ConsoleLifetime& operator=(const ConsoleLifetime&)=delete;
+};
+
+bool Forward(Interceptor::Input_Batch& inputs) {
+    const auto deadline=GetTickCount64()+2000;
+    for(;;) {
+        const auto sent=Interceptor::Send_Input(inputs);
+        if(sent)return true;
+        if(sent.error!=ERROR_BUSY)
+            throw std::system_error(static_cast<int>(sent.error),std::system_category(),"Forward input batch");
+        // A retried batch sends only its unaccepted entries. Wait only on backpressure.
+        if(GetTickCount64()>=deadline)throw std::runtime_error("Windows input queue stayed full for 2 seconds; capture released.");
+        if(WaitForSingleObject(stopRequested,1)==WAIT_OBJECT_0)return false;
+    }
+}
+}
+
+int wmain(int argc,wchar_t** argv) {
+    using namespace Interceptor;
+    if(argc==2 && (!std::wcscmp(argv[1],L"--help") || !std::wcscmp(argv[1],L"/?"))) {
+        std::cout<<"Swap H and J, including press, release and repeat packets.\nUsage: 01_Echange_H_J.exe [--help]\n";return 0;
+    }
+    if(argc!=1){std::cerr<<"Run without arguments, or use --help.\n";return ERROR_INVALID_PARAMETER;}
+    try {
+        ConsoleLifetime console;
+        std::cout<<"Initializing Interceptor devices...\n"<<std::flush;
+        const auto init=Init_AllDevices();
+        if(init.error)throw std::system_error(static_cast<int>(init.error),std::system_category(),"Init_AllDevices");
+        if(!init.ready) {
+            std::cerr<<(init.reboot_required
+                ?"Restart Windows, rerun the installer's /install, then launch this example.\n"
+                :"Devices are not ready. Check the installer diagnostics.\n");
+            return init.reboot_required?ERROR_SUCCESS_REBOOT_REQUIRED:ERROR_NOT_READY;
+        }
+        std::cout<<"Swap H and J, including press, release and repeat packets.\nPress Ctrl+C, close this window, or use physical Ctrl+Alt+Delete to stop.\nRun only one capture example at a time.\nRelease all keys/buttons; capture starts in 2 seconds.\n"<<std::flush;
+        if(WaitForSingleObject(stopRequested,2000)==WAIT_OBJECT_0)return 0;
+        std::cout<<"Capture active.\n"<<std::flush;
+        for(;;) {
+            auto inputs=Get_Input_With_Timeout(INFINITE,stopRequested);
+            if(inputs.empty()) {
+                if(WaitForSingleObject(stopRequested,0)==WAIT_OBJECT_0)break;
+                continue;
+            }
+            for(auto& event:inputs)if(auto* key=event.Get<Keyboard_Input>()) {
+                // Extended E0/E1 scan codes are distinct keys and stay unchanged.
+                if(!(key->stroke.flags&(KeyE0|KeyE1))) {
+                    if(key->stroke.make_code==0x23)key->stroke.make_code=0x24; // H -> J
+                    else if(key->stroke.make_code==0x24)key->stroke.make_code=0x23; // J -> H
+                }
+            }
+            // Sequence, device, key-up flags and every other family are preserved.
+            if(!Forward(inputs))break;
+        }
+    }catch(const std::system_error& error) {
+        if(error.code().value()!=ERROR_OPERATION_ABORTED) {
+            std::cerr<<"Error: "<<error.what()<<"\nInstall Interceptor and run this EXE as administrator.\n";
+            return 1;
+        }
+        std::cout<<"Capture cancelled by the driver.\n";
+    }catch(const std::exception& error){std::cerr<<"Error: "<<error.what()<<'\n';return 1;}
+    std::cout<<"Capture closed; normal input restored.\n";
+    return 0;
+}

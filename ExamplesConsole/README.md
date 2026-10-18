@@ -33,7 +33,9 @@ Every example uses the same two library files:
 [`Interceptor.cpp`](../Interceptor/Interceptor.cpp). No prebuilt library or
 additional local SDK headers are required.
 
-[`Behaviors.h`](Behaviors.h) contains the example transformations.
-[`Runner.cpp`](Runner.cpp)
-handles initialization, input batches, forwarding, logging and termination.
+Each `.cpp` contains its own complete program: initialization, input loop,
+transformation and forwarding. To reuse one example, compile its `.cpp` together
+with `Interceptor/Interceptor.cpp` and add `Interceptor/` to your include path.
+No shared example source or helper header is needed.
+
 See the [SDK guide](../docs/API.md) and [installation guide](../docs/INSTALLATION.md).

@@ -40,7 +40,7 @@ set(examples 01_Echange_H_J 02_Ctrl_H_Hello 03_Inverse_Souris_Y
     04_Inverse_X_J_Boutons_HK 05_Clavier_Bloque_Affichage
     06_Souris_Bloquee_Affichage 07_Manette_HID_Inverse_X_Y 08_Clavier_Minimal)
 foreach(name IN LISTS examples)
-    add_executable(${name} "ExamplesConsole/${name}.cpp" ExamplesConsole/Runner.cpp)
+    add_executable(${name} "ExamplesConsole/${name}.cpp")
     target_link_libraries(${name} PRIVATE Interceptor::SDK)
     target_link_options(${name} PRIVATE "/MANIFESTUAC:level='requireAdministrator' uiAccess='false'")
 endforeach()
