@@ -2,11 +2,37 @@
 #include <cstdio>
 #include <iostream>
 #include <system_error>
+#include <winsvc.h>
+namespace {
+bool CheckInterceptorInstallation() {
+    const SC_HANDLE manager=OpenSCManagerW(nullptr,nullptr,SC_MANAGER_CONNECT);
+    if(!manager)throw std::system_error(static_cast<int>(GetLastError()),std::system_category(),"Check Interceptor installation");
+    const SC_HANDLE service=OpenServiceW(manager,L"Interceptor",SERVICE_QUERY_STATUS);
+    const DWORD error=service?ERROR_SUCCESS:GetLastError();
+    if(service)CloseServiceHandle(service);
+    CloseServiceHandle(manager);
+    if(error==ERROR_SERVICE_DOES_NOT_EXIST) {
+        std::cerr<<"Interceptor is not installed.\n"
+            <<"Run InterceptorSetup.exe, or InterceptorSetupConsole.exe /install, then launch this example again.\n";
+        // Keep a double-clicked console visible; shells and redirected runs do not pause.
+        DWORD processes[2]{},mode=0;
+        if(GetConsoleProcessList(processes,2)==1 && GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE),&mode)) {
+            std::cerr<<"Press Enter to close..."<<std::flush;
+            std::cin.get();
+        }
+        return false;
+    }
+    if(error)throw std::system_error(static_cast<int>(error),std::system_category(),"Could not verify Interceptor installation");
+    return true;
+}
+}
+
 int wmain(int argc,wchar_t** argv) {
     using namespace Interceptor;
     try {
         const bool verbose=argc==2 && std::wstring(argv[1])==L"--verbose";
         if(argc!=1&&!verbose)throw std::invalid_argument("Usage: 07_Manette_HID_Inverse_X_Y [--verbose]");
+        if(!CheckInterceptorInstallation())return ERROR_SERVICE_DOES_NOT_EXIST;
         const auto init=Init_AllDevices();
         if(!init.ready) {
             std::cerr<<"Initialization incomplete; error="<<init.error<<", restart="<<init.reboot_required<<'\n';return 1;

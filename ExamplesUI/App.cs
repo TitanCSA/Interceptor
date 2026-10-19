@@ -29,6 +29,7 @@ namespace InterceptorViewer {
     if(args.Length==2&&args[0]=="--lifecycle-test")return LifecycleTests(args[1]);
     if(args.Length==2&&args[0]=="--native-lifecycle-test")return LifecycleTests(args[1],true);
     int observe=-1;if(args.Length==2&&args[0]=="--observe"){observe=int.Parse(args[1],CultureInfo.InvariantCulture);if(observe<0||observe>5)throw new ArgumentException("Invalid device type.");}else if(args.Length!=0)throw new ArgumentException("Arguments: --self-test JSON, --render-tests directory, --observe type(0..5).");
+    DriverInstallation.RequireInstalled();
     var application=new Application();using(var dashboard=new Dashboard(false)){if(observe>=0)dashboard.ObserveOnLoad(observe);application.Run(dashboard.Window);}return 0;
    }catch(Exception e){
     try{if(args.Length==2&&(args[0]=="--self-test"||args[0]=="--lifecycle-test"||args[0]=="--native-lifecycle-test"))Json(args[1],new{passed=false,error=e.ToString()});else if(args.Length==2&&args[0]=="--render-tests"){Directory.CreateDirectory(args[1]);Json(Path.Combine(args[1],"render-results.json"),new{passed=false,error=e.ToString()});}else MessageBox.Show(e.Message,"Interceptor · graphical example",MessageBoxButton.OK,MessageBoxImage.Error);}catch{}return 1;
@@ -36,6 +37,11 @@ namespace InterceptorViewer {
   }
   static void Check(bool condition,string message){if(!condition)throw new InvalidDataException(message);}
   static void SelfTest(string output){
+   DriverInstallation.RequireInstalled(0);
+   bool missing=false;try{DriverInstallation.RequireInstalled(1060);}catch(InvalidOperationException e){missing=e.Message.Contains("Interceptor is not installed")&&e.Message.Contains("InterceptorSetupConsole.exe /install");}
+   Check(missing,"Missing-driver installation instructions");
+   bool denied=false;try{DriverInstallation.RequireInstalled(5);}catch(Win32Exception e){denied=e.NativeErrorCode==5&&!e.Message.Contains("is not installed");}
+   Check(denied,"Access denied must not be reported as a missing driver");
    Check(Marshal.SizeOf(typeof(DeviceInfo))==800&&Marshal.SizeOf(typeof(DeviceState))==1064&&Marshal.SizeOf(typeof(Snapshot))==80,"ABI sizes");
    Check(Marshal.OffsetOf(typeof(DeviceState),"Keys").ToInt32()==832&&Marshal.OffsetOf(typeof(DeviceState),"Buttons").ToInt32()==952,"ABI offsets");Check(InputDrawing.KeyCount==105,"Incomplete ISO keyboard");
    int[] gipBits={8,9,10,11,2,3,14,15,12,13,-1,-1,4,5,6,7};
@@ -48,7 +54,7 @@ namespace InterceptorViewer {
    Snapshot header;using(var bridge=new Bridge()){var states=bridge.Read(out header);Check(header.Status==0&&states.Length==0,"Idle bridge without capture");}
    BridgeConcurrencyTest();
    using(var dashboard=new Dashboard(true)){dashboard.SetPreview(0);dashboard.LayoutForRender();}
-   Json(output,new{passed=true,snapshotBytes=80,deviceBytes=1064,keyCount=InputDrawing.KeyCount,aggregation="multi-keyboard release and mouse last packet",bridge="embedded DLL loaded, stopped snapshot read; four concurrent Read/Stop callers racing Dispose, repeated four times",captureStarted=false,installedAnything=false});
+   Json(output,new{passed=true,installationCheck="installed, missing with setup instructions, and access denied",snapshotBytes=80,deviceBytes=1064,keyCount=InputDrawing.KeyCount,aggregation="multi-keyboard release and mouse last packet",bridge="embedded DLL loaded, stopped snapshot read; four concurrent Read/Stop callers racing Dispose, repeated four times",captureStarted=false,installedAnything=false});
   }
   static void BridgeConcurrencyTest(){
    for(int cycle=0;cycle<4;++cycle)using(var bridge=new Bridge())using(var ready=new CountdownEvent(4))using(var go=new ManualResetEvent(false)){

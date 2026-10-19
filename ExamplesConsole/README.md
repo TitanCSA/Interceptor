@@ -1,6 +1,11 @@
 # C++ examples
 
 Install the driver first, then run one capture example at a time as administrator.
+Every example checks for the Interceptor driver service at startup. If it is
+missing, a message explains which installer to run and the example exits before
+initializing devices or opening capture. A double-clicked console stays open
+until Enter is pressed. This check does not install or start the driver; an
+installed service alone does not guarantee that every device is ready.
 The SDK opens its session automatically. Untouched input families are forwarded.
 
 | Source / executable | Demonstration |

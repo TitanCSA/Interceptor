@@ -62,6 +62,13 @@ automatically. To keep a log: `./InterceptorSetupConsole.exe /install > setup.lo
 Extract the Examples ZIP and launch `InterceptorExampleUI.exe`, or a console
 example. Running an example does not install the driver.
 
+All examples check for the Interceptor driver service at startup. If it is absent,
+the console prints installation instructions or the viewer displays a message,
+then exits before device initialization or capture. This read-only check does not
+start the two-hour allowance. Console help and the viewer's offline tests remain
+available without the driver. An installed service can still need a restart or
+device association; use installer diagnostics when capture is unavailable.
+
 In the viewer, choose a device family and click **Observe**. Accept elevation
 when asked. Inputs are forwarded while being displayed; **Stop** ends capture.
 Close other capture applications first. An idle controller is not an installation

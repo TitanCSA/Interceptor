@@ -8,6 +8,27 @@ using System.Security.Cryptography;
 using System.Threading;
 
 namespace InterceptorViewer {
+ // A read-only startup check: opening the service neither installs nor starts it.
+ static class DriverInstallation {
+  const int ServiceDoesNotExist=1060;
+  [DllImport("advapi32.dll",CharSet=CharSet.Unicode,SetLastError=true)] static extern IntPtr OpenSCManager(string machine,string database,uint access);
+  [DllImport("advapi32.dll",CharSet=CharSet.Unicode,SetLastError=true)] static extern IntPtr OpenService(IntPtr manager,string name,uint access);
+  [DllImport("advapi32.dll")] [return:MarshalAs(UnmanagedType.Bool)] static extern bool CloseServiceHandle(IntPtr handle);
+  public static int Check(){
+   IntPtr manager=OpenSCManager(null,null,1); // SC_MANAGER_CONNECT
+   if(manager==IntPtr.Zero)return Marshal.GetLastWin32Error();
+   try {
+    IntPtr service=OpenService(manager,"Interceptor",4); // SERVICE_QUERY_STATUS
+    if(service==IntPtr.Zero)return Marshal.GetLastWin32Error();
+    CloseServiceHandle(service);return 0;
+   }finally{CloseServiceHandle(manager);}
+  }
+  public static void RequireInstalled(){RequireInstalled(Check());}
+  internal static void RequireInstalled(int error){
+   if(error==ServiceDoesNotExist)throw new InvalidOperationException("Interceptor is not installed.\n\nRun InterceptorSetup.exe, or InterceptorSetupConsole.exe /install, then launch this example again.");
+   if(error!=0)throw new System.ComponentModel.Win32Exception(error,"Could not verify Interceptor installation (Windows error "+error+").");
+  }
+ }
  [StructLayout(LayoutKind.Sequential, Pack=8)]
  public struct Snapshot {
   public uint Size,Version,Status,Error,ResetReason,DeviceCount,Mask,Controllers;
