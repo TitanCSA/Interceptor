@@ -210,23 +210,23 @@ void ForwardOtherFamilies(Input_Batch& inputs) {
     }
 }
 
-void SendOutputs(const std::vector<Emission>& out,std::vector<Keyboard_Input>& keys,std::vector<Mouse_Input>& mice) {
+void SendOutputs(const std::vector<Emission>& out,std::vector<Keyboard_Input>& keys,std::vector<Mouse_Input>& mouseInputs) {
     std::size_t index=0;
     while(index<out.size() && !stop) {
-        keys.clear();mice.clear();
+        keys.clear();mouseInputs.clear();
         const auto kind=out[index].kind;
         std::size_t count=0;
         // Batch only adjacent emissions from the same family, so a generated
         // key remains on the correct side of the associated mouse movement.
         while(index+count<out.size() && count<256 && out[index+count].kind==kind) {
             if(kind==Keyboard)keys.push_back(out[index+count].key);
-            else mice.push_back(out[index+count].mouse);
+            else mouseInputs.push_back(out[index+count].mouse);
             ++count;
         }
         std::size_t remaining=count;
         const auto deadline=GetTickCount64()+2000;
         while(remaining && !stop) {
-            const auto result=kind==Keyboard?Send_Input(keys):Send_Input(mice);
+            const auto result=kind==Keyboard?Send_Input(keys):Send_Input(mouseInputs);
             if(result.accepted>remaining)throw std::runtime_error("Invalid accepted output count");
             remaining-=result.accepted;
             CheckSendError(result.error);
@@ -235,7 +235,7 @@ void SendOutputs(const std::vector<Emission>& out,std::vector<Keyboard_Input>& k
                 // unaccepted suffix; the common complete send needs no erase.
                 if(result.accepted) {
                     if(kind==Keyboard)keys.erase(keys.begin(),keys.begin()+result.accepted);
-                    else mice.erase(mice.begin(),mice.begin()+result.accepted);
+                    else mouseInputs.erase(mouseInputs.begin(),mouseInputs.begin()+result.accepted);
                 }
                 if(!RetryPause(deadline))return;
             }
@@ -269,7 +269,7 @@ int Run() {
     std::vector<Input_Event*> ordered;ordered.reserve(256);
     std::vector<Emission> out;out.reserve(512);
     std::vector<Keyboard_Input> keys;keys.reserve(256);
-    std::vector<Mouse_Input> mice;mice.reserve(256);
+    std::vector<Mouse_Input> mouseInputs;mouseInputs.reserve(256);
     std::cout<<"Capture is active.\n"<<std::flush;
     while(!stop) {
         auto inputs=Get_Input_With_Timeout(INFINITE,stopRequested);
@@ -290,7 +290,7 @@ int Run() {
             else throw std::runtime_error("Keyboard/mouse event has an unexpected payload");
         }
         ForwardOtherFamilies(inputs);
-        SendOutputs(out,keys,mice);
+        SendOutputs(out,keys,mouseInputs);
     }
     return 0;
 }

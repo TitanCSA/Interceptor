@@ -44,7 +44,7 @@ int wmain(int argc,wchar_t** argv) {
         if(mode==L"--restore")return InstallDriver(nullptr,true);
         if(mode==L"--status") {
             auto s=Get_Status();
-            std::cout<<"ABI "<<s.version<<"; keyboards="<<s.keyboard_devices<<"; mice="<<s.mouse_devices
+            std::cout<<"ABI "<<s.version<<"; keyboards="<<s.keyboard_devices<<"; mouse="<<s.mouse_devices
                      <<"; HID readers="<<s.controller_hid_devices<<"; HID queued="<<s.controller_hid_count
                      <<"; overflow resets="<<s.overflows<<"; last reset="<<s.last_reset_reason<<"\n";
             try {

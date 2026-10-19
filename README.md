@@ -1,6 +1,6 @@
 # Interceptor — Windows Kernel Filter Driver for Keyboard, Mouse & Gamepad
 
-**Microsoft-signed Windows kernel-mode input filter driver for keyboards, mice
+**Microsoft-signed Windows kernel-mode input filter driver for keyboard, mouse
 and HID / XInput / GIP game controllers, with a C++17 SDK.**
 
 Intercept physical input, identify its source, change or block it, then forward
@@ -111,3 +111,73 @@ implementation and API. It is not affiliated with oblitum or ABI-compatible with
 the original. See [attribution](licenses/NOTICE). For bug reports, include the
 release, Windows build, VID/PID, connection type and a diagnostic report with
 personal identifiers removed.
+
+## Minimal example: receive, read, change, forward
+
+Install Interceptor, restart Windows if requested, and run your application as
+administrator. Add `Interceptor.h` and `Interceptor.cpp` to a C++17 project
+([build instructions](docs/API.md#add-the-two-files-to-your-application)).
+This example changes the physical H key into J and forwards all other input:
+
+```cpp
+#include "Interceptor.h"
+#include <iostream>
+#include <system_error>
+
+int main() try {
+    using namespace Interceptor;
+    const auto init = Init_AllDevices();
+    if (!init.ready) {
+        std::cerr << "Initialization error: " << init.error
+                  << ", restart required: " << init.reboot_required << '\n';
+        return 1;
+    }
+
+    for (;;) {
+        auto inputs = Get_Input_With_Timeout(1000);
+        for (auto& input : inputs) {
+            if (auto* key = input.Get<Keyboard_Input>()) {
+                // Read the scan code; change H (0x23) into J (0x24).
+                if (!(key->stroke.flags & (KeyE0 | KeyE1)) &&
+                    key->stroke.make_code == 0x23)
+                    key->stroke.make_code = 0x24;
+            }
+        }
+        const auto sent = Send_Input(inputs);
+        if (!sent) {
+            std::cerr << "Send error: " << sent.error << '\n';
+            return 1;
+        }
+    }
+} catch (const std::system_error& error) {
+    std::cerr << error.what() << '\n';
+    return 1;
+}
+```
+
+1. **Receive:** `Get_Input_With_Timeout(1000)` waits up to 1,000 milliseconds
+   for input. It returns a batch you can loop over, or an empty batch on timeout.
+   Each `input` in the loop is one event; `inputs.size()` gives the event count.
+   The library creates and reuses its capture automatically; no context argument
+   is needed. `Get_Input_With_Timeout()` waits indefinitely instead.
+2. **Read:** `input.Get<Keyboard_Input>()` returns the keyboard data, or `nullptr`
+   if this entry belongs to another family. `key->stroke.make_code` is the scan
+   code, not a character; `(key->stroke.flags & KeyUp) != 0` means key release.
+   `input.type` gives the family; `input.device` identifies its source within that
+   family. For mouse data, use `if (auto* mouse = input.Get<Mouse_Input>())` and
+   read `mouse->stroke.x` / `mouse->stroke.y`.
+3. **Change:** assign a new value to a field. Here both H presses and releases
+   become J, while the other flags stay intact. These are physical scan-code
+   positions; the resulting character depends on the Windows keyboard layout.
+   Remove the `if` that changes the scan code for a simple pass-through loop.
+4. **Forward:** `Send_Input(inputs)` sends the batch back to its original
+   devices. Type, destination and count are automatic. Unchanged keyboard,
+   mouse and controller entries are forwarded too. Without this call, received
+   entries are consumed and are not forwarded automatically.
+
+`Send_Input` returns `accepted` (entries accepted by this call) and `error`
+(`0` on success). This basic example exits on an error; see the
+[API guide](docs/API.md#input-fields-and-ownership) for retry handling.
+Finish processing and forwarding a batch before receiving the next one; its
+data is valid only while that batch exists. Close the application or press
+physical **Ctrl+Alt+Delete** to release capture.

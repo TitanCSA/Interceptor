@@ -41,7 +41,7 @@ namespace InterceptorSetup {
  }
  [StructLayout(LayoutKind.Sequential)] struct DevInfo {public uint Size;public Guid Class;public uint Instance;public IntPtr Reserved;}
  [StructLayout(LayoutKind.Sequential)] struct InterfaceInfo {public uint Size;public Guid Class;public uint Flags;public IntPtr Reserved;}
- [StructLayout(LayoutKind.Sequential)] struct IcStatus {public uint Version,Mask,KeyboardCount,MouseCount,Keyboards,Mice,Reset,Capacity;public ulong Generation,Overflows,Frequency;public uint HidCount,Hids;}
+ [StructLayout(LayoutKind.Sequential)] struct IcStatus {public uint Version,Mask,KeyboardCount,MouseCount,Keyboards,MouseDevices,Reset,Capacity;public ulong Generation,Overflows,Frequency;public uint HidCount,Hids;}
  [StructLayout(LayoutKind.Sequential)] struct IcCapabilities {public uint Size,Version,Abi,Inputs,Controllers,Flags,MaxDevices,QueueCapacity,MaxSend,HidReportMax,XusbProfiles,XihProfiles,GipProfiles,Reserved0,Reserved1,Reserved2;}
  [StructLayout(LayoutKind.Sequential)] struct IcTrial {public uint Size,Version,State,Error;public ulong Duration,FirstContext,Elapsed,Remaining;public uint ActiveMask,Reserved0,Reserved1,Reserved2;}
  [StructLayout(LayoutKind.Sequential)] struct CiInfo {public uint Length,Options;}
@@ -137,7 +137,7 @@ namespace InterceptorSetup {
    try{if(File.Exists(binary))using(var file=File.OpenRead(binary))s.DriverSha256=Package.Digest(file);}catch(IOException e){s.Error="Reading the driver hash: "+e.Message;}
    s.EmbeddedDriverSha256=Package.Manifest()["Payload/Interceptor.sys"];s.DriverFileMatchesPayload=String.IsNullOrEmpty(s.DriverSha256)?(bool?)null:s.DriverSha256.Equals(s.EmbeddedDriverSha256,StringComparison.OrdinalIgnoreCase);s.DriverHashScope="File configured for the service; code already loaded in memory is not measured.";
    var ci=new CiInfo{Length=8};uint returned;s.TestMode=NtQuerySystemInformation(103,ref ci,8,out returned)>=0?((ci.Options&2)!=0?"Test mode enabled":"Test mode disabled"):"Test mode unknown";
-   try{using(var handle=OpenDriver()){var state=Status(handle);s.ApiAvailable=true;s.ApiState="Responding · ABI "+state.Version;s.KeyboardQueued=state.KeyboardCount;s.MouseQueued=state.MouseCount;s.HidQueued=state.HidCount;s.LastResetReason=state.Reset;s.Overflows=state.Overflows;s.ApiDetail=state.Keyboards+" keyboard(s), "+state.Mice+" mouse/mice, "+state.Hids+" HID reader(s); keyboard/mouse/HID queues: "+state.KeyboardCount+"/"+state.MouseCount+"/"+state.HidCount;}}
+   try{using(var handle=OpenDriver()){var state=Status(handle);s.ApiAvailable=true;s.ApiState="Responding · ABI "+state.Version;s.KeyboardQueued=state.KeyboardCount;s.MouseQueued=state.MouseCount;s.HidQueued=state.HidCount;s.LastResetReason=state.Reset;s.Overflows=state.Overflows;s.ApiDetail=state.Keyboards+" keyboard(s), "+state.MouseDevices+" mouse device(s), "+state.Hids+" HID reader(s); keyboard/mouse/HID queues: "+state.KeyboardCount+"/"+state.MouseCount+"/"+state.HidCount;}}
    catch(Exception e){s.ApiState="Unavailable";s.ApiDetail=e.Message;}
    if(s.ApiAvailable)try{using(var handle=OpenDriver()){ReadCapabilities(handle,s);s.ApiDetail+=" · "+s.ControllerProfiles;ReadTrial(handle,s);}}catch(Exception e){s.ControllerProfiles="Capabilities unverified: "+e.Message;s.Error=s.ControllerProfiles;}
    return s;

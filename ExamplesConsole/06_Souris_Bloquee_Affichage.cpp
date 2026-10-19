@@ -113,7 +113,7 @@ int wmain(int argc,wchar_t** argv) {
                 continue;
             }
             for(auto& event:inputs)if(event.Get<Mouse_Input>())event.blocked=true;
-            // Forward keyboards/controllers before console output; mice stay blocked.
+            // Forward keyboards/controllers before console output; mouse input stays blocked.
             if(!Forward(inputs))break;
             for(auto& event:inputs)if(const auto* mouse=event.Get<Mouse_Input>()) {
                 const auto buttons=mouse->stroke.button_flags;

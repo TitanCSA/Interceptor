@@ -868,7 +868,7 @@ class Input_Relay {
     Context& context_;
     bool raw_;
     std::vector<Keyboard_Input> keys_;
-    std::vector<Mouse_Input> mice_;
+    std::vector<Mouse_Input> mouse_inputs_;
     std::vector<Controller_Hid_Input> hid_;
     std::vector<Controller_Xinput_Input> xusb_;
     std::vector<Controller_XinputHid_Input> xih_;
@@ -891,7 +891,7 @@ public:
         [&](auto* p,std::uint32_t n){return Get_##Name##_Input(context_,p,n,n);}, \
         [&](const auto* p,std::size_t n){return Send_Input(context_,p,n);})
         IC_RELAY(Keyboard,keys_,Keyboard);
-        IC_RELAY(Mouse,mice_,Mouse);
+        IC_RELAY(Mouse,mouse_inputs_,Mouse);
         IC_RELAY(Ready_Controller_Hid,hid_,Controller_Hid);
         IC_RELAY(Ready_Controller_Xinput,xusb_,Controller_Xinput);
         IC_RELAY(Ready_Controller_XinputHid,xih_,Controller_XinputHid);

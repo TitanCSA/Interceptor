@@ -113,7 +113,7 @@ int wmain(int argc,wchar_t** argv) {
                 continue;
             }
             for(auto& event:inputs)if(event.Get<Keyboard_Input>())event.blocked=true;
-            // Forward mice/controllers before console output; keyboards stay blocked.
+            // Forward mouse/controller input before console output; keyboards stay blocked.
             if(!Forward(inputs))break;
             for(auto& event:inputs)if(const auto* key=event.Get<Keyboard_Input>()) {
                 char name[96]{};

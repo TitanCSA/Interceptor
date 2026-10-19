@@ -229,7 +229,7 @@ namespace InterceptorViewer {
    };
    dialog.ShowDialog();
   }
-  void ResetChoices(){changing=true;devices.Items.Clear();devices.Items.Add(new Choice{Label=Kind==0?"All keyboards":Kind==1?"All mice":"Last active controller"});devices.SelectedIndex=0;changing=false;}
+  void ResetChoices(){changing=true;devices.Items.Clear();devices.Items.Add(new Choice{Label=Kind==0?"All keyboards":Kind==1?"All mouse devices":"Last active controller"});devices.SelectedIndex=0;changing=false;}
   void UpdateChoices(){var old=devices.SelectedItem as Choice;ResetChoices();changing=true;foreach(var item in snapshotDevices){string name=string.IsNullOrWhiteSpace(item.Info.Name)?"Device":item.Info.Name;var choice=new Choice{Type=item.Info.Type,Id=item.Info.Id,Token=item.Info.Token,Label="#"+item.Info.Id+" · "+name+" · "+item.Info.Vid.ToString("X4")+":"+item.Info.Pid.ToString("X4")};devices.Items.Add(choice);if(old!=null&&old.Id==choice.Id&&old.Type==choice.Type&&old.Token==choice.Token)devices.SelectedItem=choice;}changing=false;}
   public static DeviceState Aggregate(DeviceState[] states,int kind){
    var result=DeviceState.Empty();if(states.Length==0)return result;
