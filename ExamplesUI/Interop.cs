@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
@@ -37,6 +37,12 @@ namespace InterceptorViewer {
   public ulong Reserved;
  }
  [StructLayout(LayoutKind.Sequential, Pack=8, CharSet=CharSet.Unicode)]
+ public struct Diagnostic {
+  public uint Size,Version,Stage,Type,Device,Requested,Accepted,Error,ResetReason,ReadyMask;
+  public ulong Sequence,Generation,Received,Forwarded;
+  [MarshalAs(UnmanagedType.ByValTStr,SizeConst=512)] public string Message;
+ }
+ [StructLayout(LayoutKind.Sequential, Pack=8, CharSet=CharSet.Unicode)]
  public struct DeviceInfo {
   public uint Id,Type,Token,Flags;
   public ushort Vid,Pid,Revision,UsagePage,Usage,InputBytes,OutputBytes,FeatureBytes;
@@ -68,16 +74,17 @@ namespace InterceptorViewer {
   [UnmanagedFunctionPointer(CallingConvention.Cdecl)] delegate uint StartFn(byte mask,byte controllers,IntPtr changeEvent);
   [UnmanagedFunctionPointer(CallingConvention.Cdecl)] delegate void StopFn();
   [UnmanagedFunctionPointer(CallingConvention.Cdecl)] delegate uint ReadFn(ref Snapshot header,IntPtr devices,uint capacity,out uint required);
+  [UnmanagedFunctionPointer(CallingConvention.Cdecl)] delegate uint DiagnosticFn(ref Diagnostic diagnostic);
   [DllImport("kernel32.dll",CharSet=CharSet.Unicode,SetLastError=true)] static extern IntPtr LoadLibraryEx(string path,IntPtr file,uint flags);
   [DllImport("kernel32.dll",CharSet=CharSet.Ansi,ExactSpelling=true,SetLastError=true)] static extern IntPtr GetProcAddress(IntPtr module,string name);
   [DllImport("kernel32.dll")] static extern bool FreeLibrary(IntPtr module);
   readonly AutoResetEvent changed=new AutoResetEvent(false);
   readonly object gate=new object();bool disposed;
-  IntPtr library,buffer;string directory;FileStream pinnedFile;StartFn start;StopFn stop;ReadFn read;
+  IntPtr library,buffer;string directory;FileStream pinnedFile;StartFn start;StopFn stop;ReadFn read;DiagnosticFn diagnostic;
   public WaitHandle Changed{get{return changed;}}
   public Bridge(){
    try {
-    if(Marshal.SizeOf(typeof(Snapshot))!=80||Marshal.SizeOf(typeof(DeviceState))!=1064)throw new InvalidDataException("Incompatible viewer ABI.");
+    if(Marshal.SizeOf(typeof(Snapshot))!=80||Marshal.SizeOf(typeof(DeviceState))!=1064||Marshal.SizeOf(typeof(Diagnostic))!=1096)throw new InvalidDataException("Incompatible viewer ABI.");
     // Extract only the assembly resource into a fresh, private directory. Keep
     // the file open without write/delete sharing while the DLL is loaded.
     directory=Path.Combine(Path.GetTempPath(),"InterceptorViewer-"+Guid.NewGuid().ToString("N"));
@@ -94,7 +101,7 @@ namespace InterceptorViewer {
     using(var hash=SHA256.Create()){var actual=hash.ComputeHash(pinnedFile);for(int i=0;i<expected.Length;i++)if(actual[i]!=expected[i])throw new InvalidDataException("Extracted bridge changed.");}
     library=LoadLibraryEx(path,IntPtr.Zero,0x100|0x800); // DLL directory + System32 dependencies only.
     if(library==IntPtr.Zero)throw new System.ComponentModel.Win32Exception(Marshal.GetLastWin32Error());
-    start=(StartFn)Function("Viewer_Start",typeof(StartFn));stop=(StopFn)Function("Viewer_Stop",typeof(StopFn));read=(ReadFn)Function("Viewer_ReadSnapshot",typeof(ReadFn));
+    start=(StartFn)Function("Viewer_Start",typeof(StartFn));stop=(StopFn)Function("Viewer_Stop",typeof(StopFn));read=(ReadFn)Function("Viewer_ReadSnapshot",typeof(ReadFn));diagnostic=(DiagnosticFn)Function("Viewer_ReadDiagnostic",typeof(DiagnosticFn));
     buffer=Marshal.AllocHGlobal(1064*256);
    }catch{Dispose();throw;}
   }
@@ -111,12 +118,21 @@ namespace InterceptorViewer {
    var result=new DeviceState[required];for(int i=0;i<result.Length;i++)result[i]=(DeviceState)Marshal.PtrToStructure(IntPtr.Add(buffer,i*1064),typeof(DeviceState));return result;
    }
   }
+  public Diagnostic ReadDiagnostic(){
+   lock(gate){
+    if(disposed)throw new ObjectDisposedException("Bridge");
+    var value=new Diagnostic{Size=1096,Version=1};uint error=diagnostic(ref value);
+    if(error!=0)throw new System.ComponentModel.Win32Exception((int)error);
+    if(value.Size!=1096||value.Version!=1)throw new InvalidDataException("Invalid diagnostic ABI.");
+    return value;
+   }
+  }
   public void Dispose(){
    // The native lifecycle mutex protects its worker, not concurrent callers
    // still returning through DLL code. Never unload while any call is active.
    lock(gate){
    if(disposed)return;disposed=true;
-   if(stop!=null)stop();stop=null;start=null;read=null;
+   if(stop!=null)stop();stop=null;start=null;read=null;diagnostic=null;
    if(buffer!=IntPtr.Zero){Marshal.FreeHGlobal(buffer);buffer=IntPtr.Zero;}
    if(library!=IntPtr.Zero){FreeLibrary(library);library=IntPtr.Zero;}
    if(pinnedFile!=null){pinnedFile.Dispose();pinnedFile=null;}

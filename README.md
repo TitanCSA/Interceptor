@@ -17,6 +17,18 @@ for the required connection and profile.
 · [Installation](docs/INSTALLATION.md) · [C++ API](docs/API.md)
 · [Examples](ExamplesConsole/README.md)
 
+**1.4.16.0 client update:** complete installer, viewer, console examples and SDK
+downloads are included in one release. The SDK retains temporarily unready
+HID/XInputHID/XUSB collection files, and the viewer keeps exact failure details
+with a copy button. Both former 33 ms display waits are removed; forwarding
+still precedes display decoding. Keyboard and mouse remain supported.
+
+**Kernel signing pending:** the installers still contain Microsoft-signed driver
+1.4.15.0. The additional XUSB pending-membership and idle-start kernel fixes
+have been ported to candidate 1.4.16.0 and require a new Microsoft signature.
+Updating the EXE alone does not apply those kernel fixes. No unsigned kernel
+is distributed in the public release.
+
 | Setup and diagnostics | Controller viewer |
 | --- | --- |
 | ![Interceptor installer dashboard](docs/images/installer.png) | ![Controller viewer with simulated input](docs/images/controllers.png) |

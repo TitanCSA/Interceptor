@@ -1,5 +1,5 @@
 #pragma once
-// Interceptor SDK 1.4.15.0. Compile Interceptor.cpp once alongside your application.
+// Interceptor SDK 1.4.16.0. Compile Interceptor.cpp once alongside your application.
 // This header has no local-header dependencies. Windows x64, C++17.
 
 // ---- Interceptor.h ----
