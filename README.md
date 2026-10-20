@@ -17,17 +17,16 @@ for the required connection and profile.
 · [Installation](docs/INSTALLATION.md) · [C++ API](docs/API.md)
 · [Examples](ExamplesConsole/README.md)
 
-**1.4.16.0 client update:** complete installer, viewer, console examples and SDK
+**1.4.16.0 signed release:** complete installer, viewer, console examples and SDK
 downloads are included in one release. The SDK retains temporarily unready
 HID/XInputHID/XUSB collection files, and the viewer keeps exact failure details
 with a copy button. Both former 33 ms display waits are removed; forwarding
 still precedes display decoding. Keyboard and mouse remain supported.
 
-**Kernel signing pending:** the installers still contain Microsoft-signed driver
-1.4.15.0. The additional XUSB pending-membership and idle-start kernel fixes
-have been ported to candidate 1.4.16.0 and require a new Microsoft signature.
-Updating the EXE alone does not apply those kernel fixes. No unsigned kernel
-is distributed in the public release.
+Both installers now contain **Microsoft-signed driver 1.4.16.0**, including the
+XUSB pending-membership and idle-start fixes. Install / reinstall to update the
+kernel, then use Windows **Restart** if requested. Updating the viewer EXE alone
+does not update an installed driver.
 
 | Setup and diagnostics | Controller viewer |
 | --- | --- |
@@ -94,8 +93,8 @@ example EXEs.
 | `InterceptorSetup.exe` | Standalone GUI installer and diagnostics |
 | `InterceptorSetupConsole.exe` | Standalone `/install` and `/uninstall` installer |
 | `InterceptorExampleUI.exe` | Standalone input viewer |
-| `Interceptor-Examples-1.4.15.0.zip` | Eight console examples and the viewer |
-| `Interceptor-SDK-1.4.15.0.zip` | C++ SDK and example source |
+| `Interceptor-Examples-1.4.16.0.zip` | Eight console examples and the viewer |
+| `Interceptor-SDK-1.4.16.0.zip` | C++ SDK and example source |
 
 ## Source and build
 

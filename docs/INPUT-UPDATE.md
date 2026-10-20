@@ -1,8 +1,9 @@
 # Input update 1.4.16.0
 
-The complete client release includes the GUI and console installers, viewer,
-console examples, source SDK and checksums in one place. The installers retain
-Microsoft-signed kernel 1.4.15.0 while the 1.4.16.0 kernel awaits signing.
+The complete signed release includes the GUI and console installers, viewer,
+console examples, source SDK and checksums in one place. Both installers bundle
+Microsoft-signed kernel **1.4.16.0**. Install / reinstall, then use Windows
+**Restart** if requested. The earlier client-only release bundled kernel 1.4.15.0.
 
 The SDK keeps open HID, XInputHID and XUSB HID-view source files when their
 SOURCE query temporarily returns Windows error 21. The all-family context
@@ -21,8 +22,8 @@ Keyboard and mouse remain available alongside all four controller families.
 The additional XUSB kernel fixes keep pending parents transparent until their
 mandatory mirror is ready, initialize cached physical state on the persistent
 System reader and validate its ordinary input wait before reporting readiness.
-These changes require the new signed kernel; replacing user-mode files cannot
-apply them to an older driver. No unsigned SYS or submission CAB is public.
+These changes are included in signed kernel 1.4.16.0; replacing user-mode files
+cannot apply them to an older driver. No unsigned SYS or submission CAB is public.
 
 Offline validation: actual native source opening and context-attempt fixtures
 pass 90,112 checks across 10,000 lifecycles in Release and AddressSanitizer;
@@ -34,3 +35,10 @@ and bootstrap fixtures pass 180,139 and 760,764 checks, respectively, including
 compiles with warnings as errors and passes static analysis; the CAB passes
 local INF/catalog/symbol/content checks. These are software checks, not live
 certification of every controller, end-to-end latency or display FPS.
+
+Signed package verification confirms that all three returned INF files match
+the submission and all three signed SYS images contain the submitted executable
+body. Twelve Windows kernel-policy signature/catalog checks pass, including the
+shared SYS against each catalog. Both installer EXEs embed the same verified
+20-file runtime package and pass their offline integrity/self-tests. The demo
+allowance remains two hours per Windows boot.
