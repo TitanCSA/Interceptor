@@ -1,6 +1,6 @@
-# Input update 1.4.17.0 — signing pending
+# Input update 1.4.17.0
 
-This candidate synchronizes the combined Interceptor product with the current
+This release synchronizes the combined Interceptor product with the current
 Interceptor Gamepad & Controller fixes, retaining keyboard and mouse support.
 
 - XUSB input is intercepted at the USB layer beneath the native Windows driver.
@@ -25,7 +25,7 @@ files, with automatic capture ownership and source tokens.
 
 ## Validation
 
-Local tests for this candidate passed:
+Local tests for this release passed:
 
 | Check | Scope |
 | --- | --- |
@@ -36,19 +36,20 @@ Local tests for this candidate passed:
 | Keyboard and mouse | Production mapper lifetimes, mouse report modes and input-buffer ownership |
 | Passive monitor | AddressSanitizer and concurrent subscription/drain/close tests |
 | User-mode clients | All eight console examples, viewer self-tests and diagnostic-worker self-test |
-| Installer sources | GUI and console compiled without embedding an obsolete driver |
+| Installers | GUI and console built from the same SDK and matching Microsoft-signed payload |
 | Submission package | Three INFs, catalogs, symbols and extracted CAB hashes validated locally |
+| Microsoft-signed return | Submitted executable body and all three INFs match; 12 kernel-policy signature/catalog checks pass |
+| Dedicated Windows 11 VM | Final GUI install/completion and console reinstall/uninstall; exact active signed binary/API after normal restarts; clean removal, unchanged certificates and boot configuration |
 
 Fixtures model OS boundaries and do not replace physical-device testing. No host
 driver was installed or opened in this campaign. No physical latency measurement
-or universal joy.cpl/browser/game compatibility claim is made for this candidate.
+or universal joy.cpl/browser/game compatibility claim is made for this release.
 
 ## Signing and installation
 
-The matching **1.4.17.0 Microsoft signature is pending**. Candidate SDK/example
-downloads are not a complete installable release and require that driver.
-The installers will be rebuilt from these sources after the signed return has
-been verified against the submission. Install/reinstall and use Windows Restart
-if requested; replacing only the viewer cannot update the installed kernel.
+Both installers contain the verified **Microsoft-signed 1.4.17.0 driver**. The
+complete release also includes its matching SDK, viewer and console examples.
+Install/reinstall and use Windows Restart if requested; replacing only the viewer
+cannot update the installed kernel.
 
 See [synchronization and release contents](SYNCHRONIZATION.md).

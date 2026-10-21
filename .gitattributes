@@ -1,3 +1,7 @@
-# Signed and integrity-pinned packages must retain their exact distributed bytes.
+# Catalog membership depends on exact file bytes, including INF line endings.
 InstallerUI/Package/Payload/** -text
+InstallerUI/Package/Payload/*.inf -diff
+InstallerUI/Package/Payload/*.sys -diff
+InstallerUI/Package/Payload/*.cat -diff
+InstallerUI/Package/Payload/*.json whitespace=cr-at-eol
 InstallerUI/Package/Recovery/** -text

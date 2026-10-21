@@ -33,6 +33,8 @@ if($nativeTargets.Count){$nativeArguments+=@('--target')+$nativeTargets}
 if($LASTEXITCODE){throw 'User-mode C++ compilation failed.'}
 $native=Join-Path $root 'bin\Native'
 if($Target -in @('All','Native','InstallerUI')){
+    & (Join-Path $native 'InterceptorExample.exe') --self-test-setup
+    if($LASTEXITCODE){throw 'Installer backend policy self-test failed.'}
     & (Join-Path $native 'InterceptorDiagnosticWorker.exe') --self-test
     if($LASTEXITCODE){throw 'Diagnostic worker self-test failed.'}
 }

@@ -9,11 +9,12 @@ The public SDK is exactly `Interceptor/Interceptor.h` and `Interceptor.cpp`.
 All eight console examples, the viewer and both installers use these same files.
 Kernel source and private signing material are not published.
 
-The release is pending Microsoft signing. The candidate branch contains the
-updated user-mode sources; the existing signed payload is a clearly identified
-previous baseline. Build checks block mixing it with new installer EXEs.
+The Microsoft-signed return matches the submitted executable body and all three
+INF files. Both installers embed the same verified signed driver package. Build
+checks block substituting an older driver in this release.
 
-The final release will contain both standalone installers, the standalone viewer,
-the console/viewer archive, the source SDK archive and checksums. Older releases
-will be removed only after the complete new signed release has been downloaded
-and verified. No previous binary will be relabeled as this version.
+The complete release contains both standalone installers, the standalone viewer,
+the console/viewer archive, the source SDK archive and checksums. All examples use
+the current SDK. Older releases are removed only after the complete new signed
+release has been downloaded and verified. No previous binary is relabeled as this
+version.

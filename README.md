@@ -17,19 +17,18 @@ for the required connection and profile.
 · [Installation](docs/INSTALLATION.md) · [C++ API](docs/API.md)
 · [Examples](ExamplesConsole/README.md)
 
-**1.4.17.0 candidate — Microsoft signing pending.** This branch brings the
+**1.4.17.0 Microsoft-signed release.** This version brings the
 controller fixes from Interceptor Gamepad & Controller into the combined driver,
 preserving keyboard and mouse support. It includes native XUSB USB interception,
 HID polling/current-state and GIP passthrough fixes, passive controller IN/OUT
 telemetry, and corrected device-association migration. See the
 [changes and validation scope](docs/INPUT-UPDATE.md).
 
-The candidate SDK and examples require the matching **1.4.17.0 driver**. Complete
-installers will be published after its Microsoft-signed return is verified.
-The embedded **1.4.16.0** payload is retained as the previous signed baseline;
-installer builds reject it for this candidate. For an installable package, use
-the [current stable release](https://github.com/TitanCSA/Interceptor/releases/latest).
-Updating the viewer EXE alone does not update an installed driver.
+Both installers contain the verified **Microsoft-signed 1.4.17.0 driver**. The
+matching SDK, viewer and all eight console examples are included in the same
+[complete release](https://github.com/TitanCSA/Interceptor/releases/latest).
+Install/reinstall and use Windows **Restart** if requested. Updating the viewer
+EXE alone does not update an installed driver.
 
 | Setup and diagnostics | Controller viewer |
 | --- | --- |
@@ -114,9 +113,8 @@ licenses/          Driver binary terms and attribution
 With Visual Studio 2022 C++ and the Windows SDK installed, run
 `powershell -ExecutionPolicy Bypass -File .\Build.ps1` to build the user-mode tools.
 Each installer can also be built alone with `InstallerUI/Build.ps1` or
-`InstallerConsole/Build.ps1`. While signing is pending, the main build compiles the
-SDK and examples and skips installer EXEs. Explicit installer builds require the
-matching Microsoft-signed payload; they never repackage an older driver as new.
+`InstallerConsole/Build.ps1`. Installer builds verify the matching Microsoft-signed
+payload and compiled recovery binaries; they never repackage an older driver as new.
 **Kernel driver source and
 private signing material are not included.** User-mode source is [MIT](LICENSE);
 the driver binary has [separate terms](licenses/BINARY-LICENSE.txt).

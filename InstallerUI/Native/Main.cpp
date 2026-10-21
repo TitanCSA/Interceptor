@@ -3,10 +3,39 @@
 #include <string>
 #include <system_error>
 #include <atomic>
+#include <iomanip>
 
 int InstallDriver(const wchar_t* directory,bool restore,bool onlyNew=false,const wchar_t* mouseInf=nullptr,const wchar_t* controlInf=nullptr);
 int ConfigureControlDriver(const wchar_t* inf,bool remove);
 namespace {
+void PrintInitializationFailure(const Interceptor::Init_Result& result) {
+    if(!result.error)return;
+    std::cerr<<"Device initialization failed [Win32 "<<std::dec<<result.error<<" / 0x"<<std::hex<<std::uppercase
+        <<std::setw(8)<<std::setfill('0')<<result.error<<std::dec<<"]\n";
+    if(!result.error_detail.empty())std::cerr<<"Stage: "<<result.error_detail<<'\n';
+    if(!result.error_device.empty()) {
+        const auto count=WideCharToMultiByte(CP_UTF8,WC_ERR_INVALID_CHARS,result.error_device.c_str(),-1,nullptr,0,nullptr,nullptr);
+        if(count>0) {
+            std::string device(static_cast<std::size_t>(count),'\0');
+            if(WideCharToMultiByte(CP_UTF8,WC_ERR_INVALID_CHARS,result.error_device.c_str(),-1,device.data(),count,nullptr,nullptr)>0)
+                std::cerr<<"Device or class: "<<device.c_str()<<'\n';
+        }
+    }
+}
+bool UsbXusbBackendLoaded(const IC_CAPABILITIES& capabilities) {
+    return (capabilities.controller_mask&IC_CONTROLLER_XUSB)!=0 &&
+        (capabilities.xusb_profiles&4u)!=0 && (capabilities.xusb_profiles&3u)!=0;
+}
+int SetupPolicySelfTest() {
+    struct Case {unsigned controllers,profiles;bool expected;};
+    constexpr Case cases[]={{2,3,false},{2,7,true},{2,6,true},{0,7,false},{2,4,false},{2,0,false},{15,7,true}};
+    for(const auto& test:cases) {
+        IC_CAPABILITIES capabilities{};capabilities.controller_mask=test.controllers;capabilities.xusb_profiles=test.profiles;
+        if(UsbXusbBackendLoaded(capabilities)!=test.expected)throw std::runtime_error("Installer USB backend policy test failed");
+    }
+    std::cout<<"Installer backend policy: 7 cases passed; no driver opened or installation performed.\n";
+    return 0;
+}
 std::atomic<bool> quit=false;
 HANDLE quitEvent=nullptr;SRWLOCK quitLock=SRWLOCK_INIT;
 BOOL WINAPI OnControl(DWORD) {
@@ -29,6 +58,18 @@ int wmain(int argc,wchar_t** argv) {
     using namespace Interceptor;
     try {
         std::wstring mode=argc>1?argv[1]:L"--help";
+        if((mode==L"--self-test-setup" || mode==L"--self-test") && argc==2)return SetupPolicySelfTest();
+        if(mode==L"--require-usb-backend" && argc==2) {
+            try {
+                if(UsbXusbBackendLoaded(Get_Capabilities()))return 0;
+            }catch(const std::system_error& error) {
+                if(error.code().value()!=ERROR_INVALID_FUNCTION && error.code().value()!=ERROR_NOT_SUPPORTED &&
+                    error.code().value()!=ERROR_REVISION_MISMATCH)throw;
+            }
+            std::cout<<"The installed package requires the USB XUSB backend, but the loaded driver does not advertise it. "
+                "Restart Windows and reopen this installer before completing associations.\n";
+            return ERROR_SUCCESS_REBOOT_REQUIRED;
+        }
         if(mode==L"--install-control" && argc==3)return ConfigureControlDriver(argv[2],false);
         if(mode==L"--remove-control" && argc==2)return ConfigureControlDriver(nullptr,true);
         if(mode==L"--install" && argc==3)return InstallDriver(argv[2],false);
@@ -39,6 +80,7 @@ int wmain(int argc,wchar_t** argv) {
             const auto r=Init_AllDevices();
             std::cout<<"Associated="<<r.associated<<"; already associated="<<r.already_associated<<"; skipped="<<r.skipped
                 <<"; restart required="<<r.reboot_required<<"; ready="<<r.ready<<"; error="<<r.error<<'\n';
+            PrintInitializationFailure(r);
             return r.error?static_cast<int>(r.error):r.ready?0:ERROR_SUCCESS_REBOOT_REQUIRED;
         }
         if(mode==L"--restore")return InstallDriver(nullptr,true);
@@ -72,10 +114,11 @@ int wmain(int argc,wchar_t** argv) {
                 "  --block [keyboard|mouse|both]       : capture without Send\n"
                 "  --send-mouse                       : move 20 units with temporary capture\n"
                 "  --status | --self-test | --init-all [--quiet]\n"
+                "  --require-usb-backend              : verify the loaded XUSB backend\n"
                 "  --install FOLDER | --restore        : used by installer\n"
                 "  --install-control CONTROL_INF | --remove-control : control anchor only\n"
                 "  --associate KEYBOARD_INF MOUSE_INF CONTROL_INF : bind using staged packages\n"
-                "Physical Ctrl+Alt+Delete revokes ALL capture contexts.\n";return 0;
+                "Physical Ctrl+Alt+Delete revokes ALL capture contexts.\n";return mode==L"--help"?0:ERROR_INVALID_PARAMETER;
         }
         std::uint8_t mask=Both;
         if(argc>2) {

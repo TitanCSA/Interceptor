@@ -58,10 +58,11 @@ compatibility from a row count or a single empty input batch.
 
 ## Validation scope
 
-The **1.4.17.0 candidate** passes local kernel builds, static analysis, transport
+Version **1.4.17.0** passes local kernel builds, static analysis, transport
 and lifecycle fixtures, keyboard/mouse regression tests, and SDK tests in Release
-and with AddressSanitizer. Its Microsoft signature and physical-device validation
-are pending. See [the current validation record](INPUT-UPDATE.md). These local
+and with AddressSanitizer. The returned Microsoft signatures and catalog membership
+are verified; physical-device validation of this combined release is not claimed.
+See [the current validation record](INPUT-UPDATE.md). These local
 tests do not establish compatibility with every controller, application or game.
 
 The 1.4.15 development campaign exercised six-family capture, modification,
