@@ -28,34 +28,26 @@ function Get-InterceptorPackages {
         [IO.Path]::GetFileName($_.OriginalFileName) -in @('interceptorkeyboard.inf','interceptormouse.inf','interceptorcontrol.inf')
     })
 }
-function Test-RunningTestMode {
-    Add-Type -TypeDefinition @'
-using System;
-using System.Runtime.InteropServices;
-public static class InterceptorCodeIntegrity {
-    [StructLayout(LayoutKind.Sequential)] public struct Info { public UInt32 Length, Options; }
-    [DllImport("ntdll.dll")] private static extern Int32 NtQuerySystemInformation(Int32 kind,ref Info data,UInt32 size,out UInt32 returned);
-    public static bool Enabled() { var data=new Info { Length=8 }; UInt32 returned; var status=NtQuerySystemInformation(103,ref data,8,out returned); if(status<0) throw new InvalidOperationException("Cannot query running code-integrity state"); return (data.Options & 2)!=0; }
-}
-'@
-    [InterceptorCodeIntegrity]::Enabled()
-}
 function Get-InterceptorSigningMode([string]$Payload) {
     $path=Join-Path $Payload 'Signing.json'
-    if(!(Test-Path -LiteralPath $path -PathType Leaf)){return 'Test'}
+    if(!(Test-Path -LiteralPath $path -PathType Leaf)){throw 'Package signing policy is missing.'}
     $policy=Get-Content -LiteralPath $path -Raw | ConvertFrom-Json
-    if($policy.Schema -ne 1 -or $policy.Mode -notin @('Test','Microsoft')){throw 'Politique de signature du paquet invalide.'}
+    if($policy.Schema -ne 1 -or $policy.Mode -notin @('Development','Microsoft')){throw 'Politique de signature du paquet invalide.'}
     return [string]$policy.Mode
 }
-function Assert-InterceptorPayload([string]$Payload) {
+function Assert-InterceptorPayload([string]$Payload,[switch]$AllowDevelopment) {
     $manifest=Get-Content -LiteralPath (Join-Path $Payload 'SHA256.json') -Raw | ConvertFrom-Json
     $mode=Get-InterceptorSigningMode $Payload
-    $names=@('Interceptor.sys','InterceptorExample.exe','InterceptorKeyboard.inf','InterceptorMouse.inf','InterceptorControl.inf','InterceptorKeyboard.cat','InterceptorMouse.cat','InterceptorControl.cat')
-    if($mode -eq 'Test'){$names+= 'InterceptorTest.cer'}
+    $names=@('Interceptor.sys','InterceptorKeyboard.inf','InterceptorMouse.inf','InterceptorControl.inf','interceptorkeyboard.cat','interceptormouse.cat','interceptorcontrol.cat','InterceptorExample.exe')
+    if($mode -eq 'Development' -and !$AllowDevelopment){throw 'This product has a new driver identity. Microsoft signing is required before installation. Submit the product CAB and import its signed return; no Windows setting was changed.'}
     if(Test-Path -LiteralPath (Join-Path $Payload 'Signing.json')){$names+= 'Signing.json'}
     foreach($name in $names) {
         $path=Join-Path $Payload $name
         if(!(Test-Path -LiteralPath $path -PathType Leaf) -or !$manifest.$name -or (Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash -ne $manifest.$name){throw "Paquet incomplet ou modifie: $name"}
+    }
+    foreach($name in @('InterceptorKeyboard.inf','InterceptorMouse.inf','InterceptorControl.inf')){
+        $inf=Get-Content -LiteralPath (Join-Path $Payload $name) -Raw
+        if($inf -notmatch '(?im)^\s*AddService\s*=\s*Interceptor\s*,'){throw "Unexpected service identity: $name"}
     }
     if($mode -eq 'Microsoft') {
         foreach($name in @('Interceptor.sys','InterceptorKeyboard.cat','InterceptorMouse.cat','InterceptorControl.cat')) {
@@ -67,5 +59,30 @@ function Assert-InterceptorPayload([string]$Payload) {
         }
     }
     return $mode
+}
+function Assert-InterceptorUsbPackage([string]$Payload) {
+    # Call only after Assert-InterceptorPayload verified this exact embedded INF,
+    # catalog, image and helper. Never apply the new backend requirement to an
+    # older signed package merely because its service name matches.
+    $inf=Get-Content -LiteralPath (Join-Path $Payload 'InterceptorControl.inf') -Raw
+    $versions=[regex]::Matches($inf,'(?im)^\s*DriverVer\s*=\s*[^,\r\n]+,\s*(\d+\.\d+\.\d+\.\d+)\s*$')
+    if($versions.Count -ne 1 -or [version]$versions[0].Groups[1].Value -lt [version]'1.4.17.0'){
+        throw 'This installer requires the Microsoft-signed USB-backend driver package 1.4.17.0 or later. The older embedded package cannot complete this upgrade.'
+    }
+}
+function Invoke-InterceptorSetupHelper([string]$Helper,[string[]]$Arguments) {
+    & $Helper @Arguments|ForEach-Object{Write-Host $_}
+    return [int]$LASTEXITCODE
+}
+function Initialize-InterceptorControllers([string]$Helper) {
+    # The SDK intentionally refuses to migrate an older loaded upper backend.
+    # Installation must preserve its pending state instead of treating skipped
+    # XUSB associations as proof that the new package is operational.
+    $backend=Invoke-InterceptorSetupHelper $Helper @('--require-usb-backend')
+    if($backend -eq 3010){return 3010}
+    if($backend -ne 0){throw ('Cannot verify the loaded USB XUSB backend: '+$backend)}
+    $code=Invoke-InterceptorSetupHelper $Helper @('--init-all','--quiet')
+    if($code -notin @(0,3010)){throw ('Controller initialization failed: '+$code)}
+    return $code
 }
 . (Join-Path $PSScriptRoot 'Lifecycle.ps1')

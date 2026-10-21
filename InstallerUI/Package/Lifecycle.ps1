@@ -69,10 +69,13 @@ function Register-InterceptorCertificateAdds($State,[string]$Thumbprint) {
 function Set-InterceptorPendingControllers([int]$Code,[string]$DriverSHA256) {
     $state=Read-InterceptorState
     if(!$state){throw 'Installation journal missing for controller association.'}
-    $pending=[pscustomobject]@{Pending=($Code -eq 3010);DriverSHA256=$DriverSHA256;Boot=(Get-CimInstance Win32_OperatingSystem).LastBootUpTime.ToUniversalTime().ToString('o');LastError=0}
+    $pending=[pscustomobject]@{Pending=($Code -eq 3010);UsbMigrationVerified=($Code -eq 0);DriverSHA256=$DriverSHA256;Boot=(Get-CimInstance Win32_OperatingSystem).LastBootUpTime.ToUniversalTime().ToString('o');LastError=0}
     $state|Add-Member -NotePropertyName ControllerAssociation -NotePropertyValue $pending -Force
     Write-InterceptorState $state
-    if($pending.Pending){Write-Host 'Association des manettes en attente : apres redemarrage, rouvrir cet installeur pour la terminer.'}
+    if($pending.Pending){
+        Write-Host 'Controller association is pending. Restart Windows normally and reopen this installer.'
+        Write-Host 'An upgrade may require two restarts: one to load the new driver, then one to load the migrated controller filters.'
+    }
 }
 function Install-InterceptorRecovery {
     $root=Assert-InterceptorDirectory (Get-InterceptorRecoveryRoot) (Join-Path $env:ProgramFiles 'Interceptor\Recovery')

@@ -1,3 +1,4 @@
+#define IC_SDK_INTERNAL 1
 #pragma once
 #include "ViewerBridge.h"
 #include "Interceptor.h"

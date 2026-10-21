@@ -1,5 +1,28 @@
 #pragma once
-// Interceptor SDK 1.4.16.0. Compile Interceptor.cpp once alongside your application.
+// This SDK belongs exclusively to Interceptor.
+// IC_SDK_INTERNAL enables installer/viewer compatibility declarations only.
+#if defined(IC_PRODUCT_INPUT_MASK) && IC_PRODUCT_INPUT_MASK != 3u
+#error This SDK cannot enable input families belonging to another product.
+#endif
+#ifndef IC_PRODUCT_INPUT_MASK
+#define IC_PRODUCT_INPUT_MASK 3u
+#endif
+#if defined(IC_PRODUCT_CONTROLLER_MASK) && IC_PRODUCT_CONTROLLER_MASK != 15u
+#error This SDK cannot enable controller families belonging to another product.
+#endif
+#ifndef IC_PRODUCT_CONTROLLER_MASK
+#define IC_PRODUCT_CONTROLLER_MASK 15u
+#endif
+#ifndef IC_PRODUCT_HAS_KEYBOARD_MOUSE
+#define IC_PRODUCT_HAS_KEYBOARD_MOUSE 1
+#endif
+#ifndef IC_PRODUCT_HAS_CONTROLLERS
+#define IC_PRODUCT_HAS_CONTROLLERS 1
+#endif
+#define IC_SDK_SERVICE L"Interceptor"
+#define IC_SDK_DOS_DEVICE L"\\\\.\\Interceptor"
+
+// Interceptor SDK 1.4.17.0. Compile Interceptor.cpp once alongside your application.
 // This header has no local-header dependencies. Windows x64, C++17.
 
 // ---- Interceptor.h ----
@@ -69,6 +92,7 @@ template<class T,class A> Input_View(std::vector<T,A>&)->Input_View<T>;
 template<class T,class A> Input_View(const std::vector<T,A>&)->Input_View<const T>;
 }
 
+#if IC_PRODUCT_HAS_CONTROLLERS || defined(IC_SDK_INTERNAL)
 // ---- DecodedHid.h ----
 #include <cstdint>
 #include <memory>
@@ -142,6 +166,8 @@ private:
 };
 }
 
+#endif
+
 // ---- internal/ControllerHid.h ----
 
 // ---- internal/InterceptorProtocol.h ----
@@ -186,6 +212,7 @@ typedef struct IC_CREATE_RESULT { uint32_t version,count;uint64_t generation; } 
 #define IC_CAPABILITIES_VERSION 1u
 #define IC_PROFILE_XUSB_WIRED_028E 1u
 #define IC_PROFILE_XUSB_WIRED_COMPATIBLE 2u
+#define IC_PROFILE_XUSB_USB_FILTER 4u
 #define IC_PROFILE_XINPUTHID_GENERIC6 1u
 #define IC_PROFILE_GIP_USB_GAMEPAD14 1u
 #define IC_PROFILE_GIP_USB_GAMEPAD_RAW 2u
@@ -466,13 +493,16 @@ static_assert(sizeof(IC_TRIAL_STATUS)==64,"Trial status extension ABI");
 #endif
 
 namespace Interceptor {
+#if IC_PRODUCT_HAS_KEYBOARD_MOUSE || defined(IC_SDK_INTERNAL)
 inline constexpr std::uint8_t Keyboard=IC_KEYBOARD, Mouse=IC_MOUSE, Both=IC_BOTH;
+using Keyboard_Input=IC_KEYBOARD_INPUT;
+using Mouse_Input=IC_MOUSE_INPUT;
+#endif
+#if IC_PRODUCT_HAS_CONTROLLERS || defined(IC_SDK_INTERNAL)
 inline constexpr std::uint8_t Controller_Hid=IC_CONTROLLER_HID, Controller_Xinput=IC_CONTROLLER_XUSB,
     Controller_XinputHid=IC_CONTROLLER_XINPUTHID, Controller_GIP=IC_CONTROLLER_GIP, Ready_Controller_Hid=IC_READY_HID;
 inline constexpr std::uint8_t Ready_Controller_Xinput=IC_READY_XUSB,
     Ready_Controller_XinputHid=IC_READY_XINPUTHID, Ready_Controller_GIP=IC_READY_GIP;
-using Keyboard_Input=IC_KEYBOARD_INPUT;
-using Mouse_Input=IC_MOUSE_INPUT;
 struct Controller_Hid_Input : IC_CONTROLLER_HID_INPUT,Hid_Decoded_Input {
     Controller_Hid_Input():IC_CONTROLLER_HID_INPUT{}{}
 };
@@ -482,6 +512,7 @@ struct Controller_XinputHid_Input : IC_CONTROLLER_XINPUTHID_INPUT,Hid_Decoded_In
 };
 using Controller_GIP_Input=IC_CONTROLLER_GIP_INPUT;
 using Controller_GIP_Raw_Input=IC_CONTROLLER_GIP_RAW_INPUT;
+#endif
 // Application identity contains only the capture-scoped string token.
 // Kernel wire records and their numeric source identity stay private.
 struct Device {
@@ -522,20 +553,30 @@ struct Descriptor_Result {
 };
 using Report_Descriptor=Descriptor_Result;
 enum class Device_Type : std::uint32_t {
-    Keyboard=IC_TYPE_KEYBOARD,Mouse=IC_TYPE_MOUSE,Controller_Hid=IC_TYPE_CONTROLLER_HID,
-    Controller_Xinput=IC_TYPE_CONTROLLER_XUSB,Controller_XinputHid=IC_TYPE_CONTROLLER_XINPUTHID,
-    Controller_GIP=IC_TYPE_CONTROLLER_GIP
+#if IC_PRODUCT_HAS_KEYBOARD_MOUSE || defined(IC_SDK_INTERNAL)
+    Keyboard=IC_TYPE_KEYBOARD,Mouse=IC_TYPE_MOUSE,
+#endif
+#if IC_PRODUCT_HAS_CONTROLLERS || defined(IC_SDK_INTERNAL)
+    Controller_Hid=IC_TYPE_CONTROLLER_HID,Controller_Xinput=IC_TYPE_CONTROLLER_XUSB,
+    Controller_XinputHid=IC_TYPE_CONTROLLER_XINPUTHID,Controller_GIP=IC_TYPE_CONTROLLER_GIP
+#endif
 };
+#if IC_PRODUCT_HAS_KEYBOARD_MOUSE || defined(IC_SDK_INTERNAL)
 inline constexpr std::uint16_t KeyUp=1, KeyE0=2, KeyE1=4;
 inline constexpr std::uint16_t MouseAbsolute=1, MouseVirtualDesktop=2;
 inline constexpr std::uint16_t LeftDown=1, LeftUp=2, RightDown=4, RightUp=8;
 inline constexpr std::uint16_t MiddleDown=16, MiddleUp=32, Wheel=0x400, HorizontalWheel=0x800;
+#endif
 struct Init_Skip_Diagnostic {std::wstring instance,reason;DWORD error=ERROR_SUCCESS;};
 struct Init_Result {
     bool ready=false,reboot_required=false;
     std::uint32_t associated=0,already_associated=0,skipped=0;
     DWORD error=ERROR_SUCCESS;
     std::vector<Init_Skip_Diagnostic> skipped_devices;
+    // First setup failure, including the operation and exact device when known.
+    // Empty on success. Reading input never performs this diagnostic work.
+    std::string error_detail;
+    std::wstring error_device;
 };
 struct Send_Result {
     std::size_t accepted=0;DWORD error=ERROR_SUCCESS;
@@ -558,16 +599,16 @@ namespace Detail {struct Automatic_State;}
 // Small descriptors reference reusable typed buffers. Small events do not
 // embed a maximum-sized HID report or duplicate Device metadata.
 class Input_Event {
-    using Payload=std::variant<Keyboard_Input*,Mouse_Input*,Controller_Hid_Input*,
-        Controller_Xinput_Input*,Controller_XinputHid_Input*,Controller_GIP_Input*,Controller_GIP_Raw_Input*>;
-    Payload payload_=static_cast<Keyboard_Input*>(nullptr);
+    using Payload=std::variant<Keyboard_Input*,Mouse_Input*,Controller_Hid_Input*,Controller_Xinput_Input*,
+        Controller_XinputHid_Input*,Controller_GIP_Input*,Controller_GIP_Raw_Input*>;
+    Payload payload_=static_cast<Controller_Hid_Input*>(nullptr);
     Detail::Automatic_State* owner_=nullptr;
     std::uint64_t batch_=0;
     std::size_t index_=0;
     bool sent_=false;
     friend struct Detail::Automatic_State;
 public:
-    Device_Type type=Device_Type::Keyboard;
+    Device_Type type=Device_Type::Controller_Hid;
     std::uint32_t device=0;
     std::uint64_t sequence=0,timestamp=0;
     const Device* device_info=nullptr;
@@ -627,13 +668,17 @@ void Destroy_Context();
 
 #define IC_AUTOMATIC_INPUT(Name,Type) \
 std::vector<Type> Get_##Name##_Input(std::uint32_t deviceId=0,bool consume=true)
+#if IC_PRODUCT_HAS_KEYBOARD_MOUSE
 IC_AUTOMATIC_INPUT(Keyboard,Keyboard_Input);
 IC_AUTOMATIC_INPUT(Mouse,Mouse_Input);
+#endif
+#if IC_PRODUCT_HAS_CONTROLLERS
 IC_AUTOMATIC_INPUT(Controller_Hid,Controller_Hid_Input);
 IC_AUTOMATIC_INPUT(Controller_Xinput,Controller_Xinput_Input);
 IC_AUTOMATIC_INPUT(Controller_XinputHid,Controller_XinputHid_Input);
 IC_AUTOMATIC_INPUT(Controller_GIP,Controller_GIP_Input);
 IC_AUTOMATIC_INPUT(Controller_GIP_Raw,Controller_GIP_Raw_Input);
+#endif
 #undef IC_AUTOMATIC_INPUT
 // Sending a batch again retries only its unaccepted, unblocked entries.
 Send_Result Send_Input(Input_Batch& inputs);
@@ -657,13 +702,17 @@ namespace Interceptor {
 namespace Detail {
 // Internal type dispatch. No family selection or size is needed by callers.
 #define IC_INFER_SEND(Type) Send_Result SendAuto(Input_View<const Type> inputs);
+#if IC_PRODUCT_HAS_KEYBOARD_MOUSE
 IC_INFER_SEND(Keyboard_Input)
 IC_INFER_SEND(Mouse_Input)
+#endif
+#if IC_PRODUCT_HAS_CONTROLLERS
 IC_INFER_SEND(Controller_Hid_Input)
 IC_INFER_SEND(Controller_Xinput_Input)
 IC_INFER_SEND(Controller_XinputHid_Input)
 IC_INFER_SEND(Controller_GIP_Input)
 IC_INFER_SEND(Controller_GIP_Raw_Input)
+#endif
 #undef IC_INFER_SEND
 }
 template<class Inputs> auto Send_Input(const Inputs& inputs)
@@ -672,6 +721,7 @@ template<class Inputs> auto Send_Input(const Inputs& inputs)
 }
 }
 
+#if defined(IC_SDK_INTERNAL)
 // ---- ContextAPI.h ----
 // Internal compatibility interface for installer/viewer workers and archived
 // regressions. New application code includes only Interceptor.h.
@@ -679,6 +729,11 @@ template<class Inputs> auto Send_Input(const Inputs& inputs)
 // ---- WireInputs.h ----
 #include <type_traits>
 namespace Interceptor::Detail {
+// Internal pure parser adapter for passive telemetry. No device is opened and
+// no capture/automatic state is created by these functions.
+std::shared_ptr<const Hid_Codec> Create_Hid_Decoder(std::vector<std::uint8_t> preparsed);
+void Decode_Hid_Input(const std::shared_ptr<const Hid_Codec>& decoder,Hid_Decoded_Input& output,
+                     const std::uint8_t* report,std::uint32_t length,std::uint32_t source);
 struct Hid_Input_Access {
     static void Clear(Hid_Decoded_Input& output) {
         output.token.clear();output.state.axes.clear();output.state.triggers.clear();output.state.hats.clear();output.state.values.clear();output.state.buttons.clear();output.state.binary_values.clear();
@@ -1057,3 +1112,5 @@ static_assert(sizeof(IC_GIP_DIAGNOSTICS)==2936,"GIP diagnostics ABI");
 
 // Advanced installer entry point; caller must be elevated and serialize setup operations.
 namespace Interceptor {Init_Result Restore_Controller_Hid_Filters();}
+
+#endif // IC_SDK_INTERNAL

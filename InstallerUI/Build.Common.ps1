@@ -60,6 +60,7 @@ function New-InstallerPackage([string]$IntermediateDirectory,[string]$NativeDire
     . (Join-Path $package 'Common.ps1')
     $signingMode=Assert-InterceptorPayload $payload
     if($signingMode -ne 'Microsoft'){throw 'The public installers require the Microsoft-signed release driver.'}
+    Assert-InterceptorUsbPackage $payload
     foreach($name in $recoveryNames){Assert-InstallerFile (Join-Path $recovery $name) $recoveryHashes[$name]|Out-Null}
     $selected=@($engineNames)+@($driverNames|ForEach-Object {'Payload/'+$_})+@('Payload/InterceptorExample.exe','Payload/SHA256.json')+@($recoveryNames|ForEach-Object {'Recovery/'+$_})
     $hashes=[ordered]@{}

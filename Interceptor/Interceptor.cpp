@@ -1,3 +1,6 @@
+#ifndef IC_SDK_INTERNAL
+#define IC_SDK_INTERNAL
+#endif
 #include "Interceptor.h"
 // Interceptor SDK implementation. No other project files are required.
 
@@ -69,28 +72,33 @@ inline bool Equal(const std::wstring& a,const wchar_t* b) {return _wcsicmp(a.c_s
 inline bool Has(const std::vector<std::wstring>& names,const wchar_t* value) {
     return std::any_of(names.begin(),names.end(),[&](const auto& name){return Equal(name,value);});
 }
-enum class ClassAssociation { PerDevice, ExistingXusbUpper, Conflict };
+inline bool ForeignInterceptor(const std::wstring& name) {
+    return !Equal(name,IC_SDK_SERVICE) && (Equal(name,L"Interceptor") ||
+        Equal(name,L"InterceptorKeyboardMouse") || Equal(name,L"InterceptorGamepadController"));
+}
+inline bool ForeignFilters(const std::vector<std::wstring>& names) {
+    return std::any_of(names.begin(),names.end(),[](const auto& name){return ForeignInterceptor(name);});
+}
+enum class ClassAssociation { PerDevice, Conflict };
 inline ClassAssociation ClassFilterAssociation(std::uint32_t transport,
     const std::vector<std::wstring>& deviceUpper,const std::vector<std::wstring>& deviceLower,
     const std::vector<std::wstring>& classUpper,const std::vector<std::wstring>& classLower) {
+    if(ForeignFilters(deviceUpper)||ForeignFilters(deviceLower)||ForeignFilters(classUpper)||ForeignFilters(classLower))
+        return ClassAssociation::Conflict;
     const auto count=[](const auto& names){return std::count_if(names.begin(),names.end(),
-        [](const auto& name){return Equal(name,L"Interceptor");});};
+        [](const auto& name){return Equal(name,IC_SDK_SERVICE);});};
     const auto upper=count(classUpper),lower=count(classLower);
     if(!upper&&!lower)return ClassAssociation::PerDevice;
-    // The native XUSB dispatch supports an upper filter above xusb22. A class
-    // registration and a device registration would load our service twice.
-    // XInputHID requires device-list ordering before xinputhid; GIP dispatch
-    // currently requires the per-device LowerFilters property. Class placement
-    // alone cannot establish either of those supported contracts.
-    if(transport==IC_CONTROLLER_XUSB && upper==1 && !lower &&
-       !count(deviceUpper) && !count(deviceLower))return ClassAssociation::ExistingXusbUpper;
+    // All native associations are per-instance. Legacy XUSB class references
+    // are migrated before association; leaving one would load the filter twice.
+    (void)transport;
     return ClassAssociation::Conflict;
 }
 inline bool ValidCapabilities(const IC_CAPABILITIES& c,std::size_t bytes) {
     return bytes==sizeof(c) && c.size==sizeof(c) && c.version==IC_CAPABILITIES_VERSION && c.abi_version==IC_VERSION &&
         !(c.input_mask&~IC_BOTH) && !(c.controller_mask&~15u) && !c.flags && !c.reserved[0] && !c.reserved[1] && !c.reserved[2] &&
         c.max_devices && c.max_devices<=IC_MAX_DEVICES && c.queue_capacity==IC_CAPACITY && c.max_send==IC_MAX_SEND &&
-        c.hid_report_max==IC_HID_REPORT_MAX;
+        c.hid_report_max==(c.controller_mask?IC_HID_REPORT_MAX:0);
 }
 inline std::uint32_t SupportedControllers(const IC_CAPABILITIES& c) {
     auto mask=c.controller_mask&IC_CONTROLLER_HID;
@@ -98,6 +106,11 @@ inline std::uint32_t SupportedControllers(const IC_CAPABILITIES& c) {
     if(c.xinputhid_profiles&IC_PROFILE_XINPUTHID_GENERIC6)mask|=c.controller_mask&IC_CONTROLLER_XINPUTHID;
     if(c.gip_profiles&IC_PROFILE_GIP_USB_GAMEPAD14)mask|=c.controller_mask&IC_CONTROLLER_GIP;
     return mask;
+}
+inline bool UsbXusbBackend(const IC_CAPABILITIES& c) {
+    return (c.controller_mask&IC_CONTROLLER_XUSB) &&
+        (c.xusb_profiles&IC_PROFILE_XUSB_USB_FILTER) &&
+        (c.xusb_profiles&(IC_PROFILE_XUSB_WIRED_028E|IC_PROFILE_XUSB_WIRED_COMPATIBLE));
 }
 inline bool Usb028e(const std::wstring& id) {
     constexpr auto prefix=L"USB\\VID_045E&PID_028E";constexpr std::size_t length=21;
@@ -160,13 +173,13 @@ inline bool XusbMirror(const NativeNode& collection,const NativeNode& hid,const 
 inline std::vector<std::wstring> Filters(const std::vector<std::wstring>& original,std::uint32_t transport,bool remove) {
     std::vector<std::wstring> out;out.reserve(original.size()+1);bool inserted=false;
     for(const auto& name:original) {
-        if(Equal(name,L"Interceptor"))continue; // Remove duplicates and correct a previous wrong position.
+        if(Equal(name,IC_SDK_SERVICE))continue; // Remove duplicates and correct a previous wrong position.
         if(!remove && transport==IC_CONTROLLER_XINPUTHID && Equal(name,L"xinputhid") && !inserted) {
-            out.emplace_back(L"Interceptor");inserted=true;
+            out.emplace_back(IC_SDK_SERVICE);inserted=true;
         }
         out.push_back(name);
     }
-    if(!remove && !inserted)out.emplace_back(L"Interceptor");
+    if(!remove && !inserted)out.emplace_back(IC_SDK_SERVICE);
     return out;
 }
 }}
@@ -377,7 +390,7 @@ struct Handle {
     Handle()=default;Handle(const Handle&)=delete;Handle& operator=(const Handle&)=delete;
 };
 void Open(Handle& h) {
-    h.value=CreateFileW(L"\\\\.\\Interceptor",GENERIC_READ|GENERIC_WRITE,FILE_SHARE_READ|FILE_SHARE_WRITE,
+    h.value=CreateFileW(IC_SDK_DOS_DEVICE,GENERIC_READ|GENERIC_WRITE,FILE_SHARE_READ|FILE_SHARE_WRITE,
         nullptr,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,nullptr);
     if(h.value==INVALID_HANDLE_VALUE)Fail("Open Interceptor (install driver and run as administrator)");
 }
@@ -393,8 +406,8 @@ IC_CAPABILITIES Capabilities(HANDLE handle) {
     return c;
 }
 using SourceHandles=std::vector<std::unique_ptr<Handle>>;
-void ValidateControllerCapabilities(HANDLE driver,std::uint8_t controllers,std::uint8_t inputs=0) {
-    if(!(controllers&~Controller_Hid))return; // Keep compatibility with ABI4 HID-only drivers.
+bool ValidateControllerCapabilities(HANDLE driver,std::uint8_t controllers,std::uint8_t inputs=0) {
+    if(!(controllers&~Controller_Hid))return false; // Keep compatibility with ABI4 HID-only drivers.
     IC_CAPABILITIES capabilities{};
     try {capabilities=Capabilities(driver);}
     catch(const std::system_error& e) {
@@ -403,8 +416,9 @@ void ValidateControllerCapabilities(HANDLE driver,std::uint8_t controllers,std::
     }
     if((controllers&~Policy::SupportedControllers(capabilities)) || (inputs&~capabilities.input_mask))
         Fail("Controller profile unavailable in the loaded driver",ERROR_NOT_SUPPORTED);
+    return Policy::UsbXusbBackend(capabilities);
 }
-SourceHandles OpenControllerSources(std::uint8_t controllers,bool availableOnly=false) {
+SourceHandles OpenControllerSources(std::uint8_t controllers,bool availableOnly=false,bool usbXusb=false) {
     SourceHandles sources;
     const GUID sourceGuids[]={IC_HID_INTERFACE_GUID,IC_XUSB_INTERFACE_GUID,IC_XINPUTHID_INTERFACE_GUID,IC_XUSB_MIRROR_INTERFACE_GUID};
     const DWORD sourceIoctls[]={IOCTL_IC_HID_SOURCE,IOCTL_IC_XUSB_SOURCE,IOCTL_IC_XINPUTHID_SOURCE,IOCTL_IC_XUSB_MIRROR_SOURCE};
@@ -414,8 +428,13 @@ SourceHandles OpenControllerSources(std::uint8_t controllers,bool availableOnly=
         const auto message=std::string(names[native])+": "+operation+" (Win32 "+std::to_string(error)+")";
         Fail(message.c_str(),error);
     };
-    // GIP is driven by Windows USB URBs. It has no user-mode source handle.
-    for(unsigned native=0;native<4;++native)if(controllers&(native==3?Controller_Xinput:1u<<native)) {
+    // USB XUSB and GIP are driven by native USB IN requests. Readiness and
+    // capture use the central DEVICE_QUERY / CREATE_ALL endpoints; opening a
+    // lower filter's interface would traverse xusb22 and is not a source pump.
+    // The legacy upper backend retains its old files for older installed ABI4
+    // packages; it is never migrated into a lower filter by this SDK.
+    for(unsigned native=0;native<4;++native)if(!(usbXusb&&(native==1||native==3)) &&
+        (controllers&(native==3?Controller_Xinput:1u<<native))) {
         const auto before=sources.size();
         struct Set {HDEVINFO value;~Set(){if(value!=INVALID_HANDLE_VALUE)SetupDiDestroyDeviceInfoList(value);}};
         Set set{SetupDiGetClassDevsW(&sourceGuids[native],nullptr,nullptr,DIGCF_PRESENT|DIGCF_DEVICEINTERFACE)};
@@ -485,8 +504,8 @@ struct SenderState {
         if(driver.value==INVALID_HANDLE_VALUE)Open(driver);
         if(index<4)sources[index].Prepare([&] {
             const auto controllers=static_cast<std::uint8_t>(1u<<index);
-            ValidateControllerCapabilities(driver.value,controllers);
-            return OpenControllerSources(controllers);
+            const bool usbXusb=ValidateControllerCapabilities(driver.value,controllers);
+            return OpenControllerSources(controllers,false,usbXusb);
         });
         return driver.value;
     }
@@ -606,6 +625,8 @@ DWORD PreparationError(HANDLE driver,std::uint8_t mask,std::uint8_t controllers,
     return !found?original:pending?ERROR_NOT_READY:ERROR_NOT_SUPPORTED;
 }
 static Context_Result CreateImpl(std::uint8_t mask,std::uint8_t controllers,const Detail::Preparation_Options& wait,bool all) {
+    if((mask&~IC_PRODUCT_INPUT_MASK) || (controllers&~IC_PRODUCT_CONTROLLER_MASK))
+        throw std::invalid_argument("Create_Context: input family is excluded from this product");
     if(controllers&~15u)throw std::invalid_argument("Create_Context: invalid controller mask");
     if((!mask && !controllers) || (mask&~Both))throw std::invalid_argument("Create_Context: invalid input mask");
     Context_Result result;result.devices.reserve(IC_MAX_DEVICES);
@@ -614,11 +635,11 @@ static Context_Result CreateImpl(std::uint8_t mask,std::uint8_t controllers,cons
     Open(c->driver);
     if(all) {
         const auto capabilities=Capabilities(c->driver.value);
-        mask=static_cast<std::uint8_t>(capabilities.input_mask);
-        controllers=static_cast<std::uint8_t>(Policy::SupportedControllers(capabilities));
+        mask=static_cast<std::uint8_t>(capabilities.input_mask&IC_PRODUCT_INPUT_MASK);
+        controllers=static_cast<std::uint8_t>(Policy::SupportedControllers(capabilities)&IC_PRODUCT_CONTROLLER_MASK);
         c->mask=static_cast<std::uint8_t>(mask|(controllers<<2));
     }
-    ValidateControllerCapabilities(c->driver.value,controllers,mask);
+    const bool usbXusb=ValidateControllerCapabilities(c->driver.value,controllers,mask);
     if(controllers&Controller_GIP)c->gipRawSupported=(Capabilities(c->driver.value).gip_profiles&IC_PROFILE_GIP_USB_GAMEPAD_RAW)!=0;
     IC_CREATE request{};request.version=IC_VERSION;request.mask=mask;request.controller_mask=controllers;
     for(unsigned i=0;i<IC_STREAM_COUNT;++i)if(c->mask&(1u<<i)) {
@@ -639,7 +660,7 @@ static Context_Result CreateImpl(std::uint8_t mask,std::uint8_t controllers,cons
     const auto attempt=[&] {
         // Preserve the source's family, operation and original startup error.
         // Only the CREATE request itself needs availability-error refinement.
-        if(!sourcesOpened){c->sources=OpenControllerSources(controllers,all);sourcesOpened=true;}
+        if(!sourcesOpened){c->sources=OpenControllerSources(controllers,all,usbXusb);sourcesOpened=true;}
         try {
             bytes=Io(c->driver.value,all?IOCTL_IC_CREATE_ALL:extended?IOCTL_IC_CREATE_NATIVE:native?IOCTL_IC_CREATE_XUSB:IOCTL_IC_CREATE,
                 extended?static_cast<const void*>(&extendedRequest):native?static_cast<const void*>(&nativeRequest):&request,
@@ -666,7 +687,7 @@ static Context_Result CreateImpl(std::uint8_t mask,std::uint8_t controllers,cons
     if(header.count)memcpy(result.devices.data(),reinterpret_cast<const BYTE*>(response.data())+sizeof(header),header.count*sizeof(Device_Info));
     result.generation=header.generation;result.context=std::move(c);return result;
 }
-Context_Result Create_Context() {return CreateImpl(Both,15,Detail::Preparation_Options{},true);}
+Context_Result Create_Context() {return CreateImpl(IC_PRODUCT_INPUT_MASK,IC_PRODUCT_CONTROLLER_MASK,Detail::Preparation_Options{},true);}
 bool Detail::Raw_Gip_Supported(const Context& context) noexcept {return context.gipRawSupported;}
 Context_Result Detail::Create_Selected_Context(std::uint8_t mask,std::uint8_t controllers,const Preparation_Options& wait) {
     return CreateImpl(mask,controllers,wait,false);
@@ -1083,6 +1104,15 @@ void Hid_Codec::Decode(const std::shared_ptr<const Hid_Codec>& codec,Hid_Decoded
     }
     out.decode_complete=out.decode_error==ERROR_SUCCESS;
 }
+std::shared_ptr<const Hid_Codec> Create_Hid_Decoder(std::vector<std::uint8_t> preparsed) {
+    if(preparsed.empty()||preparsed.size()>65536)Fail("Invalid passive HID parser data size",ERROR_INVALID_DATA);
+    return Hid_Codec::Create(std::move(preparsed));
+}
+void Decode_Hid_Input(const std::shared_ptr<const Hid_Codec>& decoder,Hid_Decoded_Input& output,
+                      const std::uint8_t* report,std::uint32_t length,std::uint32_t source) {
+    if(length>IC_HID_REPORT_MAX){Hid_Input_Access::Clear(output);output.decode_error=ERROR_INVALID_DATA;return;}
+    Hid_Codec::Decode(decoder,output,report,length,source);
+}
 DWORD Hid_Codec::Encode(const Hid_Decoded_Input& in,std::uint8_t* report,std::uint32_t length,std::uint32_t source) {
     const auto& state=in.state;
     if(!in.codec_) {
@@ -1248,7 +1278,8 @@ struct Automatic_State {
         std::vector<Captured_Device> result;result.reserve(source.size());
         std::bitset<IC_STREAM_COUNT*(IC_MAX_DEVICES+1)> seen;
         for(const auto& info:source) {
-            if(!info.id || info.id>IC_MAX_DEVICES || !info.instance_token || info.type<1 || info.type>IC_STREAM_COUNT)
+            if(!info.id || info.id>IC_MAX_DEVICES || !info.instance_token || info.type<1 || info.type>IC_STREAM_COUNT ||
+                !((IC_PRODUCT_INPUT_MASK|(IC_PRODUCT_CONTROLLER_MASK<<2))&(1u<<(info.type-1))))
                 Fail("Invalid captured device identity",ERROR_INVALID_DATA);
             const auto slot=(info.type-1)*(IC_MAX_DEVICES+1)+info.id;
             if(seen.test(slot))Fail("Duplicate captured device identity",ERROR_INVALID_DATA);
@@ -1341,13 +1372,17 @@ struct Automatic_State {
             // descriptor array retain their capacity between calls.
             events.clear();++batch;
 #define IC_AUTO_READ(bit,Name,buffer,type) if(ready&(bit)) {Get_##Name##_Input(context,storage.buffer);DecodeInputs(context,storage.buffer);Append(storage.buffer,Device_Type::type);}
+#if IC_PRODUCT_HAS_KEYBOARD_MOUSE
             IC_AUTO_READ(Keyboard,Keyboard,keyboard,Keyboard);
             IC_AUTO_READ(Mouse,Mouse,mouse,Mouse);
+#endif
+#if IC_PRODUCT_HAS_CONTROLLERS
             IC_AUTO_READ(Ready_Controller_Hid,Controller_Hid,hid,Controller_Hid);
             IC_AUTO_READ(Ready_Controller_Xinput,Controller_Xinput,xusb,Controller_Xinput);
             IC_AUTO_READ(Ready_Controller_XinputHid,Controller_XinputHid,xinputhid,Controller_XinputHid);
             if(context.gipRawSupported) {IC_AUTO_READ(Ready_Controller_GIP,Controller_GIP_Raw,gipRaw,Controller_GIP);}
             else {IC_AUTO_READ(Ready_Controller_GIP,Controller_GIP,gip,Controller_GIP);}
+#endif
 #undef IC_AUTO_READ
             if(events.empty())return {};
             bool refresh=false;
@@ -1481,7 +1516,7 @@ template<class T> void SelectedRead(Context& context,std::vector<T>& out,std::ve
     if constexpr(std::is_same_v<T,Controller_GIP_Raw_Input>)
         if(!context.gipRawSupported)Fail("Loaded driver has no complete GIP report API",ERROR_NOT_SUPPORTED);
     if(context.selectedReadSupport==0)
-        Fail("Device selection and non-consuming reads require Interceptor 1.4.14 or newer",ERROR_NOT_SUPPORTED);
+        Fail("Loaded driver does not support selected or non-consuming input reads",ERROR_NOT_SUPPORTED);
     std::lock_guard<std::mutex> lock(context.readers[stream]);
     const auto capacity=stream<2?IC_CAPACITY:IC_HID_CAPACITY;
     out.reserve(capacity);if(scratch.size()<capacity)scratch.resize(capacity);
@@ -1492,7 +1527,7 @@ template<class T> void SelectedRead(Context& context,std::vector<T>& out,std::ve
         const auto error=e.code().value();
         if(context.selectedReadSupport<0 && (error==ERROR_INVALID_PARAMETER || error==ERROR_INVALID_FUNCTION || error==ERROR_NOT_SUPPORTED)) {
             context.selectedReadSupport=0;
-            Fail("Device selection and non-consuming reads require Interceptor 1.4.14 or newer",ERROR_NOT_SUPPORTED);
+            Fail("Loaded driver does not support selected or non-consuming input reads",ERROR_NOT_SUPPORTED);
         }
         throw;
     }
@@ -1520,13 +1555,17 @@ Send_Result Detail::SendAuto(Detail::Input_View<const Type> inputs) { \
     const auto result=Send_Input(context,inputs.data(),inputs.size()); \
     if(result.error && result.error!=ERROR_BUSY)state.Abort(result.error);return result; \
 }
+#if IC_PRODUCT_HAS_KEYBOARD_MOUSE
 IC_AUTO_IMPL(Keyboard,Keyboard_Input,0,keyboard,IOCTL_IC_GET_KEYBOARD)
 IC_AUTO_IMPL(Mouse,Mouse_Input,1,mouse,IOCTL_IC_GET_MOUSE)
+#endif
+#if IC_PRODUCT_HAS_CONTROLLERS
 IC_AUTO_IMPL(Controller_Hid,Controller_Hid_Input,2,hid,IOCTL_IC_GET_HID)
 IC_AUTO_IMPL(Controller_Xinput,Controller_Xinput_Input,3,xusb,IOCTL_IC_GET_XUSB)
 IC_AUTO_IMPL(Controller_XinputHid,Controller_XinputHid_Input,4,xinputhid,IOCTL_IC_GET_XINPUTHID)
 IC_AUTO_IMPL(Controller_GIP,Controller_GIP_Input,5,gip,IOCTL_IC_GET_GIP)
 IC_AUTO_IMPL(Controller_GIP_Raw,Controller_GIP_Raw_Input,5,gipRaw,IOCTL_IC_GET_GIP_RAW)
+#endif
 #undef IC_AUTO_IMPL
 IC_STATUS Get_Status() {
     Detail::Automatic_Lease lease;
@@ -1809,8 +1848,12 @@ DWORD RememberRestart() {
     const DWORD flag=1;status=RegSetValueExW(key,L"Required",0,REG_DWORD,reinterpret_cast<const BYTE*>(&flag),sizeof(flag));
     RegCloseKey(key);return static_cast<DWORD>(status);
 }
-void RecordError(Init_Result& result,DWORD error) {
-    if(!result.error)result.error=error?error:ERROR_GEN_FAILURE;
+void RecordError(Init_Result& result,DWORD error,const char* detail=nullptr,const std::wstring& device={}) {
+    if(!result.error) {
+        result.error=error?error:ERROR_GEN_FAILURE;
+        if(detail)result.error_detail=detail;
+        result.error_device=device;
+    }
 }
 bool IsAdministrator() {
     SID_IDENTIFIER_AUTHORITY authority=SECURITY_NT_AUTHORITY;PSID sid=nullptr;BOOL member=FALSE;
@@ -1832,16 +1875,27 @@ void CheckStarted(SP_DEVINFO_DATA& device,Init_Result& result) {
     if(problem==CM_PROB_NEED_RESTART)result.reboot_required=true;
     else if(!(status&DN_STARTED) || (status&DN_HAS_PROBLEM))RecordError(result,ERROR_NOT_READY);
 }
+bool ForeignStackFilters(HDEVINFO set,SP_DEVINFO_DATA& device,Init_Result& result,const std::wstring& id);
 void Associate(HDEVINFO set,SP_DEVINFO_DATA& device,bool mouse,Init_Result& result) {
     const auto hardware=Property(set,device,SPDRP_HARDWAREID);
     if(_wcsnicmp(hardware.c_str(),L"HID\\",4)) {++result.skipped;return;}
     const auto service=Property(set,device,SPDRP_SERVICE);
-    if(!_wcsicmp(service.c_str(),L"Interceptor")) {++result.already_associated;CheckStarted(device,result);return;}
+    if(Policy::ForeignInterceptor(service)) {
+        ++result.skipped;RecordError(result,ERROR_SHARING_VIOLATION);
+        wchar_t instance[MAX_DEVICE_ID_LEN]{};
+        (void)SetupDiGetDeviceInstanceIdW(set,&device,instance,_countof(instance),nullptr);
+        result.skipped_devices.push_back({instance,L"Another Interceptor product owns this mapper; uninstall that product first",ERROR_SHARING_VIOLATION});
+        return;
+    }
+    wchar_t instance[MAX_DEVICE_ID_LEN]{};
+    if(!SetupDiGetDeviceInstanceIdW(set,&device,instance,_countof(instance),nullptr)) {
+        RecordError(result,GetLastError());return;
+    }
+    if(ForeignStackFilters(set,device,result,instance))return;
+    if(!_wcsicmp(service.c_str(),IC_SDK_SERVICE)) {++result.already_associated;CheckStarted(device,result);return;}
     if(_wcsicmp(service.c_str(),mouse?L"mouhid":L"kbdhid")) {++result.skipped;return;}
     const auto profile=SetupDetail::ProbeMapperProfile(set,device,mouse);
     if(!profile.supported) {
-        wchar_t instance[MAX_DEVICE_ID_LEN]{};
-        if(!SetupDiGetDeviceInstanceIdW(set,&device,instance,_countof(instance),nullptr))instance[0]=0;
         ++result.skipped;result.skipped_devices.push_back({instance,profile.reason,profile.error});return;
     }
     SP_DEVINSTALL_PARAMS_W params{};params.cbSize=sizeof(params);
@@ -1865,8 +1919,6 @@ void Associate(HDEVINFO set,SP_DEVINFO_DATA& device,bool mouse,Init_Result& resu
     // metadata probe. Preserve a newly selected custom driver rather than bind.
     if(_wcsicmp(Property(set,device,SPDRP_SERVICE).c_str(),service.c_str()) ||
        _wcsicmp(Property(set,device,SPDRP_HARDWAREID).c_str(),hardware.c_str())) {
-        wchar_t instance[MAX_DEVICE_ID_LEN]{};
-        if(!SetupDiGetDeviceInstanceIdW(set,&device,instance,_countof(instance),nullptr))instance[0]=0;
         ++result.skipped;result.skipped_devices.push_back({instance,L"Mapper identity/service changed before association",ERROR_RETRY});return;
     }
     BOOL reboot=FALSE;
@@ -1980,6 +2032,22 @@ bool ActiveControllerFilter(const std::wstring& id,const GUID& guid=IC_HID_INTER
     }
     return (item.Flags&SPINT_ACTIVE)!=0;
 }
+std::vector<std::wstring> FilterNames(const std::vector<wchar_t>& values);
+bool NativeClassFilterMissing(const GUID& deviceClass,DWORD property);
+std::vector<std::wstring> NativeClassFilters(const GUID& deviceClass,DWORD property,
+    decltype(&SetupDiGetClassRegistryPropertyW) query=SetupDiGetClassRegistryPropertyW,
+    bool (*missing)(const GUID&,DWORD)=NativeClassFilterMissing);
+bool ForeignStackFilters(HDEVINFO set,SP_DEVINFO_DATA& device,Init_Result& result,const std::wstring& id) {
+    const bool foreign=Policy::ForeignFilters(FilterNames(MultiProperty(set,device,SPDRP_UPPERFILTERS))) ||
+        Policy::ForeignFilters(FilterNames(MultiProperty(set,device,SPDRP_LOWERFILTERS))) ||
+        Policy::ForeignFilters(NativeClassFilters(device.ClassGuid,SPCRP_UPPERFILTERS)) ||
+        Policy::ForeignFilters(NativeClassFilters(device.ClassGuid,SPCRP_LOWERFILTERS));
+    if(foreign) {
+        ++result.skipped;RecordError(result,ERROR_SHARING_VIOLATION);
+        result.skipped_devices.push_back({id,L"Another Interceptor product filters this stack; uninstall that product first",ERROR_SHARING_VIOLATION});
+    }
+    return foreign;
+}
 void AssociateControllers(Init_Result& result,bool remove) {
     unsigned profiles=IC_HID_PROFILE_DESKTOP;
     if(!remove)try{profiles=Get_Device_Details().hid_profiles;}
@@ -2001,10 +2069,11 @@ void AssociateControllers(Init_Result& result,bool remove) {
         SP_DEVINFO_DATA device{};device.cbSize=sizeof(device);
         if(!SetupDiOpenDeviceInfoW(set.value,id.c_str(),nullptr,0,&device)) {RecordError(result,GetLastError());continue;}
         if(!remove && (NativeXbox(device.DevInst) || !ControllerCollection(set.value,device,profiles)))continue;
+        if(!remove && ForeignStackFilters(set.value,device,result,id))continue;
         const auto original=MultiProperty(set.value,device,SPDRP_UPPERFILTERS);
         std::vector<wchar_t> updated;bool found=false;
         for(const auto* name=original.data();*name;name+=wcslen(name)+1) {
-            if(!_wcsicmp(name,L"Interceptor")) {found=true;if(remove)continue;}
+            if(!_wcsicmp(name,IC_SDK_SERVICE)) {found=true;if(remove)continue;}
             updated.insert(updated.end(),name,name+wcslen(name)+1);
         }
         if(found==!remove) {
@@ -2014,7 +2083,7 @@ void AssociateControllers(Init_Result& result,bool remove) {
             }
             continue;
         }
-        if(!remove) {const wchar_t name[]=L"Interceptor";updated.insert(updated.end(),std::begin(name),std::end(name));}
+        if(!remove) {const wchar_t name[]=IC_SDK_SERVICE;updated.insert(updated.end(),std::begin(name),std::end(name));}
         updated.push_back(0);if(updated.size()==1)updated.push_back(0);
         WriteFilters(set.value,device,updated);
         ++result.associated;
@@ -2024,7 +2093,7 @@ void AssociateControllers(Init_Result& result,bool remove) {
         ULONG status=0,problem=0;
         if(CM_Get_DevNode_Status(&status,&problem,device.DevInst,0)==CR_SUCCESS && (status&DN_STARTED))result.reboot_required=true;
         else if(!remove)result.reboot_required=true;
-    } catch(const std::system_error& e) {RecordError(result,static_cast<DWORD>(e.code().value()));}
+    } catch(const std::system_error& e) {RecordError(result,static_cast<DWORD>(e.code().value()),e.what(),id);}
 }
 
 // ---- NativeDevices.inl ----
@@ -2045,8 +2114,8 @@ bool NativeClassFilterMissing(const GUID& deviceClass,DWORD property) {
     return false;
 }
 std::vector<std::wstring> NativeClassFilters(const GUID& deviceClass,DWORD property,
-    decltype(&SetupDiGetClassRegistryPropertyW) query=SetupDiGetClassRegistryPropertyW,
-    bool (*missing)(const GUID&,DWORD)=NativeClassFilterMissing) {
+    decltype(&SetupDiGetClassRegistryPropertyW) query,
+    bool (*missing)(const GUID&,DWORD)) {
     // Query the setup-class property through SetupAPI, never derive a registry
     // path from device text. Missing filters are distinct from an unreadable or
     // malformed value; only the former means no class association.
@@ -2061,16 +2130,22 @@ std::vector<std::wstring> NativeClassFilters(const GUID& deviceClass,DWORD prope
         if(missing(deviceClass,property))return {};
         throw std::system_error(ERROR_INVALID_DATA,std::system_category(),"Unreadable existing native class filters");
     }
-    if((!queried && error!=ERROR_INSUFFICIENT_BUFFER) || bytes<2*sizeof(wchar_t) ||
+    if((!queried && error!=ERROR_INSUFFICIENT_BUFFER) || bytes<sizeof(wchar_t) ||
        bytes>65536 || bytes%sizeof(wchar_t))
         throw std::system_error(static_cast<int>(!queried && error!=ERROR_INSUFFICIENT_BUFFER?error:ERROR_INVALID_DATA),
             std::system_category(),"Read native class filters size");
     std::vector<wchar_t> data(bytes/sizeof(wchar_t));const DWORD capacity=bytes;
     if(!query(&deviceClass,property,&type,reinterpret_cast<BYTE*>(data.data()),capacity,&bytes,nullptr,nullptr))
         throw std::system_error(GetLastError(),std::system_category(),"Read native class filters");
-    if(type!=REG_MULTI_SZ || bytes<2*sizeof(wchar_t) || bytes>capacity || bytes%sizeof(wchar_t))
+    if(type!=REG_MULTI_SZ || bytes<sizeof(wchar_t) || bytes>capacity || bytes%sizeof(wchar_t))
         throw std::system_error(ERROR_INVALID_DATA,std::system_category(),"Invalid native class filter type/size");
     const auto length=bytes/sizeof(wchar_t);
+    // An empty REG_MULTI_SZ is one empty string (a single NUL). Nonempty
+    // sequences still require the final string terminator plus the list NUL.
+    if(length==1) {
+        if(!data[0])return {};
+        throw std::system_error(ERROR_INVALID_DATA,std::system_category(),"Unterminated native class filters");
+    }
     if(data[length-1] || data[length-2])
         throw std::system_error(ERROR_INVALID_DATA,std::system_category(),"Unterminated native class filters");
     std::vector<std::wstring> result;std::size_t at=0;
@@ -2104,6 +2179,17 @@ void WriteNativeFilters(HDEVINFO set,SP_DEVINFO_DATA& device,DWORD property,cons
     if(!SetupDiSetDeviceRegistryPropertyW(set,&device,property,values.empty()?nullptr:reinterpret_cast<const BYTE*>(bytes.data()),
         values.empty()?0:static_cast<DWORD>(bytes.size()*sizeof(wchar_t))))
         throw std::system_error(GetLastError(),std::system_category(),"Write per-device native controller filters");
+}
+template<class Write> bool ConfigureXusbUsbFilters(Init_Result& result,
+    const std::vector<std::wstring>& upper,const std::vector<std::wstring>& lower,Write&& write) {
+    const auto cleaned=Policy::Filters(upper,0,true);
+    const auto installed=Policy::Filters(lower,IC_CONTROLLER_XUSB,false);
+    bool changed=false;
+    // Remove the obsolete upper registration first. If a later write fails,
+    // the next boot is transparent rather than loading this service twice.
+    if(cleaned!=upper){write(SPDRP_UPPERFILTERS,cleaned);result.reboot_required=true;changed=true;}
+    if(installed!=lower){write(SPDRP_LOWERFILTERS,installed);result.reboot_required=true;changed=true;}
+    return changed;
 }
 void AssociateNativeControllers(Init_Result& result,const IC_CAPABILITIES* capabilities,bool remove) {
     const GUID classes[]={GUID_DEVCLASS_HIDCLASS,
@@ -2151,23 +2237,31 @@ void AssociateNativeControllers(Init_Result& result,const IC_CAPABILITIES* capab
         node.compatible=FilterNames(MultiProperty(set.value,device,SPDRP_COMPATIBLEIDS));
         if(Policy::Has(upper,L"xinputhid")) {node.propertyFlags=NativePropertyFlags(set.value,device);node.blockedAncestry=NativeControllerParent(device.DevInst);}
         const auto transport=Policy::Transport(node);if(!transport) {if(Policy::Has(upper,L"xinputhid"))++result.skipped;continue;}
+        if(ForeignStackFilters(set.value,device,result,id))continue;
         if(!capabilities || !(Policy::SupportedControllers(*capabilities)&transport)) {++result.skipped;continue;}
         if(transport==IC_CONTROLLER_XUSB && !Policy::XusbProfileAvailable(node,*capabilities)){++result.skipped;continue;}
+        if(transport==IC_CONTROLLER_XUSB && !Policy::UsbXusbBackend(*capabilities)) {
+            ++result.skipped;result.skipped_devices.push_back({id,L"Legacy XUSB backend: install the current driver package before migrating to a USB lower filter",ERROR_NOT_SUPPORTED});continue;
+        }
         const auto classUpper=NativeClassFilters(device.ClassGuid,SPCRP_UPPERFILTERS);
         const auto classLower=NativeClassFilters(device.ClassGuid,SPCRP_LOWERFILTERS);
         const auto placement=Policy::ClassFilterAssociation(transport,upper,lower,classUpper,classLower);
-        if(placement==Policy::ClassAssociation::Conflict) {RecordError(result,ERROR_INVALID_DATA);continue;}
-        if(placement==Policy::ClassAssociation::ExistingXusbUpper) {
-            ++result.already_associated;CheckStarted(device,result);
-            const GUID xusbGuid=IC_XUSB_INTERFACE_GUID;
-            if(!ActiveControllerFilter(id,xusbGuid))result.reboot_required=true;
+        if(placement==Policy::ClassAssociation::Conflict) {
+            RecordError(result,ERROR_INVALID_DATA,"Conflicting native class/device filter placement",id);continue;
+        }
+        if(transport==IC_CONTROLLER_XUSB) {
+            if(ConfigureXusbUsbFilters(result,upper,lower,[&](DWORD property,const auto& filters){WriteNativeFilters(set.value,device,property,filters);}))++result.associated;
+            else {
+                ++result.already_associated;CheckStarted(device,result);
+                const GUID guid=IC_XUSB_INTERFACE_GUID;if(!ActiveControllerFilter(id,guid))result.reboot_required=true;
+            }
             continue;
         }
         const bool gip=transport==IC_CONTROLLER_GIP;
-        if(Policy::Has(gip?upper:lower,L"Interceptor")) {
+        if(Policy::Has(gip?upper:lower,IC_SDK_SERVICE)) {
             // Do not introduce two Interceptor instances on one stack. A legacy
             // wrong-side association needs explicit uninstall/reinstall first.
-            RecordError(result,ERROR_INVALID_DATA);continue;
+            RecordError(result,ERROR_INVALID_DATA,"Interceptor registered on the unexpected native filter side",id);continue;
         }
         const auto property=gip?SPDRP_LOWERFILTERS:SPDRP_UPPERFILTERS;
         const auto& original=gip?lower:upper;
@@ -2183,119 +2277,103 @@ void AssociateNativeControllers(Init_Result& result,const IC_CAPABILITIES* capab
             // restart reconstructs the stack; never restart a controller here.
             result.reboot_required=true;
         }
-    } catch(const std::system_error& e) {RecordError(result,static_cast<DWORD>(e.code().value()));}
+    } catch(const std::system_error& e) {RecordError(result,static_cast<DWORD>(e.code().value()),e.what(),id);}
 }
 
 // ---- XusbMirrors.inl ----
-// Per-instance binding of the private XUSB HID mirror. Parent identities come
-// from Configuration Manager, never from a same-VID/PID search or player index.
-Policy::NativeNode ReadNativeNode(HDEVINFO set,SP_DEVINFO_DATA& device,const std::wstring& id) {
-    Policy::NativeNode n;n.instance=id;n.deviceClass=Property(set,device,SPDRP_CLASSGUID);
-    try {n.service=Property(set,device,SPDRP_SERVICE);}
-    catch(const std::system_error& e) {if(e.code().value()!=ERROR_INVALID_DATA && e.code().value()!=ERROR_FILE_NOT_FOUND)throw;}
-    n.upper=FilterNames(MultiProperty(set,device,SPDRP_UPPERFILTERS));
-    n.hardware=FilterNames(MultiProperty(set,device,SPDRP_HARDWAREID));
-    n.compatible=FilterNames(MultiProperty(set,device,SPDRP_COMPATIBLEIDS));return n;
-}
-bool MirrorParents(HDEVINFO set,SP_DEVINFO_DATA& child,const std::wstring& id,Policy::NativeNode& hid,Policy::NativeNode& xusb) {
-    DEVINST parent=0,grandparent=0;wchar_t parentId[MAX_DEVICE_ID_LEN]{},grandparentId[MAX_DEVICE_ID_LEN]{};
-    if(CM_Get_Parent(&parent,child.DevInst,0)!=CR_SUCCESS || CM_Get_Parent(&grandparent,parent,0)!=CR_SUCCESS ||
-       CM_Get_Device_IDW(parent,parentId,MAX_DEVICE_ID_LEN,0)!=CR_SUCCESS || CM_Get_Device_IDW(grandparent,grandparentId,MAX_DEVICE_ID_LEN,0)!=CR_SUCCESS)return false;
-    SP_DEVINFO_DATA p{};p.cbSize=sizeof(p);SP_DEVINFO_DATA g{};g.cbSize=sizeof(g);
-    if(!SetupDiOpenDeviceInfoW(set,parentId,nullptr,0,&p) || !SetupDiOpenDeviceInfoW(set,grandparentId,nullptr,0,&g))return false;
-    hid=ReadNativeNode(set,p,parentId);xusb=ReadNativeNode(set,g,grandparentId);
-    return Policy::XusbMirror(ReadNativeNode(set,child,id),hid,xusb);
-}
+// Cleanup is authorized by this product's own identity marker or filter, not
+// by unrelated ancestry. Historical HID views may have classless ghost parents.
 struct MirrorRegistry {
     HKEY value;
     ~MirrorRegistry(){if(value!=INVALID_HANDLE_VALUE)RegCloseKey(value);}
 };
-bool SetMirrorIdentity(HKEY key,const wchar_t* name,const std::wstring& value) {
-    if(value.empty() || value.size()>=MAX_DEVICE_ID_LEN)throw std::system_error(ERROR_INVALID_DATA,std::system_category(),"Invalid mirror identity");
-    wchar_t old[MAX_DEVICE_ID_LEN]{};DWORD type=0,bytes=sizeof(old);
-    const auto query=RegQueryValueExW(key,name,nullptr,&type,reinterpret_cast<BYTE*>(old),&bytes);
-    if(query==ERROR_SUCCESS && type==REG_SZ && bytes==(value.size()+1)*sizeof(wchar_t) && bytes<=sizeof(old) &&
-       old[bytes/sizeof(wchar_t)-1]==0 && !_wcsicmp(old,value.c_str()))return false;
-    if(query!=ERROR_SUCCESS && query!=ERROR_FILE_NOT_FOUND && query!=ERROR_MORE_DATA)
-        throw std::system_error(query,std::system_category(),"Read XUSB mirror identity");
-    const auto status=RegSetValueExW(key,name,0,REG_SZ,reinterpret_cast<const BYTE*>(value.c_str()),static_cast<DWORD>((value.size()+1)*sizeof(wchar_t)));
-    if(status!=ERROR_SUCCESS)throw std::system_error(status,std::system_category(),"Write XUSB mirror identity");return true;
-}
-void RemoveMirrorIdentity(HDEVINFO set,SP_DEVINFO_DATA& device) {
-    MirrorRegistry key{SetupDiOpenDevRegKey(set,&device,DICS_FLAG_GLOBAL,0,DIREG_DEV,KEY_SET_VALUE)};
-    if(key.value==INVALID_HANDLE_VALUE) {
-        const auto error=GetLastError();if(error==ERROR_FILE_NOT_FOUND || error==ERROR_INVALID_DATA)return;
-        throw std::system_error(error,std::system_category(),"Open XUSB mirror hardware key");
-    }
+bool RemoveMirrorIdentity(HKEY key,Init_Result& result,bool started,decltype(&RegDeleteValueW) remove=RegDeleteValueW) {
+    bool changed=false;
     for(const auto* name:{IC_XUSB_MIRROR_HID_PARENT_VALUE,IC_XUSB_MIRROR_PARENT_VALUE}) {
-        const auto status=RegDeleteValueW(key.value,name);
-        if(status!=ERROR_SUCCESS && status!=ERROR_FILE_NOT_FOUND)throw std::system_error(status,std::system_category(),"Remove XUSB mirror identity");
+        const auto status=remove(key,name);
+        if(status==ERROR_SUCCESS){changed=true;result.reboot_required|=started;}
+        else if(status!=ERROR_FILE_NOT_FOUND)throw std::system_error(status,std::system_category(),"Remove legacy XUSB mirror identity");
     }
+    return changed;
 }
-void AssociateXusbMirrors(Init_Result& result,const IC_CAPABILITIES* capabilities,bool remove) {
-    struct Candidate {std::wstring id,hid,xusb;};std::vector<Candidate> candidates;
-    DeviceSet snapshot{SetupDiGetClassDevsW(&GUID_DEVCLASS_HIDCLASS,nullptr,nullptr,remove?0:DIGCF_PRESENT)};
-    if(snapshot.value==INVALID_HANDLE_VALUE) {RecordError(result,GetLastError());return;}
+void CleanupLegacyXusbMirrors(Init_Result& result) {
+    // Include absent instances, but touch only our own legacy mirror state.
+    DeviceSet snapshot{SetupDiGetClassDevsW(&GUID_DEVCLASS_HIDCLASS,nullptr,nullptr,0)};
+    if(snapshot.value==INVALID_HANDLE_VALUE){RecordError(result,GetLastError());return;}
     std::vector<std::wstring> ids;
     for(DWORD index=0;;++index) {
         SP_DEVINFO_DATA d{};d.cbSize=sizeof(d);
-        if(!SetupDiEnumDeviceInfo(snapshot.value,index,&d)) {if(GetLastError()!=ERROR_NO_MORE_ITEMS)RecordError(result,GetLastError());break;}
+        if(!SetupDiEnumDeviceInfo(snapshot.value,index,&d)){if(GetLastError()!=ERROR_NO_MORE_ITEMS)RecordError(result,GetLastError());break;}
         wchar_t id[MAX_DEVICE_ID_LEN]{};
-        if(!SetupDiGetDeviceInstanceIdW(snapshot.value,&d,id,MAX_DEVICE_ID_LEN,nullptr)) {RecordError(result,GetLastError());continue;}
-        // Removal includes absent instances but only the precise device family
-        // to which this code can have written identity values.
+        if(!SetupDiGetDeviceInstanceIdW(snapshot.value,&d,id,MAX_DEVICE_ID_LEN,nullptr)){RecordError(result,GetLastError());continue;}
         if(Policy::XusbMirrorGroup(id)>=0)ids.emplace_back(id);
     }
     for(const auto& id:ids)try {
         DeviceSet set{SetupDiCreateDeviceInfoList(nullptr,nullptr)};SP_DEVINFO_DATA d{};d.cbSize=sizeof(d);
-        if(set.value==INVALID_HANDLE_VALUE || !SetupDiOpenDeviceInfoW(set.value,id.c_str(),nullptr,0,&d)) {RecordError(result,GetLastError());continue;}
-        if(remove){RemoveMirrorIdentity(set.value,d);continue;}
-        if(!capabilities || !(Policy::SupportedControllers(*capabilities)&IC_CONTROLLER_XUSB)){++result.skipped;continue;}
-        Policy::NativeNode hid,xusb;
-        if(!MirrorParents(set.value,d,id,hid,xusb)){++result.skipped;continue;}
-        if(!Policy::XusbProfileAvailable(xusb,*capabilities)){++result.skipped;continue;}
-        candidates.push_back({id,hid.instance,xusb.instance});
-    } catch(const std::system_error& e){RecordError(result,static_cast<DWORD>(e.code().value()));}
-    // Refuse every candidate when a parent has more than one mirror, instead of
-    // silently selecting whichever instance SetupAPI enumerated first.
-    for(const auto& candidate:candidates)try {
-        const auto count=std::count_if(candidates.begin(),candidates.end(),[&](const auto& c){return !_wcsicmp(c.xusb.c_str(),candidate.xusb.c_str());});
-        if(count!=1){++result.skipped;RecordError(result,ERROR_NOT_SUPPORTED);continue;}
-        DeviceSet set{SetupDiCreateDeviceInfoList(nullptr,nullptr)};SP_DEVINFO_DATA d{};d.cbSize=sizeof(d);
-        if(set.value==INVALID_HANDLE_VALUE || !SetupDiOpenDeviceInfoW(set.value,candidate.id.c_str(),nullptr,0,&d)) {RecordError(result,GetLastError());continue;}
-        Policy::NativeNode hid,xusb;
-        if(!MirrorParents(set.value,d,candidate.id,hid,xusb) || _wcsicmp(hid.instance.c_str(),candidate.hid.c_str()) || _wcsicmp(xusb.instance.c_str(),candidate.xusb.c_str())) {RecordError(result,ERROR_DEVICE_NOT_CONNECTED);continue;}
-        if(Policy::Has(FilterNames(MultiProperty(set.value,d,SPDRP_LOWERFILTERS)),L"Interceptor")){RecordError(result,ERROR_INVALID_DATA);continue;}
+        if(set.value==INVALID_HANDLE_VALUE || !SetupDiOpenDeviceInfoW(set.value,id.c_str(),nullptr,0,&d)){RecordError(result,GetLastError());continue;}
         MirrorRegistry key{SetupDiOpenDevRegKey(set.value,&d,DICS_FLAG_GLOBAL,0,DIREG_DEV,KEY_QUERY_VALUE|KEY_SET_VALUE)};
-        if(key.value==INVALID_HANDLE_VALUE)throw std::system_error(GetLastError(),std::system_category(),"Open XUSB mirror identity key");
-        bool changed=SetMirrorIdentity(key.value,IC_XUSB_MIRROR_HID_PARENT_VALUE,candidate.hid);
-        changed=SetMirrorIdentity(key.value,IC_XUSB_MIRROR_PARENT_VALUE,candidate.xusb)||changed;
-        const auto original=FilterNames(MultiProperty(set.value,d,SPDRP_UPPERFILTERS));
-        const auto updated=Policy::Filters(original,IC_CONTROLLER_XUSB,false);
-        if(updated!=original){WriteNativeFilters(set.value,d,SPDRP_UPPERFILTERS,updated);changed=true;}
-        if(changed){++result.associated;result.reboot_required=true;}
-        else {
-            ++result.already_associated;CheckStarted(d,result);
-            const GUID guid=IC_XUSB_MIRROR_INTERFACE_GUID;if(!ActiveControllerFilter(candidate.id,guid))result.reboot_required=true;
+        if(key.value==INVALID_HANDLE_VALUE){const auto error=GetLastError();if(error==ERROR_FILE_NOT_FOUND||error==ERROR_INVALID_DATA)continue;throw std::system_error(error,std::system_category(),"Open legacy XUSB mirror key");}
+        bool marked=false;
+        for(const auto* name:{IC_XUSB_MIRROR_HID_PARENT_VALUE,IC_XUSB_MIRROR_PARENT_VALUE}) {
+            const auto status=RegQueryValueExW(key.value,name,nullptr,nullptr,nullptr,nullptr);
+            if(status==ERROR_SUCCESS||status==ERROR_MORE_DATA)marked=true;
+            else if(status!=ERROR_FILE_NOT_FOUND)throw std::system_error(status,std::system_category(),"Read legacy XUSB mirror marker");
         }
-    } catch(const std::system_error& e){RecordError(result,static_cast<DWORD>(e.code().value()));}
+        const auto upper=FilterNames(MultiProperty(set.value,d,SPDRP_UPPERFILTERS));
+        const auto lower=FilterNames(MultiProperty(set.value,d,SPDRP_LOWERFILTERS));
+        if(!marked && ((!Policy::Has(upper,IC_SDK_SERVICE)&&!Policy::Has(lower,IC_SDK_SERVICE)) ||
+           Policy::Has(upper,L"xinputhid")))continue;
+        ULONG state=0,problem=0;const bool started=CM_Get_DevNode_Status(&state,&problem,d.DevInst,0)==CR_SUCCESS&&(state&DN_STARTED);
+        bool changed=false;
+        for(const auto property:{SPDRP_UPPERFILTERS,SPDRP_LOWERFILTERS}) {
+            const auto& original=property==SPDRP_UPPERFILTERS?upper:lower;
+            const auto cleaned=Policy::Filters(original,0,true);
+            if(cleaned!=original){WriteNativeFilters(set.value,d,property,cleaned);changed=true;result.reboot_required|=started;}
+        }
+        changed=RemoveMirrorIdentity(key.value,result,started)||changed;
+        if(changed)++result.associated;
+    }catch(const std::system_error& error){RecordError(result,static_cast<DWORD>(error.code().value()),error.what(),id);}
+}
+void CleanupLegacyXusbClassFilters(Init_Result& result) {
+    // Historical laboratory/legacy XNA class placement is no longer a capture
+    // contract. Remove only this service from this exact class, preserving all
+    // other products and the original order. Never create a new class filter.
+    const GUID xna={0xd61ca365,0x5af4,0x4486,{0x99,0x8b,0x9d,0xb4,0x73,0x4c,0x6c,0xa3}};
+    const HKEY existing=SetupDiOpenClassRegKeyExW(&xna,KEY_QUERY_VALUE,DIOCR_INSTALLER,nullptr,nullptr);
+    if(existing==INVALID_HANDLE_VALUE){const auto error=GetLastError();if(error==ERROR_FILE_NOT_FOUND||error==ERROR_PATH_NOT_FOUND||error==ERROR_INVALID_CLASS)return;RecordError(result,error);return;}
+    RegCloseKey(existing);
+    for(const auto property:{SPCRP_UPPERFILTERS,SPCRP_LOWERFILTERS})try {
+        const auto original=NativeClassFilters(xna,property);
+        const auto cleaned=Policy::Filters(original,0,true);
+        if(cleaned==original)continue;
+        std::vector<wchar_t> data;
+        for(const auto& name:cleaned)data.insert(data.end(),name.c_str(),name.c_str()+name.size()+1);
+        data.push_back(0);if(data.size()==1)data.push_back(0);
+        if(!SetupDiSetClassRegistryPropertyW(&xna,property,cleaned.empty()?nullptr:reinterpret_cast<const BYTE*>(data.data()),cleaned.empty()?0:static_cast<DWORD>(data.size()*sizeof(wchar_t)),nullptr,nullptr))
+            throw std::system_error(GetLastError(),std::system_category(),"Remove legacy XUSB class filter");
+        ++result.associated;result.reboot_required=true;
+    }catch(const std::system_error& error){RecordError(result,static_cast<DWORD>(error.code().value()),error.what(),L"Setup class {D61CA365-5AF4-4486-998B-9DB4734C6CA3}");}
+}
+void CleanupLegacyXusb(Init_Result& result) {
+    CleanupLegacyXusbClassFilters(result);CleanupLegacyXusbMirrors(result);
 }
 }
 
 static Init_Result Initialize() {
     static std::mutex mutex;std::lock_guard<std::mutex> guard(mutex);
     Init_Result result;
-    if(!IsAdministrator()) {result.error=ERROR_ACCESS_DENIED;return result;}
+    if(!IsAdministrator()) {RecordError(result,ERROR_ACCESS_DENIED,"Initialization requires administrator rights");return result;}
     MutexHandle interprocess{CreateMutexW(nullptr,FALSE,L"Global\\Interceptor.InitAllDevices"),false};
-    if(!interprocess.value) {result.error=GetLastError();return result;}
+    if(!interprocess.value) {RecordError(result,GetLastError(),"Create initialization mutex");return result;}
     const DWORD wait=WaitForSingleObject(interprocess.value,30000);
-    if(wait!=WAIT_OBJECT_0 && wait!=WAIT_ABANDONED) {result.error=wait==WAIT_TIMEOUT?ERROR_BUSY:GetLastError();return result;}
+    if(wait!=WAIT_OBJECT_0 && wait!=WAIT_ABANDONED) {RecordError(result,wait==WAIT_TIMEOUT?ERROR_BUSY:GetLastError(),"Wait for another initialization to finish");return result;}
     interprocess.owned=true;
     result.error=PendingRestart(result.reboot_required);
-    if(result.error)return result;
+    if(result.error) {result.error_detail="Read pending Windows restart state";return result;}
     if(result.reboot_required)return result;
     // Snapshot instance IDs before changing stacks; updating one device can
     // invalidate an ongoing enumeration. Reopen and recheck each instance.
+#if IC_PRODUCT_HAS_KEYBOARD_MOUSE
     struct Target {std::wstring id;bool mouse;};std::vector<Target> targets;
     const GUID* classes[]={&GUID_DEVCLASS_KEYBOARD,&GUID_DEVCLASS_MOUSE};
     for(unsigned kind=0;kind<2;++kind) {
@@ -2315,8 +2393,10 @@ static Init_Result Initialize() {
         SP_DEVINFO_DATA device{};device.cbSize=sizeof(device);
         if(!SetupDiOpenDeviceInfoW(devices.value,target.id.c_str(),nullptr,0,&device)) {RecordError(result,GetLastError());continue;}
         try {Associate(devices.value,device,target.mouse,result);}
-        catch(const std::system_error& e) {RecordError(result,static_cast<DWORD>(e.code().value()));}
+        catch(const std::system_error& e) {RecordError(result,static_cast<DWORD>(e.code().value()),e.what(),target.id);}
     }
+    #endif
+#if IC_PRODUCT_HAS_CONTROLLERS
     if(!result.error && !result.reboot_required) {
         // Never attach the HID filter when an older keyboard-only driver is loaded.
         try {
@@ -2328,18 +2408,19 @@ static Init_Result Initialize() {
                 // Missing endpoint permits no native association whatsoever.
                 if(e.code().value()!=ERROR_INVALID_FUNCTION && e.code().value()!=ERROR_NOT_SUPPORTED)throw;
             }
-            AssociateControllers(result,false);
+            if(available&&Policy::UsbXusbBackend(capabilities))CleanupLegacyXusb(result);
+            if(!result.error)AssociateControllers(result,false);
             if(!result.error)AssociateNativeControllers(result,available?&capabilities:nullptr,false);
-            if(!result.error)AssociateXusbMirrors(result,available?&capabilities:nullptr,false);
         }
-        catch(const std::system_error& e) {RecordError(result,static_cast<DWORD>(e.code().value()));}
+        catch(const std::system_error& e) {RecordError(result,static_cast<DWORD>(e.code().value()),e.what());}
     }
+    #endif
     if(result.reboot_required) {
-        const DWORD error=RememberRestart();if(error)RecordError(result,error);
+        const DWORD error=RememberRestart();if(error)RecordError(result,error,"Record required Windows restart");
     }
     if(!result.error && !result.reboot_required) {
-        try {if(Get_Status().version!=IC_VERSION)RecordError(result,ERROR_REVISION_MISMATCH);}
-        catch(const std::system_error& e) {RecordError(result,static_cast<DWORD>(e.code().value()));}
+        try {if(Get_Status().version!=IC_VERSION)RecordError(result,ERROR_REVISION_MISMATCH,"Verify driver ABI after association");}
+        catch(const std::system_error& e) {RecordError(result,static_cast<DWORD>(e.code().value()),e.what());}
     }
     result.ready=!result.error && !result.reboot_required;
     return result;
@@ -2347,8 +2428,11 @@ static Init_Result Initialize() {
 // Installer helper. Caller must be elevated and serialize setup operations.
 static Init_Result RestoreFilters() {
     Init_Result result;
-    if(!IsAdministrator()) {result.error=ERROR_ACCESS_DENIED;return result;}
-    AssociateControllers(result,true);AssociateNativeControllers(result,nullptr,true);AssociateXusbMirrors(result,nullptr,true);return result;
+    if(!IsAdministrator()) {RecordError(result,ERROR_ACCESS_DENIED,"Restoration requires administrator rights");return result;}
+#if IC_PRODUCT_HAS_CONTROLLERS
+    AssociateControllers(result,true);AssociateNativeControllers(result,nullptr,true);CleanupLegacyXusb(result);
+#endif
+    return result;
 }
 
 }

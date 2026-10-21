@@ -1,0 +1,9 @@
+{
+  "Schema": 1,
+  "Product": "Interceptor",
+  "DriverVersion": "1.4.17.0",
+  "SdkVersion": "1.4.17.0",
+  "SigningPending": true,
+  "InstalledFamilies": ["Keyboard", "Mouse", "HID", "XUSB", "XInputHID", "GIP"],
+  "Note": "Candidate source. Installer packaging is blocked until the matching Microsoft-signed 1.4.17.0 package is imported. Do not combine candidate clients with an older driver."
+}

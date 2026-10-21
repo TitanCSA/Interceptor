@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -25,12 +25,12 @@ namespace InterceptorSetup {
   }
   public static string SigningMode() {
    using(var stream=Resource("Payload.zip"))using(var zip=new ZipArchive(stream,ZipArchiveMode.Read)){
-    var entry=zip.GetEntry("Payload/Signing.json");if(entry==null)return "Test";
+    var entry=zip.GetEntry("Payload/Signing.json");if(entry==null)throw new InvalidDataException("Package signing policy is missing.");
     if(entry.Length>4096)throw new InvalidDataException("The signing policy is too large.");
     using(var input=entry.Open())using(var reader=new StreamReader(input,Encoding.UTF8)){
      var policy=Json.Deserialize<Dictionary<string,object>>(reader.ReadToEnd());
      if(policy==null||!policy.ContainsKey("Schema")||Convert.ToInt32(policy["Schema"])!=1||!policy.ContainsKey("Mode"))throw new InvalidDataException("Invalid signing policy.");
-     string mode=Convert.ToString(policy["Mode"]);if(mode!="Test"&&mode!="Microsoft")throw new InvalidDataException("Unknown signing mode.");return mode;
+     string mode=Convert.ToString(policy["Mode"]);if(mode!="Development"&&mode!="Microsoft")throw new InvalidDataException("Unknown signing mode.");return mode;
     }
    }
   }
@@ -63,6 +63,7 @@ namespace InterceptorSetup {
   }
   static int ExecuteLocked(string action,Action<string> log,Action<string> phase) {
    if(!new WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator))throw new UnauthorizedAccessException("Administrator rights are required.");
+   if(action!="Uninstall"&&SigningMode()!="Microsoft")throw new InvalidOperationException("Microsoft signing is pending for this driver. No Windows setting was changed.");
    if(action!="Install"&&action!="Uninstall"&&action!="Associate"&&action!="CompleteAssociation")throw new ArgumentException("Unknown action.");string root=null;
    try {phase("Checking and extracting the package…");root=Extract();log(Verify());phase(action=="Install"?"Installing and associating devices…":action=="Uninstall"?"Restoring Windows drivers and uninstalling…":"Associating connected devices…");
     var start=new ProcessStartInfo(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System),@"WindowsPowerShell\v1.0\powershell.exe"),"-NoProfile -NonInteractive -ExecutionPolicy Bypass -File \""+Path.Combine(root,action+".ps1")+"\""){UseShellExecute=false,CreateNoWindow=true,RedirectStandardOutput=true,RedirectStandardError=true,WorkingDirectory=root};
@@ -74,11 +75,16 @@ namespace InterceptorSetup {
    string path=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),@"Interceptor\state.json");
    if(!File.Exists(path))return false;
    var state=Json.Deserialize<Dictionary<string,object>>(File.ReadAllText(path,Encoding.UTF8));
+   return PendingControllerAssociation(state,Convert.ToString(Manifest()["Payload/Interceptor.sys"]));
+  }
+  internal static bool PendingControllerAssociation(Dictionary<string,object> state,string expectedHash) {
    object value;if(state==null||!state.TryGetValue("Schema",out value)||Convert.ToInt32(value)!=1)return false;
    if(state.TryGetValue("PendingUninstall",out value)&&Convert.ToBoolean(value))return false;
    if(!state.TryGetValue("ControllerAssociation",out value))return false;
-   var pending=value as Dictionary<string,object>;object enabled,hash;
-   return pending!=null&&pending.TryGetValue("Pending",out enabled)&&Convert.ToBoolean(enabled)&&pending.TryGetValue("DriverSHA256",out hash)&&string.Equals(Convert.ToString(hash),Convert.ToString(Manifest()["Payload/Interceptor.sys"]),StringComparison.OrdinalIgnoreCase);
+   var pending=value as Dictionary<string,object>;object enabled,hash,verified;
+   if(pending==null||!pending.TryGetValue("DriverSHA256",out hash)||!string.Equals(Convert.ToString(hash),expectedHash,StringComparison.OrdinalIgnoreCase))return false;
+   return (pending.TryGetValue("Pending",out enabled)&&Convert.ToBoolean(enabled))||
+     !pending.TryGetValue("UsbMigrationVerified",out verified)||!Convert.ToBoolean(verified);
   }
  }
 }

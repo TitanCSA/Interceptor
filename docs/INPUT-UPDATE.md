@@ -1,44 +1,54 @@
-# Input update 1.4.16.0
+# Input update 1.4.17.0 — signing pending
 
-The complete signed release includes the GUI and console installers, viewer,
-console examples, source SDK and checksums in one place. Both installers bundle
-Microsoft-signed kernel **1.4.16.0**. Install / reinstall, then use Windows
-**Restart** if requested. The earlier client-only release bundled kernel 1.4.15.0.
+This candidate synchronizes the combined Interceptor product with the current
+Interceptor Gamepad & Controller fixes, retaining keyboard and mouse support.
 
-The SDK keeps open HID, XInputHID and XUSB HID-view source files when their
-SOURCE query temporarily returns Windows error 21. The all-family context
-reserves the streams and the driver decides when each source can actually join.
-Other ready sources continue working. No source polling, capture restart or
-fake input is introduced. Native-parent bootstrap failures, unsupported
-mandatory mirrors, access errors and trial expiry still retain their cause.
+- XUSB input is intercepted at the USB layer beneath the native Windows driver.
+  Windows retains its native controller views; a replacement HID mirror is not
+  needed. Association migration removes only this product's obsolete bindings.
+- HID polling reads the current physical state, including valid replies whose
+  completion reports a zero Information count. Capture, reset and device removal
+  preserve ownership and bounded request lifetimes.
+- GIP keeps native protocol, Guide and fragmented metadata traffic unchanged
+  when no capture owns the source. Closing an unused session does not alter it.
+- Passive controller IN/OUT telemetry uses a separate bounded observer path.
+  Observation alone does not claim input or start the two-hour capture allowance.
+- The SDK keeps preparing sources available for later activation. Idle-start,
+  cancellation, hotplug and detailed viewer failure reporting use the current
+  controller implementation across supported families.
+- Installers handle absent class-filter properties, product-owned migrations and
+  an existing classless control endpoint. The classic keyboard/mouse mapper setup
+  and recovery binaries remain included.
 
-The viewer now preserves the failed operation, actual family/device/sequence
-when known, Win32 and reset codes, forwarding totals and partial sends, with
-a copyable diagnostic. Both 33 ms publication/display waits are removed.
-Latest snapshots are displayed on available WPF frames with one pending UI
-notification. There is no fixed application FPS cap or idle rendering loop.
-Keyboard and mouse remain available alongside all four controller families.
+The two-hour per-boot demo limit is unchanged. The public library remains two
+files, with automatic capture ownership and source tokens.
 
-The additional XUSB kernel fixes keep pending parents transparent until their
-mandatory mirror is ready, initialize cached physical state on the persistent
-System reader and validate its ordinary input wait before reporting readiness.
-These changes are included in signed kernel 1.4.16.0; replacing user-mode files
-cannot apply them to an older driver. No unsigned SYS or submission CAB is public.
+## Validation
 
-Offline validation: actual native source opening and context-attempt fixtures
-pass 90,112 checks across 10,000 lifecycles in Release and AddressSanitizer;
-the previous implementation is rejected. Actual viewer transfer/diagnostic
-fixtures pass 120,291 checks in both builds. The managed frame scheduler passes
-60,019 checks, and all six families render offscreen. Kernel pending-source
-and bootstrap fixtures pass 180,139 and 760,764 checks, respectively, including
-10,000 cycles each in Release and AddressSanitizer. The production kernel
-compiles with warnings as errors and passes static analysis; the CAB passes
-local INF/catalog/symbol/content checks. These are software checks, not live
-certification of every controller, end-to-end latency or display FPS.
+Local tests for this candidate passed:
 
-Signed package verification confirms that all three returned INF files match
-the submission and all three signed SYS images contain the submitted executable
-body. Twelve Windows kernel-policy signature/catalog checks pass, including the
-shared SYS against each catalog. Both installer EXEs embed the same verified
-20-file runtime package and pass their offline integrity/self-tests. The demo
-allowance remains two hours per Windows boot.
+| Check | Scope |
+| --- | --- |
+| WDK Release and static-analysis builds | Combined kernel, all six input families |
+| SDK Release and AddressSanitizer | 1,191,185 checks in each run; 100,000 idle receives and 10,000 pending-source lifecycles |
+| Product policy | 105,858 checks covering family masks, ownership, hotplug and demo expiry |
+| Transport and lifecycle fixtures | XUSB USB, HID polling/ownership and GIP passthrough; regression mutations rejected |
+| Keyboard and mouse | Production mapper lifetimes, mouse report modes and input-buffer ownership |
+| Passive monitor | AddressSanitizer and concurrent subscription/drain/close tests |
+| User-mode clients | All eight console examples, viewer self-tests and diagnostic-worker self-test |
+| Installer sources | GUI and console compiled without embedding an obsolete driver |
+| Submission package | Three INFs, catalogs, symbols and extracted CAB hashes validated locally |
+
+Fixtures model OS boundaries and do not replace physical-device testing. No host
+driver was installed or opened in this campaign. No physical latency measurement
+or universal joy.cpl/browser/game compatibility claim is made for this candidate.
+
+## Signing and installation
+
+The matching **1.4.17.0 Microsoft signature is pending**. Candidate SDK/example
+downloads are not a complete installable release and require that driver.
+The installers will be rebuilt from these sources after the signed return has
+been verified against the submission. Install/reinstall and use Windows Restart
+if requested; replacing only the viewer cannot update the installed kernel.
+
+See [synchronization and release contents](SYNCHRONIZATION.md).

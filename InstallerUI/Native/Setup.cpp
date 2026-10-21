@@ -9,6 +9,7 @@ namespace Interceptor {Init_Result Restore_Controller_Hid_Filters();}
 #include <vector>
 #include <set>
 #include <iostream>
+#include <iomanip>
 #include <system_error>
 #include "SetupBinding.h"
 
@@ -33,7 +34,7 @@ constexpr wchar_t ControlInstance[]=L"ROOT\\InterceptorControl\\0000";
 bool IsControl(HDEVINFO set,SP_DEVINFO_DATA& d) {
     wchar_t id[MAX_DEVICE_ID_LEN]{},hardware[4096]{};DWORD type=0;
     Check(SetupDiGetDeviceInstanceIdW(set,&d,id,MAX_DEVICE_ID_LEN,nullptr),"Read control instance");
-    if(_wcsnicmp(id,L"ROOT\\InterceptorControl\\",24))return false;
+    if(_wcsnicmp(id,L"ROOT\\InterceptorControl\\",_countof(ControlHardware)))return false;
     if(!SetupDiGetDeviceRegistryPropertyW(set,&d,SPDRP_HARDWAREID,&type,reinterpret_cast<BYTE*>(hardware),sizeof(hardware)-2*sizeof(wchar_t),nullptr)) {
         if(GetLastError()==ERROR_INVALID_DATA)return false;Check(FALSE,"Read control hardware ID");
     }
@@ -51,7 +52,9 @@ bool RemoveControlDevice(HDEVINFO set,SP_DEVINFO_DATA& d) {
     return (params.Flags&(DI_NEEDREBOOT|DI_NEEDRESTART))!=0;
 }
 bool ConfigureControl(const wchar_t* inf,bool remove) {
-    Devices scan{SetupDiGetClassDevsW(&GUID_DEVCLASS_SYSTEM,nullptr,nullptr,0)};
+    // Removing a package can leave its root instance without a setup class.
+    // Include those instances so retrying installation reuses the stable ID.
+    Devices scan{SetupDiGetClassDevsW(nullptr,nullptr,nullptr,DIGCF_ALLCLASSES)};
     Check(scan.value!=INVALID_HANDLE_VALUE,"Enumerate root control devices");
     std::vector<std::wstring> ids;
     for(DWORD index=0;;++index) {
@@ -60,7 +63,8 @@ bool ConfigureControl(const wchar_t* inf,bool remove) {
         if(!IsControl(scan.value,d))continue;
         wchar_t id[MAX_DEVICE_ID_LEN]{};Check(SetupDiGetDeviceInstanceIdW(scan.value,&d,id,MAX_DEVICE_ID_LEN,nullptr),"Read root control ID");ids.emplace_back(id);
     }
-    Devices set{SetupDiCreateDeviceInfoList(&GUID_DEVCLASS_SYSTEM,nullptr)};
+    // A class-specific set cannot open an unbound/classless root instance.
+    Devices set{SetupDiCreateDeviceInfoList(nullptr,nullptr)};
     Check(set.value!=INVALID_HANDLE_VALUE,"Create root control information set");
     bool reboot=false;
     if(remove) {
@@ -84,7 +88,12 @@ bool ConfigureControl(const wchar_t* inf,bool remove) {
         Check(UpdateDriverForPlugAndPlayDevicesW(nullptr,ControlHardware,inf,INSTALLFLAG_FORCE|INSTALLFLAG_NONINTERACTIVE,&needsRestart),"Bind root control driver");
         reboot=needsRestart!=FALSE;
     } catch(...) {
-        if(registered)try {RemoveControlDevice(set.value,created);}catch(const std::exception& e){std::cerr<<"Root rollback failed: "<<e.what()<<'\n';}
+        if(registered)try {RemoveControlDevice(set.value,created);}
+        catch(const std::system_error& e){
+            const auto code=static_cast<unsigned long>(e.code().value());
+            std::cerr<<"Root rollback failed: "<<e.what()<<" [Win32 "<<std::dec<<code
+                <<" / 0x"<<std::hex<<std::uppercase<<std::setw(8)<<std::setfill('0')<<code<<std::dec<<"]\n";
+        }catch(const std::exception& e){std::cerr<<"Root rollback failed: "<<e.what()<<'\n';}
         throw;
     }
     std::cout<<"Root control configured; reboot="<<reboot<<'\n';return reboot;

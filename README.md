@@ -17,16 +17,19 @@ for the required connection and profile.
 · [Installation](docs/INSTALLATION.md) · [C++ API](docs/API.md)
 · [Examples](ExamplesConsole/README.md)
 
-**1.4.16.0 signed release:** complete installer, viewer, console examples and SDK
-downloads are included in one release. The SDK retains temporarily unready
-HID/XInputHID/XUSB collection files, and the viewer keeps exact failure details
-with a copy button. Both former 33 ms display waits are removed; forwarding
-still precedes display decoding. Keyboard and mouse remain supported.
+**1.4.17.0 candidate — Microsoft signing pending.** This branch brings the
+controller fixes from Interceptor Gamepad & Controller into the combined driver,
+preserving keyboard and mouse support. It includes native XUSB USB interception,
+HID polling/current-state and GIP passthrough fixes, passive controller IN/OUT
+telemetry, and corrected device-association migration. See the
+[changes and validation scope](docs/INPUT-UPDATE.md).
 
-Both installers now contain **Microsoft-signed driver 1.4.16.0**, including the
-XUSB pending-membership and idle-start fixes. Install / reinstall to update the
-kernel, then use Windows **Restart** if requested. Updating the viewer EXE alone
-does not update an installed driver.
+The candidate SDK and examples require the matching **1.4.17.0 driver**. Complete
+installers will be published after its Microsoft-signed return is verified.
+The embedded **1.4.16.0** payload is retained as the previous signed baseline;
+installer builds reject it for this candidate. For an installable package, use
+the [current stable release](https://github.com/TitanCSA/Interceptor/releases/latest).
+Updating the viewer EXE alone does not update an installed driver.
 
 | Setup and diagnostics | Controller viewer |
 | --- | --- |
@@ -93,8 +96,8 @@ example EXEs.
 | `InterceptorSetup.exe` | Standalone GUI installer and diagnostics |
 | `InterceptorSetupConsole.exe` | Standalone `/install` and `/uninstall` installer |
 | `InterceptorExampleUI.exe` | Standalone input viewer |
-| `Interceptor-Examples-1.4.16.0.zip` | Eight console examples and the viewer |
-| `Interceptor-SDK-1.4.16.0.zip` | C++ SDK and example source |
+| `Interceptor-Examples-<version>.zip` | Eight console examples and the viewer |
+| `Interceptor-SDK-<version>.zip` | The two library files, example source and build instructions |
 
 ## Source and build
 
@@ -109,9 +112,11 @@ licenses/          Driver binary terms and attribution
 ```
 
 With Visual Studio 2022 C++ and the Windows SDK installed, run
-`powershell -ExecutionPolicy Bypass -File .\Build.ps1` to build everything.
+`powershell -ExecutionPolicy Bypass -File .\Build.ps1` to build the user-mode tools.
 Each installer can also be built alone with `InstallerUI/Build.ps1` or
-`InstallerConsole/Build.ps1`. Builds reuse the pre-signed demo driver.
+`InstallerConsole/Build.ps1`. While signing is pending, the main build compiles the
+SDK and examples and skips installer EXEs. Explicit installer builds require the
+matching Microsoft-signed payload; they never repackage an older driver as new.
 **Kernel driver source and
 private signing material are not included.** User-mode source is [MIT](LICENSE);
 the driver binary has [separate terms](licenses/BINARY-LICENSE.txt).

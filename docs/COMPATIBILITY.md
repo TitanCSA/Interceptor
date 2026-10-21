@@ -11,7 +11,7 @@ being implemented does not mean every product, firmware or transport is supporte
 | Keyboard | Associated HID keyboard mapper | Requires the installed mapper; scan codes are not layout-independent text |
 | Mouse | Associated HID mouse mapper | Relative/absolute movement, buttons and wheels depend on the device reports |
 | HID controller | Descriptor-driven game, joystick, simulation, sport and related controller collections | Declared fields can be decoded; arbitrary vendor protocols and malformed descriptors cannot be guessed |
-| XUSB / XInput | Compatible wired, single-slot XUSB parents with the validated Windows protocol and HID mirror | Not every device accessible through the Windows XInput API uses this supported transport |
+| XUSB / XInput | Compatible wired, single-slot USB XUSB source, intercepted below the native Windows XUSB driver | Not every device accessible through the Windows XInput API uses this supported transport; no replacement HID mirror is created |
 | XInputHID | Validated HID source beneath Microsoft's XInputHID translator | Native Xbox/GIP child views are not separate XInputHID sources |
 | GIP USB | Compatible USB gamepad protocol with validated metadata and standard gamepad prefix | Complete input reports up to the supported 64-byte bound; unknown extension meanings remain raw |
 
@@ -35,7 +35,7 @@ compatible descriptor and protocol profile for the selected connection.
 | --- | --- |
 | PlayStation 4 **DualShock 4 / DS4** | USB HID gamepad collection |
 | PlayStation 5 **DualSense** | USB HID gamepad collection |
-| **Xbox 360** | Wired USB XInput/XUSB, compatible single-slot parent and validated HID mirror |
+| **Xbox 360** | Wired USB XInput/XUSB, compatible single-slot parent and validated USB input profile |
 | **Xbox One** | Compatible USB GIP gamepad profile |
 | **Xbox Series X\|S** | Compatible USB GIP gamepad profile |
 
@@ -57,6 +57,12 @@ missing. Read the device details and diagnostic findings instead of inferring
 compatibility from a row count or a single empty input batch.
 
 ## Validation scope
+
+The **1.4.17.0 candidate** passes local kernel builds, static analysis, transport
+and lifecycle fixtures, keyboard/mouse regression tests, and SDK tests in Release
+and with AddressSanitizer. Its Microsoft signature and physical-device validation
+are pending. See [the current validation record](INPUT-UPDATE.md). These local
+tests do not establish compatibility with every controller, application or game.
 
 The 1.4.15 development campaign exercised six-family capture, modification,
 forwarding, malformed requests, cancellation and contention in dedicated Windows

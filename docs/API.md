@@ -6,6 +6,11 @@ The library targets Windows x64 and C++17. It consists of exactly two files:
 compile the source once with your application. Public functions are in
 `namespace Interceptor`. Install the signed kernel driver before capturing input.
 
+The **1.4.17.0 candidate** SDK requires the matching 1.4.17.0 driver. Its Microsoft
+signature is pending; do not combine this SDK or its viewer with an older release.
+The public API remains automatic: initialization, session ownership, source tokens
+and type-specific forwarding do not require user-managed contexts.
+
 ## Add the two files to your application
 
 Copy both files into your project and add `Interceptor.cpp` to its C++ sources.

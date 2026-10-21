@@ -4,6 +4,7 @@ param(
 )
 $ErrorActionPreference='Stop'
 $root=$PSScriptRoot
+$releaseState=Get-Content -LiteralPath (Join-Path $root 'docs\release-state.json') -Raw|ConvertFrom-Json
 if(!$BuildDirectory){$BuildDirectory=Join-Path $root 'obj\PublicBuild'}
 $BuildDirectory=[IO.Path]::GetFullPath($BuildDirectory)
 if(![Environment]::Is64BitProcess){throw 'Run 64-bit Windows PowerShell.'}
@@ -38,7 +39,11 @@ if($Target -in @('All','Native','InstallerUI')){
 if($Target -in @('All','ExamplesUI')){
     & (Join-Path $root 'ExamplesUI\Build.ps1') -BridgePath (Join-Path $native 'InterceptorViewerBridge.dll') -OutputDirectory (Join-Path $root 'bin\ExampleUI') -IntermediateDirectory (Join-Path $BuildDirectory 'ExamplesUI')
 }
-if($Target -in @('All','InstallerUI')){& (Join-Path $root 'InstallerUI\Build.ps1') -SkipNative -BuildDirectory $BuildDirectory}
-if($Target -in @('All','InstallerConsole')){& (Join-Path $root 'InstallerConsole\Build.ps1') -SkipNative -BuildDirectory $BuildDirectory}
+if($Target -eq 'All' -and $releaseState.SigningPending){
+    Write-Host ('Installer EXEs are pending the matching Microsoft-signed '+$releaseState.DriverVersion+' package. SDK and examples built; old payloads were not repackaged.')
+}else{
+    if($Target -in @('All','InstallerUI')){& (Join-Path $root 'InstallerUI\Build.ps1') -SkipNative -BuildDirectory $BuildDirectory}
+    if($Target -in @('All','InstallerConsole')){& (Join-Path $root 'InstallerConsole\Build.ps1') -SkipNative -BuildDirectory $BuildDirectory}
+}
 Write-Host "Build completed: $Target. Driver and recovery release binaries were not rebuilt."
 Write-Host 'All builds and self-tests were user-mode only. No driver installed and no Windows setting changed.'

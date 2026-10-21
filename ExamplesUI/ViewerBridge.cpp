@@ -254,7 +254,8 @@ void Run(uint8_t mask, uint8_t controllers) noexcept {
         }
         if (init.error || !init.ready) {
             const auto error = init.error ? init.error : ERROR_NOT_READY;
-            RecordFailure(s, error, 0, "Init_AllDevices did not complete successfully");
+            const auto detail=init.error_detail.empty()?std::string("Init_AllDevices did not complete successfully"):init.error_detail;
+            RecordFailure(s, error, 0, detail.c_str());
             Status(ViewerError, error);
             return;
         }
