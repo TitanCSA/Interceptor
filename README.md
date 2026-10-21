@@ -1,130 +1,119 @@
-# Interceptor — Windows Kernel Filter Driver for Keyboard, Mouse & Gamepad
+# Interceptor - Windows Kernel Filter Driver for Keyboard, Mouse and Gamepad
 
-**Microsoft-signed Windows kernel-mode input filter driver for keyboard, mouse
-and HID / XInput / GIP game controllers, with a C++17 SDK.**
+Capture physical input, identify its source, modify or block it, and forward it
+to Windows with a **Microsoft-signed kernel filter driver** and a **two-file
+C++17 SDK**. Supports keyboard, mouse and compatible HID, XInput/XUSB,
+XInputHID and GIP controllers on **Windows 10 1709+ / Windows 11 x64**.
 
-Intercept physical input, identify its source, change or block it, then forward
-it to Windows through one API. Windows 10/11 **x64**; administrator rights required
-for installation and capture. See the [supported profiles](docs/COMPATIBILITY.md)
-for device and connection limits.
+**[Download](https://github.com/TitanCSA/Interceptor/releases/latest)** |
+[Installation](docs/INSTALLATION.md) | [C++ API](docs/API.md) |
+[Examples](ExamplesConsole/README.md) | [Compatibility](docs/COMPATIBILITY.md)
 
-USB gamepad families include **DualShock 4 (DS4 / PS4), DualSense (PS5), wired
-Xbox 360, Xbox One and Xbox Series X|S**, using compatible HID, XInput/XUSB or
-GIP input profiles. See the [controller matrix](docs/COMPATIBILITY.md#console-gamepads)
-for the required connection and profile.
-
-**[Download](https://github.com/TitanCSA/Interceptor/releases/latest)**
-· [Installation](docs/INSTALLATION.md) · [C++ API](docs/API.md)
-· [Examples](ExamplesConsole/README.md)
-
-**1.4.17.0 Microsoft-signed release.** This version brings the
-controller fixes from Interceptor Gamepad & Controller into the combined driver,
-preserving keyboard and mouse support. It includes native XUSB USB interception,
-HID polling/current-state and GIP passthrough fixes, passive controller IN/OUT
-telemetry, and corrected device-association migration. See the
-[changes and validation scope](docs/INPUT-UPDATE.md).
-
-Both installers contain the verified **Microsoft-signed 1.4.17.0 driver**. The
-matching SDK, viewer and all eight console examples are included in the same
-[complete release](https://github.com/TitanCSA/Interceptor/releases/latest).
-Install/reinstall and use Windows **Restart** if requested. Updating the viewer
-EXE alone does not update an installed driver.
-
-| Setup and diagnostics | Controller viewer |
+| Setup and diagnostics | Input viewer |
 | --- | --- |
-| ![Interceptor installer dashboard](docs/images/installer.png) | ![Controller viewer with simulated input](docs/images/controllers.png) |
+| ![Installer dashboard](docs/images/installer.png) | ![Viewer with simulated controller input](docs/images/controllers.png) |
 
-The installer is shown before installation; Windows device names follow the OS
-language. The controller image is a simulated preview, not a physical-device test.
+Screenshots illustrate the interface; the controller preview uses simulated input.
 
-## Quick start
+<a id="quick-start"></a>
 
-1. Download and run **InterceptorSetup.exe**, then accept Windows elevation.
-2. Click **Install / reinstall**. If requested, use Windows **Restart**, then
-   reopen the same installer to finish device associations.
-3. Launch **InterceptorExampleUI.exe** and click **Observe** to view and forward
-   inputs. **Stop** ends capture. Close other capture applications first.
-4. Use **Diagnose** for per-device checks and a report you can copy or export.
-   Checks without suitable input activity remain **unverified**.
+## Install and use
 
-The console installer uses the same installation engine:
+1. Download **InterceptorSetup.exe** from this repository's latest release.
+2. Run it, accept the administrator prompt and choose **Install / reinstall**.
+3. If requested, use Windows **Restart**, then reopen setup to finish associations.
+4. Open **InterceptorExampleUI.exe** as administrator and click **Observe** to
+   inspect and forward input. **Stop** releases capture. Run one capture app at a time.
+5. Use **Diagnose** to check installation and export or copy a per-device report.
+
+For command-line installation or removal, use the same release's console installer:
 
 ```powershell
 .\InterceptorSetupConsole.exe /install
 .\InterceptorSetupConsole.exe /uninstall
 ```
 
-Exit code `3010` means restart required; after installing, rerun `/install` after
-that restart. [Installation, diagnostics and recovery](docs/INSTALLATION.md).
+Exit code `3010` requests a restart. After installation, rerun `/install` if setup
+still has pending associations. The GUI also provides **Uninstall**.
+The Microsoft signature covers the driver package; installer and example EXEs
+have their own signature status. [Installation and recovery](docs/INSTALLATION.md).
+
+## How it works
+
+The filter sits in the supported physical device's Windows input stack. Without
+a capture owner, input passes through normally. An application receives input
+batches, changes typed fields or marks events blocked, then sends the batch back
+through the filter. Closing the application releases its capture.
+
+| Family | Input path |
+| --- | --- |
+| Keyboard and mouse | Associated Windows input paths and supported HID mapper collections |
+| HID controller | Descriptor-based axes, triggers, buttons, hats and other declared controls |
+| XInput / XUSB | Compatible wired USB source beneath the native Windows XUSB driver |
+| XInputHID | Supported HID collection beneath the Windows translator |
+| GIP | Compatible USB gamepad protocol, including the standard state and Guide input |
+
+Compatible profiles include **DualShock 4 / DS4 (PS4), DualSense (PS5), wired
+Xbox 360, Xbox One and Xbox Series X|S**. Support depends on connection,
+descriptor and protocol; see the [controller matrix](docs/COMPATIBILITY.md#console-gamepads).
+Setup lists Windows device nodes, so one physical controller can have several rows.
 
 ## C++ SDK
 
-`Get_Input_With_Timeout()` receives a mixed input batch. Modify typed fields or
-mark individual events blocked, then call `Send_Input(inputs)` to forward it.
-The library is just [`Interceptor.h`](Interceptor/Interceptor.h) and
-[`Interceptor.cpp`](Interceptor/Interceptor.cpp): include the header and compile
-the source in your project. No prebuilt Interceptor `.lib` or DLL is required.
-Sessions, send types and sizes are automatic; HID controller state is decoded
-from the device descriptor.
+Add [`Interceptor.h`](Interceptor/Interceptor.h) and
+[`Interceptor.cpp`](Interceptor/Interceptor.cpp) to a Windows x64 C++17 project.
+Include the header and compile the source once. No Interceptor DLL or prebuilt
+LIB is required. Run capture applications as administrator.
 
-Start with the [complete H-to-J example](ExamplesConsole/08_Clavier_Minimal.cpp)
-or the [API guide](docs/API.md). Each console example contains its complete source
-and uses only the two library files. Forward untouched families too: receiving a batch
-consumes its input. Closing the application releases capture; physical
-**Ctrl+Alt+Delete** also revokes captures.
+`Get_Input_With_Timeout()` automatically creates and reuses the capture session.
+It returns a mixed batch; `Send_Input(inputs)` determines the input types,
+destinations and counts. HID state is decoded from the device descriptor.
+Finish and forward each batch before receiving another one, including families
+you do not modify. [API reference](docs/API.md).
+
+<a id="source-and-build"></a>
+
+## Downloads and source
+
+The [latest release](https://github.com/TitanCSA/Interceptor/releases/latest)
+contains both standalone installers, the standalone viewer, an examples ZIP,
+a source SDK ZIP and **SHA256SUMS.txt**. Use matching driver, SDK and examples
+from the same release. Updating the viewer alone does not update the driver.
+
+```text
+Interceptor/       Interceptor.h and Interceptor.cpp
+ExamplesConsole/   Eight independent C++ examples
+ExamplesUI/        Graphical input viewer
+InstallerConsole/  Console installer
+InstallerUI/       GUI, shared setup engine and compiled driver/recovery binaries
+docs/              Installation, API, compatibility and screenshots
+licenses/          Driver terms and attribution
+```
+
+With Visual Studio 2022 C++ tools, a Windows SDK and CMake available, run
+`powershell -ExecutionPolicy Bypass -File .\Build.ps1` to build the user-mode tools.
+The signed driver and recovery binaries are supplied; **kernel source is not
+included**. User-mode source is [MIT](LICENSE); the driver has
+[separate terms](licenses/BINARY-LICENSE.txt).
+
+For controller-only capture, use [Interceptor Gamepad & Controller](https://github.com/TitanCSA/Interceptor-Gamepad-Controller).
+For keyboard/mouse-only capture, use [Interceptor Keyboard & Mouse](https://github.com/TitanCSA/Interceptor-Keyboard-Mouse).
+Remove an overlapping combined edition before installing a split edition.
 
 ## Demo edition
 
-**Two hours per Windows boot**, starting with the first successful capture,
-shared across all applications and devices. Time spent asleep counts; closing an
-application or reinstalling does not reset it. Diagnostics that capture input
-can start the allowance. After expiry, capture/injection stop and physical input
-continues normally. Use Windows **Restart** for another allowance; Fast Startup
-shutdown does not reset the kernel boot.
-
-For the **full version without the demo time limit**, DM **`titancsa`** on Discord.
-
-## Downloads
-
-All files and checksums are in [Releases](https://github.com/TitanCSA/Interceptor/releases/latest).
-The driver's Microsoft signature does not automatically sign the installer or
-example EXEs.
-
-| File | Contents |
-| --- | --- |
-| `InterceptorSetup.exe` | Standalone GUI installer and diagnostics |
-| `InterceptorSetupConsole.exe` | Standalone `/install` and `/uninstall` installer |
-| `InterceptorExampleUI.exe` | Standalone input viewer |
-| `Interceptor-Examples-<version>.zip` | Eight console examples and the viewer |
-| `Interceptor-SDK-<version>.zip` | The two library files, example source and build instructions |
-
-## Source and build
-
-```text
-Interceptor/       Standalone two-file C++ library
-ExamplesConsole/   Eight console examples
-ExamplesUI/        Graphical input viewer
-InstallerConsole/  Console installer
-InstallerUI/       GUI installer, shared package engine and recovery binaries
-docs/              API, installation, compatibility and images
-licenses/          Driver binary terms and attribution
-```
-
-With Visual Studio 2022 C++ and the Windows SDK installed, run
-`powershell -ExecutionPolicy Bypass -File .\Build.ps1` to build the user-mode tools.
-Each installer can also be built alone with `InstallerUI/Build.ps1` or
-`InstallerConsole/Build.ps1`. Installer builds verify the matching Microsoft-signed
-payload and compiled recovery binaries; they never repackage an older driver as new.
-**Kernel driver source and
-private signing material are not included.** User-mode source is [MIT](LICENSE);
-the driver binary has [separate terms](licenses/BINARY-LICENSE.txt).
+Capture and injection are available for **two hours per Windows kernel boot**,
+starting with the first successful capture and shared across applications.
+Sleep time counts; closing or reinstalling does not reset the allowance.
+Diagnostics that capture input can start it. At expiry, capture stops and
+physical input passes through normally. Use Windows **Restart** for a new
+allowance; Fast Startup shutdown does not reset the kernel boot.
+For the unrestricted version, DM **`titancsa`** on Discord.
 
 Interceptor independently evolves the input-interception workflow popularized by
-[oblitum's Interception](https://github.com/oblitum/Interception), with its own
+[oblitum/Interception](https://github.com/oblitum/Interception), with its own
 implementation and API. It is not affiliated with oblitum or ABI-compatible with
-the original. See [attribution](licenses/NOTICE). For bug reports, include the
-release, Windows build, VID/PID, connection type and a diagnostic report with
-personal identifiers removed.
+the original. [Attribution](licenses/NOTICE).
 
 ## Minimal example: receive, read, change, forward
 
