@@ -22,8 +22,9 @@ Screenshots illustrate the interface; the controller preview uses simulated inpu
 1. Download **InterceptorSetup.exe** from this repository's latest release.
 2. Run it, accept the administrator prompt and choose **Install / reinstall**.
 3. If requested, use Windows **Restart**, then reopen setup to finish associations.
-4. Open **InterceptorExampleUI.exe** as administrator and click **Observe** to
-   inspect and forward input. **Stop** releases capture. Run one capture app at a time.
+4. Open **InterceptorExampleUI.exe** and accept the administrator prompt.
+   Observation starts automatically. Tabs select the displayed family.
+   **Stop** releases capture. Run one capture app at a time.
 5. Use **Diagnose** to check installation and export or copy a per-device report.
 
 For command-line installation or removal, use the same release's console installer:

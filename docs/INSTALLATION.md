@@ -69,8 +69,9 @@ start the two-hour allowance. Console help and the viewer's offline tests remain
 available without the driver. An installed service can still need a restart or
 device association; use installer diagnostics when capture is unavailable.
 
-In the viewer, choose a device family and click **Observe**. Accept elevation
-when asked. Inputs are forwarded while being displayed; **Stop** ends capture.
+The viewer requests elevation on opening and starts observation automatically.
+Choose a device family to display its inputs. After **Stop**, **Observe** resumes.
+Inputs are forwarded while being displayed; **Stop** ends capture.
 Close other capture applications first. An idle controller is not an installation
 failure, and an unavailable protocol profile is reported separately.
 

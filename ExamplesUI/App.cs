@@ -29,9 +29,15 @@ namespace InterceptorViewer {
     if(args.Length==2&&args[0]=="--render-tests"){RenderTests(args[1]);return 0;}
     if(args.Length==2&&args[0]=="--lifecycle-test")return LifecycleTests(args[1]);
     if(args.Length==2&&args[0]=="--native-lifecycle-test")return LifecycleTests(args[1],true);
-    int observe=-1;if(args.Length==2&&args[0]=="--observe"){observe=int.Parse(args[1],CultureInfo.InvariantCulture);if(!SupportedKinds.Contains(observe))throw new ArgumentException("Invalid device type.");}else if(args.Length!=0)throw new ArgumentException("Arguments: --self-test JSON, --render-tests directory, --observe type(0..5).");
+    int observe=SupportedKinds[0];if(args.Length==2&&args[0]=="--observe"){observe=int.Parse(args[1],CultureInfo.InvariantCulture);if(!SupportedKinds.Contains(observe))throw new ArgumentException("Invalid device type.");}else if(args.Length!=0)throw new ArgumentException("Arguments: --self-test JSON, --render-tests directory, --observe type(0..5).");
+    // Normal launches elevate immediately. Offline tests above never request
+    // elevation, install a driver or start observation.
+    if(!Administrator){
+     try{Process.Start(new ProcessStartInfo(Assembly.GetExecutingAssembly().Location,"--observe "+observe.ToString(CultureInfo.InvariantCulture)){UseShellExecute=true,Verb="runas"});return 0;}
+     catch(Win32Exception e){if(e.NativeErrorCode==1223)return 1223;throw;}
+    }
     DriverInstallation.RequireInstalled();
-    var application=new Application();using(var dashboard=new Dashboard(false)){if(observe>=0)dashboard.ObserveOnLoad(observe);application.Run(dashboard.Window);}return 0;
+    var application=new Application();using(var dashboard=new Dashboard(false)){dashboard.ObserveOnLoad(observe);application.Run(dashboard.Window);}return 0;
    }catch(Exception e){
     try{if(args.Length==2&&(args[0]=="--self-test"||args[0]=="--lifecycle-test"||args[0]=="--native-lifecycle-test"))Json(args[1],new{passed=false,error=e.ToString()});else if(args.Length==2&&args[0]=="--render-tests"){Directory.CreateDirectory(args[1]);Json(Path.Combine(args[1],"render-results.json"),new{passed=false,error=e.ToString()});}else MessageBox.Show(e.Message,"Interceptor · graphical example",MessageBoxButton.OK,MessageBoxImage.Error);}catch{}return 1;
    }

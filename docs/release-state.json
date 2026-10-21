@@ -1,9 +1,18 @@
 {
-  "Schema": 1,
-  "Product": "Interceptor",
-  "DriverVersion": "1.4.17.0",
-  "SdkVersion": "1.4.17.0",
-  "SigningPending": false,
-  "InstalledFamilies": ["Keyboard", "Mouse", "HID", "XUSB", "XInputHID", "GIP"],
-  "Note": "Microsoft-signed 1.4.17.0 payload verified against its submission. SDK, examples and both installers use this release; do not combine them with older drivers."
+    "Schema":  1,
+    "Product":  "Interceptor",
+    "DriverVersion":  "1.4.17.0",
+    "SdkVersion":  "1.4.17.0",
+    "SigningPending":  false,
+    "InstalledFamilies":  [
+                              "Keyboard",
+                              "Mouse",
+                              "HID",
+                              "XUSB",
+                              "XInputHID",
+                              "GIP"
+                          ],
+    "Note":  "Bundle 1.4.17.1: automatic viewer startup and five all-family controller examples. The Microsoft-signed driver and two-file SDK remain 1.4.17.0; signed payloads are unchanged.",
+    "BundleVersion":  "1.4.17.1",
+    "ViewerVersion":  "1.4.17.1"
 }

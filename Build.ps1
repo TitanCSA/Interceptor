@@ -24,7 +24,7 @@ $nativeTargets=switch($Target){
     'InstallerUI'{@('InterceptorExample','InterceptorDiagnosticWorker')}
     'InstallerConsole'{@('InterceptorExample')}
     'ExamplesUI'{@('InterceptorViewerBridge')}
-    'ExamplesConsole'{@('01_Echange_H_J','02_Ctrl_H_Hello','03_Inverse_Souris_Y','04_Inverse_X_J_Boutons_HK','05_Clavier_Bloque_Affichage','06_Souris_Bloquee_Affichage','07_Manette_HID_Inverse_X_Y','08_Clavier_Minimal')}
+    'ExamplesConsole'{@(Get-ChildItem -LiteralPath (Join-Path $root 'ExamplesConsole') -Filter '*.cpp' -File | ForEach-Object BaseName)}
     default{@()}
 }
 $nativeArguments=@('--build',$BuildDirectory,'--config','Release','--parallel')
