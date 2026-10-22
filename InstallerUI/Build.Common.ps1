@@ -31,11 +31,12 @@ function New-InstallerPackage([string]$IntermediateDirectory,[string]$NativeDire
     $sourcePayload=Join-Path $source 'Payload'
     $sourceRecovery=Join-Path $source 'Recovery'
     $driverNames=@('Interceptor.sys','InterceptorKeyboard.inf','InterceptorMouse.inf','InterceptorControl.inf','interceptorkeyboard.cat','interceptormouse.cat','interceptorcontrol.cat','Signing.json')
+    if(@(Get-ChildItem -LiteralPath $sourcePayload -Filter '*Control.inf' | Where-Object {[IO.File]::ReadAllText($_.FullName).Contains('TitanDemoClock.sys')}).Count){$driverNames+='TitanDemoClock.sys'}
     $recoveryNames=@('InterceptorRecovery.exe','RecoveryBinding.dll')
     $engineNames=@('Install.ps1','Uninstall.ps1','Associate.ps1','CompleteAssociation.ps1','Common.ps1','Lifecycle.ps1','Maintenance.ps1','EmergencyRecover.ps1','FinalizeUninstall.ps1')
     $driverManifest=Get-Content -LiteralPath (Join-Path $sourcePayload 'SHA256.json') -Raw|ConvertFrom-Json
     $recoveryManifest=Get-Content -LiteralPath (Join-Path $sourceRecovery 'SHA256.json') -Raw|ConvertFrom-Json
-    if(@($driverManifest.PSObject.Properties).Count -ne $driverNames.Count){throw 'The signed source manifest must contain exactly the eight distributed driver files.'}
+    if(@($driverManifest.PSObject.Properties).Count -ne $driverNames.Count){throw 'The source manifest must contain exactly the required signed driver package files.'}
     if(@($recoveryManifest.PSObject.Properties).Count -ne $recoveryNames.Count){throw 'The recovery manifest must contain exactly the two precompiled recovery binaries.'}
     $driverHashes=[ordered]@{};$recoveryHashes=[ordered]@{}
     foreach($name in $driverNames){

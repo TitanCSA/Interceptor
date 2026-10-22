@@ -198,3 +198,12 @@ To run them independently:
 Real installation, reinstall, deferred uninstall and edition coexistence are also
 checked in a dedicated Windows VM. VM and fixture tests do not certify physical
 controller compatibility or measure input latency.
+
+## Demo clock component
+
+Setup includes the Microsoft-signed `TitanDemoClock.sys` companion. It keeps this
+product's two-hour allowance in kernel memory until Windows Restart, independently
+of unloading or reinstalling the main driver. It has no user-mode background process
+and is not attached to the input stack. A product-owned driver service registers it;
+removing another product does not remove this product's registration. Missing or
+invalid clock files prevent protected operations; use setup to repair the package.

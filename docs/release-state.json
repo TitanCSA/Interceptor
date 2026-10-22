@@ -1,9 +1,15 @@
 {
     "Schema":  1,
     "Product":  "Interceptor",
-    "DriverVersion":  "1.4.17.0",
+    "DriverVersion":  "1.4.20.0",
     "SdkVersion":  "1.4.17.0",
+    "BundleVersion":  "1.4.20.0",
+    "InstallerVersion":  "1.4.20.0",
+    "ViewerVersion":  "1.4.20.0",
     "SigningPending":  false,
+    "TrialSeconds":  7200,
+    "TrialStorage":  "Kernel resident per-boot clock",
+    "ClockRequired":  true,
     "InstalledFamilies":  [
                               "Keyboard",
                               "Mouse",
@@ -12,8 +18,5 @@
                               "XInputHID",
                               "GIP"
                           ],
-    "Note":  "Installer bundle 1.4.18.0; Microsoft-signed kernel and SDK 1.4.17.0; viewer 1.4.17.1. Installation uses bounded commands, verified PnP startup and deferred recovery-safe cleanup. Signed driver payloads are unchanged.",
-    "BundleVersion":  "1.4.18.0",
-    "ViewerVersion":  "1.4.17.1",
-    "InstallerVersion":  "1.4.18.0"
+    "Note":  "Microsoft-signed primary driver and resident clock; complete current user-mode sources and installers."
 }

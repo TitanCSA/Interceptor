@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.20)
 cmake_policy(SET CMP0091 NEW)
-project(InterceptorUserMode VERSION 1.4.17.0 LANGUAGES CXX)
+project(InterceptorUserMode VERSION 1.4.20.0 LANGUAGES CXX)
 if(NOT WIN32 OR NOT CMAKE_SIZEOF_VOID_P EQUAL 8)
     message(FATAL_ERROR "Interceptor user-mode tools require Windows x64.")
 endif()

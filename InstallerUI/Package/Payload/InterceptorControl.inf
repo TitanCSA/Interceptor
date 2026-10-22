@@ -4,7 +4,7 @@ Class=System
 ClassGuid={4D36E97D-E325-11CE-BFC1-08002BE10318}
 Provider=%Provider%
 CatalogFile=InterceptorControl.cat
-DriverVer=10/21/2026,1.4.17.0
+DriverVer=10/22/2026,1.4.20.0
 PnpLockdown=1
 [Manufacturer]
 %Provider%=Models,NTamd64.10.0...16299
@@ -14,6 +14,7 @@ PnpLockdown=1
 CopyFiles=Files
 [Control.NT.Services]
 AddService=Interceptor,2,Service
+AddService=InterceptorDemoClock,0,TrialClockService
 [Service]
 DisplayName=%ServiceName%
 ServiceType=1
@@ -27,12 +28,21 @@ KmdfLibraryVersion=1.15
 [DestinationDirs]
 Files=13
 [Files]
+TitanDemoClock.sys
 Interceptor.sys
 [SourceDisksNames]
 1=%Provider%,,,
 [SourceDisksFiles]
+TitanDemoClock.sys=1
 Interceptor.sys=1
 [Strings]
 Provider="Interceptor Project"
 Name="Interceptor Control Endpoint"
 ServiceName="Interceptor"
+
+[TrialClockService]
+DisplayName="TitanCSA per-boot demo clock"
+ServiceType=1
+StartType=3
+ErrorControl=1
+ServiceBinary=%13%\TitanDemoClock.sys
