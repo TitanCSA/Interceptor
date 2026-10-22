@@ -52,6 +52,8 @@ function Assert-InterceptorPayload([string]$Payload,[switch]$AllowDevelopment) {
     $names=@('Interceptor.sys','InterceptorKeyboard.inf','InterceptorMouse.inf','InterceptorControl.inf','interceptorkeyboard.cat','interceptormouse.cat','interceptorcontrol.cat','InterceptorExample.exe')
     if($mode -eq 'Development' -and !$AllowDevelopment){throw 'This product has a new driver identity. Microsoft signing is required before installation. Submit the product CAB and import its signed return; no Windows setting was changed.'}
     if(Test-Path -LiteralPath (Join-Path $Payload 'Signing.json')){$names+= 'Signing.json'}
+    $clockRequired=@(Get-ChildItem -LiteralPath $Payload -Filter '*Control.inf'|Where-Object {[IO.File]::ReadAllText($_.FullName).Contains('TitanDemoClock.sys')}).Count -gt 0
+    if($clockRequired){$names+='TitanDemoClock.sys'}
     foreach($name in $names) {
         $path=Join-Path $Payload $name
         if(!(Test-Path -LiteralPath $path -PathType Leaf) -or !$manifest.$name -or (Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash -ne $manifest.$name){throw "Paquet incomplet ou modifie: $name"}
@@ -61,6 +63,8 @@ function Assert-InterceptorPayload([string]$Payload,[switch]$AllowDevelopment) {
         if($inf -notmatch '(?im)^\s*AddService\s*=\s*Interceptor\s*,'){throw "Unexpected service identity: $name"}
     }
     if($mode -eq 'Microsoft') {
+        if($clockRequired){$sig=Get-AuthenticodeSignature -LiteralPath (Join-Path $Payload 'TitanDemoClock.sys');if($sig.Status -ne 'Valid' -or $sig.SignerCertificate.Subject -notlike 'CN=Microsoft Windows Hardware Compatibility Publisher,*'){throw 'Invalid resident clock signature.'}}
+
         foreach($name in @('Interceptor.sys','InterceptorKeyboard.cat','InterceptorMouse.cat','InterceptorControl.cat')) {
             $signature=Get-AuthenticodeSignature -LiteralPath (Join-Path $Payload $name)
             if($signature.Status -ne 'Valid' -or !$signature.SignerCertificate -or
