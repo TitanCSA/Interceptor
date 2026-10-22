@@ -23,13 +23,25 @@ function Enter-InterceptorOperation {
     $script:InterceptorOperationOwned=$false
     $security=New-Object Security.AccessControl.MutexSecurity
     foreach($id in @('S-1-5-18','S-1-5-32-544')){$security.AddAccessRule((New-Object Security.AccessControl.MutexAccessRule((New-Object Security.Principal.SecurityIdentifier($id)),'FullControl','Allow')))}
+    $familyCreated=$false
+    $script:InterceptorFamilyOwned=$false
+    $script:InterceptorFamilyOperation=New-Object Threading.Mutex($false,'Global\InterceptorSetup-Maintenance',[ref]$familyCreated,$security)
+    try{$family=$script:InterceptorFamilyOperation.WaitOne(0)}catch [Threading.AbandonedMutexException]{$family=$true}
+    if(!$family){$script:InterceptorFamilyOperation.Dispose();$script:InterceptorFamilyOperation=$null;$script:InterceptorLastExitCode=1618;throw 'Another Interceptor edition is performing setup or recovery (Win32 1618). Wait for it to finish.'}
+    $script:InterceptorFamilyOwned=$true
     $created=$false
     $script:InterceptorOperation=New-Object Threading.Mutex($false,'Global\InterceptorSetup-Installation',[ref]$created,$security)
-    try{$acquired=$script:InterceptorOperation.WaitOne(120000)}catch [Threading.AbandonedMutexException]{$acquired=$true}
-    if(!$acquired){$script:InterceptorOperation.Dispose();$script:InterceptorOperation=$null;throw 'Another Interceptor operation is still active.'}
+    try{$acquired=$script:InterceptorOperation.WaitOne(0)}catch [Threading.AbandonedMutexException]{$acquired=$true}
+    if(!$acquired){$script:InterceptorOperation.Dispose();$script:InterceptorOperation=$null;$script:InterceptorLastExitCode=1618;throw 'Another setup or recovery operation for this product is active (Win32 1618). Wait for that operation to finish before retrying.'}
     $script:InterceptorOperationOwned=$true
 }
-function Exit-InterceptorOperation {if($script:InterceptorOperation){if($script:InterceptorOperationOwned){$script:InterceptorOperation.ReleaseMutex()};$script:InterceptorOperation.Dispose();$script:InterceptorOperation=$null;$script:InterceptorOperationOwned=$false}}
+function Exit-InterceptorOperation {
+    try{
+        if($script:InterceptorOperation){try{if($script:InterceptorOperationOwned){$script:InterceptorOperation.ReleaseMutex()}}finally{$script:InterceptorOperation.Dispose();$script:InterceptorOperation=$null;$script:InterceptorOperationOwned=$false}}
+    }finally{
+        if($script:InterceptorFamilyOperation){try{if($script:InterceptorFamilyOwned){$script:InterceptorFamilyOperation.ReleaseMutex()}}finally{$script:InterceptorFamilyOperation.Dispose();$script:InterceptorFamilyOperation=$null;$script:InterceptorFamilyOwned=$false}}
+    }
+}
 function Import-InterceptorRecoveryAssembly {
     if(!('InterceptorRecovery.Devices' -as [type])){[Reflection.Assembly]::Load([IO.File]::ReadAllBytes((Join-Path $PSScriptRoot 'Recovery\InterceptorRecovery.exe')))|Out-Null}
 }
@@ -87,7 +99,7 @@ function Install-InterceptorRecovery {
     }
     $security=Get-Acl -LiteralPath (Get-InterceptorDataRoot)
     if(!(Test-Path -LiteralPath $root)){[IO.Directory]::CreateDirectory($root,$security)|Out-Null}else{Set-Acl -LiteralPath $root -AclObject $security}
-    foreach($relative in @('Common.ps1','Lifecycle.ps1','Uninstall.ps1','EmergencyRecover.ps1','FinalizeUninstall.ps1','Recovery\InterceptorRecovery.exe','Recovery\RecoveryBinding.dll','Payload\InterceptorExample.exe')){
+    foreach($relative in @('Common.ps1','Maintenance.ps1','Lifecycle.ps1','Uninstall.ps1','EmergencyRecover.ps1','FinalizeUninstall.ps1','Recovery\InterceptorRecovery.exe','Recovery\RecoveryBinding.dll','Payload\InterceptorExample.exe')){
         $source=Join-Path $PSScriptRoot $relative;$target=Join-Path $root $relative
         [IO.Directory]::CreateDirectory([IO.Path]::GetDirectoryName($target))|Out-Null
         if([IO.Path]::GetFullPath($source) -ine [IO.Path]::GetFullPath($target)){Copy-Item -LiteralPath $source -Destination $target -Force}
@@ -102,8 +114,9 @@ function Stop-InterceptorRecovery {
 function Remove-InterceptorRecoveryService {
     Stop-InterceptorRecovery
     if(Test-Path -LiteralPath 'HKLM:\SYSTEM\CurrentControlSet\Services\InterceptorRecovery'){
-        & sc.exe delete InterceptorRecovery|Write-Host
-        if($LASTEXITCODE -notin @(0,1060,1072)){throw 'Recovery service deletion failed.'}
+        $result=Invoke-InterceptorProcess (Get-InterceptorWindowsTool 'sc.exe') @('delete','InterceptorRecovery') -TimeoutMs 30000
+        if($result.ExitCode -notin @(0,1060,1072)){throw ('Recovery service deletion failed: '+$result.ExitCode)}
+        $script:InterceptorNeedsReboot=$script:InterceptorNeedsReboot -or $result.ExitCode -eq 1072
     }
 }
 function Remove-InterceptorOwnedTree([string]$Path,[string]$Expected) {
@@ -155,16 +168,25 @@ function Invoke-InterceptorCleanUninstall([switch]$Finalize) {
             catch{Write-Host ('Original binding unavailable; restoring the Windows mapper: '+$device.Instance+'; '+$_.Exception.Message)}
         }}
     }
-    & (Join-Path $PSScriptRoot 'Payload\InterceptorExample.exe') --restore|ForEach-Object {Write-Host $_}
-    if($LASTEXITCODE -notin @(0,3010)){throw "Windows input restoration failed ($LASTEXITCODE). Recovery files retained."}
-    $reboot=$reboot -or $LASTEXITCODE -eq 3010
+    Set-InterceptorPhase 'Restore original Windows input bindings'
+    $helper=Join-Path $PSScriptRoot 'Payload\InterceptorExample.exe'
+    $restore=Invoke-InterceptorSetupHelper $helper @('--restore')
+    if($restore -notin @(0,3010)){throw ("Windows input restoration failed ("+$restore+"). Recovery files retained.")}
+    $reboot=$reboot -or $restore -eq 3010
     if($state){foreach($device in $saved){[InterceptorRecovery.Devices]::RestoreFilter($device.Instance,$device.Upper);[InterceptorRecovery.Devices]::RestoreFilter($device.Instance,$device.Lower)}}
     $reboot=[InterceptorRecovery.Devices]::CleanClassFilters() -or $reboot
+    # Pending devnode restarts are not proof that old stacks stopped using
+    # the image. Preserve packages and recovery until a normal Windows boot.
+    $owned=Get-InterceptorSetupState $helper
+    if($reboot -or @($owned.devices).Count){
+        return Set-InterceptorUninstallPending $state -Finalize:$Finalize
+    }
+    Set-InterceptorPhase 'Remove unbound owned driver packages'
     foreach($package in Get-InterceptorPackages){Remove-InterceptorPackage $package.Driver}
     $reboot=$reboot -or $script:InterceptorNeedsReboot
     $remaining=@(Get-InterceptorPackages)
     $driver=Get-Service -Name Interceptor -ErrorAction SilentlyContinue
-    if($driver){$running=$driver.Status -ne 'Stopped';$driver.Dispose();& sc.exe delete Interceptor|Write-Host;if($LASTEXITCODE -notin @(0,1060,1072)){throw 'Interceptor service removal failed.'};$reboot=$reboot -or $running}
+    if($driver){$running=$driver.Status -ne 'Stopped';$driver.Dispose();$delete=Invoke-InterceptorProcess (Get-InterceptorWindowsTool 'sc.exe') @('delete','Interceptor') -TimeoutMs 30000;if($delete.ExitCode -notin @(0,1060,1072)){throw ('Driver service removal failed: '+$delete.ExitCode)};$reboot=$reboot -or $running -or $delete.ExitCode -eq 1072}
     if($remaining.Count){$reboot=$true}
     if($state){foreach($cert in $state.CertificatesAdded){
         if($cert.Store -notin @('Root','TrustedPublisher') -or $cert.Thumbprint -notmatch '^[A-Fa-f0-9]{40}$'){throw 'Invalid certificate restoration entry.'}
@@ -172,13 +194,20 @@ function Invoke-InterceptorCleanUninstall([switch]$Finalize) {
         if(Test-Path -LiteralPath $path){Remove-Item -LiteralPath $path}
     }}
     Remove-InterceptorRecoveryService
-    if($reboot){
-        if(!$state){$state=[pscustomobject]@{Schema=1;Devices=@();CertificatesAdded=@();PendingUninstall=$true;FinalizeAttempts=0}}
-        $state.PendingUninstall=$true
-        if($Finalize){$state.FinalizeAttempts++;if($state.FinalizeAttempts -gt 3){Write-InterceptorState $state;throw 'Cleanup still pending after three boots; state retained for diagnosis.'}}
-        Write-InterceptorState $state;Register-InterceptorFinalCleanup
-        return 3010
-    }
+    if($reboot -or $script:InterceptorNeedsReboot){return Set-InterceptorUninstallPending $state -Finalize:$Finalize}
     Remove-InterceptorFinalCleanup
     return 0
+}
+
+function Set-InterceptorUninstallPending($State,[switch]$Finalize) {
+    if(!$State){$State=[pscustomobject]@{Schema=1;Devices=@();CertificatesAdded=@();PendingUninstall=$true;FinalizeAttempts=0}}
+    $State.PendingUninstall=$true
+    if($Finalize){
+        $State.FinalizeAttempts++
+        if($State.FinalizeAttempts -gt 3){Write-InterceptorState $State;throw 'Cleanup is still pending after three boots; recovery state is retained for diagnosis.'}
+    }else{$State.FinalizeAttempts=0}
+    Write-InterceptorState $State
+    Register-InterceptorFinalCleanup
+    Write-Host 'Input restoration or package removal requires a restart. Remaining packages and recovery are retained for automatic cleanup after the next normal boot.'
+    return 3010
 }

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
@@ -34,7 +34,7 @@ namespace InterceptorSetup {
    Console.WriteLine("Administrator rights are required to install or uninstall (automatic UAC prompt).");
    Console.WriteLine("In an elevated terminal, output stays in that terminal and can be redirected.");
    Console.WriteLine("Exit codes: 0 = completed; 3010 = restart required; 1223 = UAC cancelled;");
-   Console.WriteLine("        87 = invalid arguments; 1 = failure. Windows never restarts automatically.");
+   Console.WriteLine("        87 = invalid arguments; 1618 = another setup is active; 1638 = conflicting Interceptor edition; 1460 = Windows command timed out; 1 = failure. Windows never restarts automatically.");
   }
 
   static void Log(string line) {

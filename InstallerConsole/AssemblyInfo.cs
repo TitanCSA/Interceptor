@@ -3,6 +3,6 @@ using System.Runtime.Versioning;
 [assembly: AssemblyTitle("Interceptor Console Setup")]
 [assembly: AssemblyDescription("Console entry point for the shared Interceptor installer")]
 [assembly: AssemblyProduct("Interceptor")]
-[assembly: AssemblyVersion("1.4.17.0")]
-[assembly: AssemblyFileVersion("1.4.17.0")]
+[assembly: AssemblyVersion("1.4.18.0")]
+[assembly: AssemblyFileVersion("1.4.18.0")]
 [assembly: TargetFramework(".NETFramework,Version=v4.6")]

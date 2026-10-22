@@ -12,7 +12,8 @@
                               "XInputHID",
                               "GIP"
                           ],
-    "Note":  "Bundle 1.4.17.1: automatic viewer startup and five all-family controller examples. The Microsoft-signed driver and two-file SDK remain 1.4.17.0; signed payloads are unchanged.",
-    "BundleVersion":  "1.4.17.1",
-    "ViewerVersion":  "1.4.17.1"
+    "Note":  "Installer bundle 1.4.18.0; Microsoft-signed kernel and SDK 1.4.17.0; viewer 1.4.17.1. Installation uses bounded commands, verified PnP startup and deferred recovery-safe cleanup. Signed driver payloads are unchanged.",
+    "BundleVersion":  "1.4.18.0",
+    "ViewerVersion":  "1.4.17.1",
+    "InstallerVersion":  "1.4.18.0"
 }

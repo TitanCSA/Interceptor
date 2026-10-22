@@ -3,50 +3,63 @@ $code=1;$logged=$false;$bindingStarted=$false;$stagingStarted=$false;$existingPa
 try {
     Assert-Administrator
     $payload=Join-Path $PSScriptRoot 'Payload'
-    [void](Assert-InterceptorPayload $payload)
+    Assert-InterceptorPayload $payload|Out-Null
     Assert-InterceptorUsbPackage $payload
-    Enter-InterceptorOperation;Start-InterceptorLog 'install';$logged=$true
+    Get-InterceptorWindowsTool 'pnputil.exe'|Out-Null
+    Get-InterceptorWindowsTool 'sc.exe'|Out-Null
+    Enter-InterceptorOperation
+    Assert-InterceptorInstallationBoundary
+    Start-InterceptorLog 'install';$logged=$true
+    Set-InterceptorPhase 'Snapshot original Windows device bindings'
     $baseline=Save-InterceptorBaseline
     $baseline.PendingUninstall=$false;$baseline.FinalizeAttempts=0;Write-InterceptorState $baseline
+    $helper=Join-Path $payload 'InterceptorExample.exe'
+    $script:InterceptorBeforeSetup=Get-InterceptorSetupState $helper
+    $existingPackages=@(Get-InterceptorPackages|ForEach-Object Driver)
+    Set-InterceptorPhase 'Prepare protected recovery'
     Remove-InterceptorFinalCleanup
     Install-InterceptorRecovery
-    Write-Host 'This product driver and catalogs are Microsoft signed.'
-    Get-PnpDevice -PresentOnly | Where-Object Class -in @('Keyboard','Mouse','HIDClass','XnaComposite','XboxComposite') | Select-Object Class,FriendlyName,InstanceId,Status | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $env:ProgramData 'Interceptor\devices-before.json') -Encoding UTF8
-    $existingPackages=@(Get-InterceptorPackages | ForEach-Object Driver)
+    Set-InterceptorPhase 'Stage Microsoft-signed driver packages'
     $stagingStarted=$true
-    foreach($name in @('InterceptorKeyboard.inf','InterceptorMouse.inf','InterceptorControl.inf')) {
-        Add-InterceptorPackage (Join-Path $payload $name)
-    }
+    foreach($name in @('InterceptorKeyboard.inf','InterceptorMouse.inf','InterceptorControl.inf')){Add-InterceptorPackage (Join-Path $payload $name)}
+    Set-InterceptorPhase 'Associate supported device instances'
     $bindingStarted=$true
-    & (Join-Path $payload 'InterceptorExample.exe') --install $payload
-    $code=$LASTEXITCODE
-    if($code -notin @(0,3010)) { throw "Association aux peripheriques en echec: $code" }
-    if($code -eq 0) {
-        & (Join-Path $payload 'InterceptorExample.exe') --status
-        if($LASTEXITCODE -ne 0) { throw 'Le pilote ne repond pas apres installation.' }
-        $code=Initialize-InterceptorControllers (Join-Path $payload 'InterceptorExample.exe')
+    $code=Invoke-InterceptorSetupHelper $helper @('--install',$payload)
+    if($code -notin @(0,3010)){throw ('Device association failed: '+$code)}
+    if($code -eq 0){
+        if((Invoke-InterceptorSetupHelper $helper @('--status') 20000) -ne 0){throw 'Driver API did not respond after installation.'}
+        Set-InterceptorPhase 'Initialize supported input interfaces'
+        $code=Initialize-InterceptorControllers $helper
+        if($code -notin @(0,3010)){throw ('Input interface initialization failed: '+$code)}
     }
+    if($script:InterceptorNeedsReboot){$code=3010}
+    Set-InterceptorPhase 'Verify Windows device startup'
+    $code=Wait-InterceptorSetupDevices $helper $script:InterceptorBeforeSetup -RestartRequested:($code -eq 3010)
     Set-InterceptorPendingControllers $code (Get-FileHash -LiteralPath (Join-Path $payload 'Interceptor.sys') -Algorithm SHA256).Hash
-    Get-InterceptorPackages | Select-Object Driver,OriginalFileName | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $env:ProgramData 'Interceptor\packages.json') -Encoding UTF8
-    Write-Host 'Interceptor installed. Les entrees passent normalement tant qu aucun contexte ne capture.'
-} catch {
-    Write-Host $_.Exception.Message
-    $restorationComplete=$true
-    if($bindingStarted) {
-        Write-Host 'Tentative de retour aux pilotes HID Windows...'
-        & (Join-Path $PSScriptRoot 'Payload\InterceptorExample.exe') --restore
-        $restorationComplete=$LASTEXITCODE -in @(0,3010)
-        if(!$restorationComplete) {
-            Write-Host ('Input restoration failed ('+$LASTEXITCODE+'). Driver packages, control endpoint and recovery files are retained because input stacks may still reference the driver. Retry Install / reinstall with the corrected installer or export diagnostics.')
-        }
-    }
-    if($stagingStarted -and $restorationComplete) {
-        try {
-            foreach($package in (Get-InterceptorPackages | Where-Object { $_.Driver -notin $existingPackages })) {
-                Remove-InterceptorPackage $package.Driver
+    Get-InterceptorPackages|Select-Object Driver,OriginalFileName|ConvertTo-Json|Set-Content -LiteralPath (Join-Path (Get-InterceptorDataRoot) 'packages.json') -Encoding UTF8
+    Complete-InterceptorOperation $code
+    Write-Host 'Installation verified. Physical input passes through until an application opens capture.'
+}catch{
+    $code=if($logged){Write-InterceptorFailure $_}else{Write-Host $_.Exception.ToString();if($script:InterceptorLastExitCode -notin @(0,3010)){$script:InterceptorLastExitCode}else{1}}
+    $safeToRemove=$false
+    if($script:InterceptorProcessTimedOut){
+        Write-Host 'A setup command exceeded its deadline. Binding rollback and package deletion are deferred; recovery and operation evidence are retained. Restart Windows normally, then retry.'
+    }elseif($bindingStarted){
+        try{
+            Write-Host 'Restoring Windows input bindings after the failed installation...'
+            $restore=Invoke-InterceptorSetupHelper $helper @('--restore')
+            if($restore -eq 0){
+                $remaining=Get-InterceptorSetupState $helper
+                $safeToRemove=@($remaining.devices).Count -eq 0
             }
-        } catch { Write-Host "Nettoyage des nouveaux paquets incomplet: $($_.Exception.Message)" }
+            if(!$safeToRemove){Write-Host ('Restoration is incomplete or needs a restart (code '+$restore+'). Driver packages and recovery files are retained.')}
+        }catch{Write-Host ('Restoration failed; driver packages and recovery are retained: '+$_.Exception.Message)}
+    }else{$safeToRemove=$true}
+    if($stagingStarted -and $safeToRemove){
+        try{foreach($package in (Get-InterceptorPackages|Where-Object {$_.Driver -notin $existingPackages})){Remove-InterceptorPackage $package.Driver}}
+        catch{Write-Host ('Owned package cleanup is pending: '+$_.Exception.Message)}
     }
-    $code=1
-} finally { if($logged) { Stop-Transcript | Out-Null };Exit-InterceptorOperation }
+}finally{
+    try{if($logged){Stop-Transcript|Out-Null}}finally{Exit-InterceptorOperation}
+}
 exit $code
