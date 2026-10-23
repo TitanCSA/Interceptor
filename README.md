@@ -81,9 +81,13 @@ contains both standalone installers, the standalone viewer, an examples ZIP,
 a source SDK ZIP and **SHA256SUMS.txt**. Use matching driver, SDK and examples
 from the same release. Updating the viewer alone does not update the driver.
 
+To move the mouse horizontally, run **09_Mouse_Move_Horizontal.exe** as
+administrator. Enter `300` to move right or `-485` to move left, then press Enter.
+See the [example instructions](ExamplesConsole/README.md#move-the-mouse-by-a-number-of-pixels).
+
 ```text
 Interceptor/       Interceptor.h and Interceptor.cpp
-ExamplesConsole/   Eight independent C++ examples
+ExamplesConsole/   Independent keyboard, mouse and controller C++ examples
 ExamplesUI/        Graphical input viewer
 InstallerConsole/  Console installer
 InstallerUI/       GUI, shared setup engine and compiled driver/recovery binaries
