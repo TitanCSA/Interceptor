@@ -14,36 +14,42 @@ product's driver service before capture. Run one program at a time as administra
 | `05_Clavier_Bloque_Affichage` | Display and intentionally block keyboard input |
 | `06_Souris_Bloquee_Affichage` | Display and intentionally block mouse input |
 | `08_Clavier_Minimal` | Minimal mixed-batch loop: H becomes J |
-| `09_Mouse_Move_Horizontal` | Enter a signed pixel distance to move the desktop cursor horizontally |
+| `09_Mouse_Move_Horizontal` | Send a signed relative mouse X movement through the driver |
 
 Examples 01-06 use a countdown. Release controls, then focus the target app.
 Physical Ctrl+Alt+Delete revokes capture if a blocking monitor suppresses ordinary
 shortcuts. The `hello` example uses scan codes; it is not a text/IME API.
 
-### Move the mouse by a number of pixels
+### Move the mouse using raw relative X input
 
-Run `bin/Native/09_Mouse_Move_Horizontal.exe` as administrator in an interactive
-Windows console. Type `300` and press Enter to move right by 300 pixels, or
-`-485` to move left by 485 pixels. Enter another number to move again; `0` does
-nothing. Press Esc, type `q` and Enter, or use Ctrl+C to exit.
+Extract the examples ZIP and run `ExamplesConsole/09_Mouse_Move_Horizontal.exe`
+as administrator after installing this edition's driver. When building from
+source, the EXE is in `bin/Native/`. Type `300` and Enter to send X = +300, or
+`-485` and Enter to send X = -485. `0` does nothing. Esc, `q` and Enter, or Ctrl+C
+exits.
 
-The example sends a `Mouse_Input` with `Send_Input`, using the first captured
-mouse. It calculates an absolute destination from the current cursor position,
-preserves Y and uses physical desktop pixels across monitors. Unlike relative
-counts, the distance is not scaled by Windows pointer acceleration. Screen
-edges, monitor gaps or an application's cursor confinement can limit movement.
-The printed destination is the requested target, not a measurement of the
-resulting cursor position. Do not move the physical mouse during the command
-when checking the distance.
+The value is sent directly as a relative mouse input through Interceptor:
 
-All captured keyboard, mouse and controller inputs are forwarded unchanged.
-The console and driver share an event-driven loop, so typing a number does not
-block physical input and idle does not busy-poll. Close other capture apps first.
-The installed demo's one-hour allowance still applies. No driver update is needed.
+```cpp
+Interceptor::Mouse_Input input{};
+input.device = mouse.id;        // A mouse returned by Get_Devices().
+auto& state = input.stroke;
+state.x = 300;                 // Relative X; Y, buttons and flags remain zero.
+auto result = Interceptor::Send_Input(input);
+```
 
-[Source](09_Mouse_Move_Horizontal.cpp) |
-[Windows mouse packet flags](https://learn.microsoft.com/en-us/windows/win32/api/ntddmou/ns-ntddmou-mouse_input_data)
+`state` is a local reference to the SDK's `stroke` field. There is no cursor
+position query, absolute coordinate conversion or screen-bound clamping. These
+are raw movement counts, not a guaranteed number of screen pixels: Windows and
+applications apply their own sensitivity/acceleration. The example also checks
+the send result and handles queue backpressure.
 
+Physical input is forwarded while you enter commands. The console and driver
+share an event-driven loop with no idle busy polling. Run one capture app at a
+time. The installed demo's one-hour allowance still applies; no driver update
+is required. The compiled EXE is distributed inside the examples ZIP.
+
+[Source](09_Mouse_Move_Horizontal.cpp)
 ## Controller examples
 
 Run **one capture program at a time**, as administrator, after installing this

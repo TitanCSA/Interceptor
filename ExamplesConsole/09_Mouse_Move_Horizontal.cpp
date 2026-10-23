@@ -1,6 +1,5 @@
 #include "Interceptor.h"
 #include <algorithm>
-#include <array>
 #include <charconv>
 #include <iostream>
 #include <stdexcept>
@@ -14,7 +13,7 @@ void Check(BOOL result,const char* operation) {
     if(!result)throw std::system_error(static_cast<int>(GetLastError()),std::system_category(),operation);
 }
 
-bool ParsePixels(std::string_view text,std::int32_t& pixels) {
+bool ParseDelta(std::string_view text,std::int32_t& delta) {
     const auto first=text.find_first_not_of(" \t");
     if(first==std::string_view::npos)return false;
     text=text.substr(first,text.find_last_not_of(" \t")-first+1);
@@ -22,25 +21,16 @@ bool ParsePixels(std::string_view text,std::int32_t& pixels) {
         text.remove_prefix(1);
         if(text.empty() || text.front()<'0' || text.front()>'9')return false;
     }
-    const auto parsed=std::from_chars(text.data(),text.data()+text.size(),pixels);
+    const auto parsed=std::from_chars(text.data(),text.data()+text.size(),delta);
     return parsed.ec==std::errc{} && parsed.ptr==text.data()+text.size();
 }
 
-// Choose the first 16-bit absolute value mapping to the requested physical pixel.
-// Relative mouse counts would also be affected by Windows pointer acceleration.
-std::int32_t AbsolutePixel(std::int64_t pixel,std::int64_t origin,std::int64_t extent) {
-    if(extent<1 || extent>65536)throw std::runtime_error("Desktop dimensions must be between 1 and 65536 pixels.");
-    const auto offset=std::clamp(pixel-origin,std::int64_t{0},extent-1);
-    return static_cast<std::int32_t>((offset*65536+extent-1)/extent);
-}
-
-Mouse_Input MakeMovement(std::uint32_t device,POINT from,std::int32_t pixels,
-                        std::int64_t left,std::int64_t top,std::int64_t width,std::int64_t height) {
+// Relative mouse input: no cursor position, screen coordinates or conversion.
+Mouse_Input MakeMovement(std::uint32_t device,std::int32_t delta) {
     Mouse_Input input{};
     input.device=device;
-    input.stroke.flags=MouseAbsolute|MouseVirtualDesktop;
-    input.stroke.x=AbsolutePixel(static_cast<std::int64_t>(from.x)+pixels,left,width);
-    input.stroke.y=AbsolutePixel(from.y,top,height);
+    auto& state=input.stroke;
+    state.x=delta; // flags=0 means relative movement; Y and buttons stay zero.
     return input;
 }
 
@@ -59,17 +49,11 @@ template<class Sender> void SendAll(Sender send,std::size_t count) {
     }
 }
 
-void MoveHorizontal(std::uint32_t device,std::int32_t pixels) {
-    if(!pixels){std::cout<<"No movement.\n";return;}
-    POINT from{};
-    Check(GetCursorPos(&from),"GetCursorPos");
-    const auto left=GetSystemMetrics(SM_XVIRTUALSCREEN),top=GetSystemMetrics(SM_YVIRTUALSCREEN);
-    const auto width=GetSystemMetrics(SM_CXVIRTUALSCREEN),height=GetSystemMetrics(SM_CYVIRTUALSCREEN);
-    const std::array<Mouse_Input,1> movement{MakeMovement(device,from,pixels,left,top,width,height)};
-    SendAll([&]{return Send_Input(movement);},movement.size());
-    const auto target=std::clamp(static_cast<std::int64_t>(from.x)+pixels,
-                                 static_cast<std::int64_t>(left),static_cast<std::int64_t>(left)+width-1);
-    std::cout<<"Sent "<<target-from.x<<" horizontal pixels (target X="<<target<<", Y="<<from.y<<").\n";
+void MoveHorizontal(std::uint32_t device,std::int32_t delta) {
+    if(!delta)return;
+    const auto input=MakeMovement(device,delta);
+    SendAll([&]{return Send_Input(input);},1);
+    std::cout<<"Sent relative mouse X = "<<delta<<".\n";
 }
 
 BOOL WINAPI ConsoleControl(DWORD signal) {
@@ -127,8 +111,8 @@ int wmain(int argc,wchar_t** argv) try {
         std::cout<<"09_Mouse_Move_Horizontal\n"
             <<"Install this edition's driver, then run this console example as administrator.\n"
             <<"Enter a signed number and press Enter: 300 = right, -485 = left, 0 = no movement.\n"
-            <<"Uses Interceptor Send_Input; X is measured in desktop pixels and Y stays unchanged.\n"
-            <<"Screen edges, gaps between monitors and cursor confinement can limit movement.\n"
+            <<"Uses Interceptor Send_Input with relative mouse X counts; Y is zero.\n"
+            <<"Raw counts are not screen pixels; Windows or the game applies its sensitivity.\n"
             <<"Physical input is forwarded. Esc, q + Enter or Ctrl+C exits.\n";
         return 0;
     }
@@ -140,13 +124,12 @@ int wmain(int argc,wchar_t** argv) try {
     if(!init.ready){std::cerr<<"Device initialization is incomplete.\n";return ERROR_NOT_READY;}
     ConsoleMode console;
     CaptureLifetime capture;
-    Check(SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2)!=nullptr,"Use physical desktop pixels");
     const auto devices=Get_Devices(); // Opens the automatic capture once.
     const auto mouse=std::find_if(devices.begin(),devices.end(),[](const auto& d){return d.type==static_cast<std::uint32_t>(Device_Type::Mouse);});
     if(mouse==devices.end())throw std::runtime_error("No captured mouse is available. Connect/associate a mouse, then restart this example.");
     std::cout<<"Horizontal mouse movement via Interceptor (mouse ID "<<mouse->id<<").\n"
-        <<"Enter pixels: 300 = right, -485 = left. Esc or q + Enter exits.\n"
-        <<"Physical inputs stay active. Close other capture programs first.\nPixels > "<<std::flush;
+        <<"Enter relative X counts: 300 = right, -485 = left. Esc or q + Enter exits.\n"
+        <<"Physical inputs stay active. Close other capture programs first.\nX > "<<std::flush;
     std::string line;
     bool tooLong=false;
     for(;;) {
@@ -164,11 +147,11 @@ int wmain(int argc,wchar_t** argv) try {
                     if(ch==L'\r') {
                         std::cout<<'\n';
                         if(line=="q" || line=="Q")return 0;
-                        std::int32_t pixels=0;
-                        if(tooLong || !ParsePixels(line,pixels))
+                        std::int32_t delta=0;
+                        if(tooLong || !ParseDelta(line,delta))
                             std::cout<<"Enter a whole number from -2147483648 to 2147483647.\n";
-                        else MoveHorizontal(mouse->id,pixels);
-                        line.clear();tooLong=false;std::cout<<"Pixels > "<<std::flush;
+                        else MoveHorizontal(mouse->id,delta);
+                        line.clear();tooLong=false;std::cout<<"X > "<<std::flush;
                     }else if(ch==L'\b') {
                         if(!line.empty()){line.pop_back();std::cout<<"\b \b"<<std::flush;}
                         if(line.empty())tooLong=false;
