@@ -103,7 +103,7 @@ Remove an overlapping combined edition before installing a split edition.
 
 ## Demo edition
 
-Capture and injection are available for **two hours per Windows kernel boot**,
+Capture and injection are available for **one hour per Windows kernel boot**,
 starting with the first capture, controller monitor subscription or raw GIP
 diagnostic access, and shared across applications.
 Sleep time counts; closing or reinstalling does not reset the allowance.

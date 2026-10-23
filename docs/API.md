@@ -161,6 +161,6 @@ Tokens are strings unique to the source **within the capture**. Obtain them from
 as stable hardware serial numbers. Descriptor results expose `applicable` and
 `error`: distinguish an inapplicable protocol from a failed descriptor read.
 
-The first successful capture starts the shared two-hour demo allowance.
+The first successful capture starts the shared one-hour demo allowance.
 Expiration revokes capture and rejects injection; Windows physical input continues.
 Use Windows Restart for a new allowance. [Installation and recovery](INSTALLATION.md).

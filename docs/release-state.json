@@ -1,13 +1,13 @@
 {
     "Schema":  1,
     "Product":  "Interceptor",
-    "DriverVersion":  "1.4.20.0",
+    "DriverVersion":  "1.4.21.0",
     "SdkVersion":  "1.4.17.0",
-    "BundleVersion":  "1.4.20.0",
-    "InstallerVersion":  "1.4.20.0",
-    "ViewerVersion":  "1.4.20.0",
+    "BundleVersion":  "1.4.21.0",
+    "InstallerVersion":  "1.4.21.0",
+    "ViewerVersion":  "1.4.21.0",
     "SigningPending":  false,
-    "TrialSeconds":  7200,
+    "TrialSeconds":  3600,
     "TrialStorage":  "Kernel resident per-boot clock",
     "ClockRequired":  true,
     "InstalledFamilies":  [
@@ -18,5 +18,5 @@
                               "XInputHID",
                               "GIP"
                           ],
-    "Note":  "Microsoft-signed primary driver and resident clock; complete current user-mode sources and installers."
+    "Note":  "Microsoft-signed one-hour primary driver and resident clock; complete current user-mode SDK and installers."
 }

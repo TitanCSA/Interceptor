@@ -1,3 +1,5 @@
+> Historical report for 1.4.17.0. Current 1.4.21.0 uses a one-hour allowance; controller monitor subscription also starts and obeys that allowance. See [current validation](DEMO-VALIDATION.md).
+
 # Input update 1.4.17.0
 
 This release synchronizes the combined Interceptor product with the current

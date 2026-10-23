@@ -4,7 +4,7 @@ Class=Keyboard
 ClassGuid={4D36E96B-E325-11CE-BFC1-08002BE10318}
 Provider=%Provider%
 CatalogFile=InterceptorKeyboard.cat
-DriverVer=10/22/2026,1.4.20.0
+DriverVer=10/23/2026,1.4.21.0
 PnpLockdown=1
 [Manufacturer]
 %Provider%=Models,NTamd64.10.0...16299

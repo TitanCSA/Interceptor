@@ -381,7 +381,7 @@ struct Hid_Codec {
 namespace Interceptor {
 namespace {
 [[noreturn]] void Fail(const char* operation,DWORD error=GetLastError()) {
-    if(error==IC_ERROR_TRIAL_EXPIRED)operation="Interceptor two-hour trial expired; restart Windows to use capture again";
+    if(error==IC_ERROR_TRIAL_EXPIRED)operation="Interceptor one-hour trial expired; restart Windows to use capture again";
     throw std::system_error(static_cast<int>(error),std::system_category(),operation);
 }
 struct Handle {

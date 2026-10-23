@@ -47,7 +47,7 @@ service, initializes devices, receives a batch, transforms it and calls
 `Send_Input(inputs)`. The loop has no sleep, FPS limit or per-report console
 logging. A send error or incomplete batch stops the process with its error.
 Closing the process / Ctrl+C releases capture and restores passthrough.
-The shared two-hour per-boot demo allowance applies.
+The shared one-hour per-boot demo allowance applies.
 
 ### HID layouts
 

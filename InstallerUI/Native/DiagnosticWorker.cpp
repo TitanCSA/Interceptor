@@ -1,4 +1,4 @@
-﻿#include "Interceptor.h"
+#include "Interceptor.h"
 #pragma execution_character_set("utf-8")
 // Finite, explicit diagnostic worker. No installation or association. Closing
 // this process also closes its non-inherited capture handle in the kernel.
@@ -264,9 +264,9 @@ void Run(unsigned type,const std::wstring& instance,HWND owner){
     Emit("api","info","Reading the loaded driver's capabilities.",5);const auto caps=Get_Capabilities();
     Emit("api","pass","API ABI "+std::to_string(caps.abi_version)+"; XUSB profiles="+std::to_string(caps.xusb_profiles)+", XInputHID="+std::to_string(caps.xinputhid_profiles)+", GIP="+std::to_string(caps.gip_profiles)+".",10);
     try{const auto trial=Get_Trial_Status();
-        if(trial.state==IC_TRIAL_EXPIRED){Emit("trial_expired","unverified","The two-hour demo has expired: capture and modification are disabled until Windows restarts. Physical input remains functional.",100);return;}
+        if(trial.state==IC_TRIAL_EXPIRED){Emit("trial_expired","unverified","The one-hour demo has expired: capture and modification are disabled until Windows restarts. Physical input remains functional.",100);return;}
         if(trial.state==IC_TRIAL_UNAVAILABLE){Emit("trial_state","error","Demo status unavailable; capture disabled, passthrough preserved. Windows="+std::to_string(trial.error)+".",100);return;}
-        Emit("trial_state","info",trial.state==IC_TRIAL_NOT_STARTED?"The two-hour demo has not started. The first test that creates a capture context starts the shared timer for all device families.":"Demo active; remaining time: "+std::to_string(trial.remaining_100ns/10000000ull)+" seconds. Closing diagnostics does not reset the timer.",12);
+        Emit("trial_state","info",trial.state==IC_TRIAL_NOT_STARTED?"The one-hour demo has not started. The first test that creates a capture context starts the shared timer for all device families.":"Demo active; remaining time: "+std::to_string(trial.remaining_100ns/10000000ull)+" seconds. Closing diagnostics does not reset the timer.",12);
     }catch(const std::system_error& error){if(error.code().value()!=ERROR_INVALID_FUNCTION&&error.code().value()!=ERROR_NOT_SUPPORTED)throw;}
     IC_DEVICE_QUERY_RESULT detail{};bool exactIdentity=true;
     try{detail=Get_Device_Details();Emit("identity","info","Exact identification by PnP instance; HID profiles="+std::to_string(detail.hid_profiles)+".",15);}
@@ -357,7 +357,7 @@ int wmain(int argc,wchar_t** argv){setvbuf(stdout,nullptr,_IONBF,0);try{
     const unsigned type=wcstoul(argv[4],nullptr,10);if(type<1||type>6||wcslen(argv[2])>255)throw std::invalid_argument("invalid device selection");
     Run(type,argv[2],reinterpret_cast<HWND>(static_cast<ULONG_PTR>(_wcstoui64(argv[6],nullptr,10))));return 0;
 }catch(const std::system_error& error){const auto code=static_cast<DWORD>(error.code().value());
-    if(code==IC_ERROR_TRIAL_EXPIRED){Emit("trial_expired","unverified","The two-hour demo expired during the test. Captures were released; restart Windows to continue.",100);return 2;}
+    if(code==IC_ERROR_TRIAL_EXPIRED){Emit("trial_expired","unverified","The one-hour demo expired during the test. Captures were released; restart Windows to continue.",100);return 2;}
     if(code==ERROR_OPERATION_ABORTED){try{if(Get_Trial_Status().state==IC_TRIAL_EXPIRED){Emit("trial_expired","unverified","The demo expired during diagnostics. Remaining tests are unverified; restart Windows to continue.",100);return 2;}}catch(...){}}
     if(code==ERROR_NOT_READY || code==ERROR_TIMEOUT){Emit("capture_pending","unverified","The source is present but not yet ready to finish the test. This does not prove a disconnected or faulty controller. Review its status and preparation reasons above; Win32="+std::to_string(code)+".",100);return 2;}
     Emit("native_error",code==ERROR_INVALID_FUNCTION||code==ERROR_NOT_SUPPORTED||code==ERROR_DEVICE_NOT_CONNECTED||code==ERROR_SHARING_VIOLATION?"unverified":"error",ErrorText(error)+" ; Win32="+std::to_string(code)+" ("+Hex(code)+"). A complete test could not be verified; check driver version, permissions, availability and capture ownership.",100);return 2;

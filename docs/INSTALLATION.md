@@ -65,7 +65,7 @@ example. Running an example does not install the driver.
 All examples check for the Interceptor driver service at startup. If it is absent,
 the console prints installation instructions or the viewer displays a message,
 then exits before device initialization or capture. This read-only check does not
-start the two-hour allowance. Console help and the viewer's offline tests remain
+start the one-hour allowance. Console help and the viewer's offline tests remain
 available without the driver. An installed service can still need a restart or
 device association; use installer diagnostics when capture is unavailable.
 
@@ -96,7 +96,7 @@ input modification when suitable activity reaches the foreground diagnostic wind
 No activity, a missing Windows confirmation or an unsupported field is marked
 **unverified**, not reported as a successful end-to-end test. This does not test
 every button, axis, rumble, audio function or proprietary extension. A diagnostic
-capture can start the two-hour demo allowance.
+capture can start the one-hour demo allowance.
 
 ![Diagnostics window with simulated report data](images/diagnostics.png)
 
@@ -123,7 +123,7 @@ restarting, and let the installed recovery service check it during its 30-second
 startup window. This recovery path can restart Windows when cleanup requires it.
 It is not a replacement for Windows recovery if the OS cannot boot.
 
-The demo expires two hours after the first successful capture in the current
+The demo expires one hour after the first successful capture in the current
 Windows boot, including time spent asleep. Closing applications or reinstalling
 does not reset it. Use Windows
 **Restart**, rather than sleep or Fast Startup shutdown, for another allowance.
@@ -202,7 +202,7 @@ controller compatibility or measure input latency.
 ## Demo clock component
 
 Setup includes the Microsoft-signed `TitanDemoClock.sys` companion. It keeps this
-product's two-hour allowance in kernel memory until Windows Restart, independently
+product's one-hour allowance in kernel memory until Windows Restart, independently
 of unloading or reinstalling the main driver. It has no user-mode background process
 and is not attached to the input stack. A product-owned driver service registers it;
 removing another product does not remove this product's registration. Missing or

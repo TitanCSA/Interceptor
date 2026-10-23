@@ -1,22 +1,29 @@
-# Signed demo validation - 1.4.20.0
+# Signed demo validation - 1.4.21.0
 
-This release includes the Microsoft-signed main driver and `TitanDemoClock.sys`.
-The returned executable bodies and INF files match the production candidates
-validated in an isolated Windows 11 VM. Catalog membership and Microsoft kernel
-signatures were checked for all returned packages. No kernel source is distributed.
+The main driver and required `TitanDemoClock.sys` have valid Microsoft Windows
+Hardware Compatibility Publisher signatures. Every returned executable body and
+INF matches the prepared production candidate; kernel catalog membership was
+checked before integration. Kernel source and signing credentials are private.
 
-The four-product validation campaign covered 1,278,238 offline assertions with
-AddressSanitizer, Driver Verifier, expiry, reload/reinstall persistence, administrator
-and SYSTEM access rejection, and concurrent API requests. Vdevice additionally
-completed 1,000 rapid create/delete cycles and 100 early owner-close cycles with
-zero remaining driver-attributed tracked allocations in those tests.
+The allowance is **3,600 seconds per product per Windows kernel boot**, shared
+across applications. First capture, controller monitor subscription or raw GIP
+diagnostics start the Interceptor allowance; Vdevice starts on device creation.
+Status queries do not start it. Closing, unloading or reinstalling the main driver
+does not renew it. Expiry releases capture and restores physical passthrough;
+Vdevice removes its demo devices. Use **Windows Restart** for another allowance.
 
-The allowance remains 7,200 seconds per product per Windows kernel boot. First
-capture starts it; controller monitor subscription and raw GIP diagnostics also
-count as use. Vdevice starts on virtual-device creation. Metadata/status queries
-do not start it. At expiry, protected operations stop; physical Interceptor input
-returns to passthrough. Windows Restart provides a new allowance.
+Exact production duration and non-starting status queries were checked in an
+isolated Windows 11 VM. Expiry, pending-reader cancellation and rejection of new
+sessions were exercised using 45-second laboratory variants. Clock and trial
+stress suites passed under AddressSanitizer; the prior Driver Verifier campaign
+covered the same lifecycle mechanisms. The one-hour change does not change input
+routing. The signed installers are additionally checked before publication.
 
-These bounded tests do not establish zero latency, universal hardware support,
-absence of all possible defects, or protection against arbitrary kernel control,
-external VM rollback, or older signed driver versions already distributed.
+Upgrading from the previous two-hour clock requires a normal **Windows Restart**.
+An incompatible resident clock fails closed until that restart; reopening an app
+or unplugging a controller does not replace the loaded clock.
+
+These bounded tests are not a full one-hour wall-clock soak, exhaustive physical
+device testing, a zero-latency claim or proof of absence of every defect. Older
+signed releases already downloaded, kernel control and external VM rollback are
+outside this protection boundary.

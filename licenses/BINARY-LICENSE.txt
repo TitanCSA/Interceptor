@@ -10,7 +10,7 @@ packages with these terms and the supplied notices. Keep the driver signatures,
 catalogs, integrity manifests and demo limitation intact. This permission does
 not grant a right to redistribute the unrestricted edition.
 
-The demo permits capture and injection for two hours from the first successful
+The demo permits capture and injection for one hour from the first successful
 capture in each Windows kernel boot. The allowance is shared by all applications.
 Expiry releases capture and leaves physical input in passthrough. Windows
 Restart begins a new allowance. No claim is made that every device model or

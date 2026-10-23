@@ -198,7 +198,7 @@ namespace InterceptorViewer {
   internal static bool TerminalStatus(uint status){return status!=0&&status!=1&&status!=2&&status!=8;}
   internal static string FamilyName(uint type){switch(type){case 3:return "HID";case 4:return "XInput / XUSB";case 5:return "XInputHID";case 6:return "GIP";default:return "type "+type;}}
   internal static string StageName(uint stage){switch(stage){case 0:return "not recorded";case 1:return "Init_AllDevices";case 2:return "Get_Capabilities";case 3:return "Create_Context";case 4:return "Get_Devices";case 5:return "Wait_For_Input";case 6:return "Get_Input (receive)";case 7:return "Send_Input (forward unchanged)";case 8:return "display decoding";default:return "stage "+stage;}}
-  internal static string ResetDescription(uint reason){switch(reason){case 0:return "not reported";case 1:return "emergency passthrough shortcut";case 2:return "input queue overflow; capture released";case 3:return "capture/context closed";case 4:return "device removed or device topology changed";case 5:return "two-hour demo expired";default:return "unknown reset reason";}}
+  internal static string ResetDescription(uint reason){switch(reason){case 0:return "not reported";case 1:return "emergency passthrough shortcut";case 2:return "input queue overflow; capture released";case 3:return "capture/context closed";case 4:return "device removed or device topology changed";case 5:return "one-hour demo expired";default:return "unknown reset reason";}}
   internal static string StopDiagnostic(Snapshot snapshot,Diagnostic diagnostic,int kind,DeviceState[] states,bool concise){
    uint error=diagnostic.Error!=0?diagnostic.Error:snapshot.Error;
    uint reason=diagnostic.ResetReason!=0?diagnostic.ResetReason:snapshot.ResetReason;
@@ -236,7 +236,7 @@ namespace InterceptorViewer {
     case 7:state.Text="Observation stopped automatically";detail.Text="The capture was released; this viewer is no longer intercepting inputs.";break;
     case 8:state.Text="Waiting for a compatible source";detail.Text="Waiting for the selected family to become capturable. Inputs pass through until ready. Observe remains active; Stop releases it.";break;
     case 9:state.Text="Capture operation timed out";detail.Text="The operation timed out before capture became ready. The exact stage and error are shown below.";break;
-    case 10:state.Text="Two-hour demo expired";detail.Text="All captures have been released. Restart Windows to begin another two-hour session.";break;
+    case 10:state.Text="One-hour demo expired";detail.Text="All captures have been released. Restart Windows to begin another one-hour session.";break;
     default:state.Text="Observation stopped automatically";detail.Text="The capture operation failed. See its exact stage and error below.";break;
    }
    if(TerminalStatus(header.Status)){
