@@ -1,131 +1,77 @@
-# C++ input examples
+# Interceptor console examples
 
-Install the driver first. Each example uses the two-file SDK and checks its own
-product's driver service before capture. Run one program at a time as administrator.
+Install this edition with **InterceptorSetup.exe**, restart Windows if requested,
+then run **one** example as administrator. Each program checks the driver before
+starting and explains its action in English. Close its console or press Ctrl+C to
+stop. Physical Ctrl+Alt+Delete is available if an intentional keyboard block
+suppresses shortcuts; that example also exits on Escape.
 
-## Keyboard and mouse
+Each `.cpp` is independent: `Interceptor.h`, `Interceptor.cpp`, and standard/Windows
+headers are all it needs. There is no shared example runner or behavior header.
 
-| Source / executable | Behavior |
+| Source / executable | What it does |
 | --- | --- |
-| `01_Echange_H_J` | Swap H and J |
-| `02_Ctrl_H_Hello` | Ctrl+H types `hello` |
-| `03_Inverse_Souris_Y` | Invert mouse Y |
-| `04_Inverse_X_J_Boutons_HK` | Invert mouse X; J or X1/X2 holds H+K |
-| `05_Clavier_Bloque_Affichage` | Display and intentionally block keyboard input |
-| `06_Souris_Bloquee_Affichage` | Display and intentionally block mouse input |
-| `08_Clavier_Minimal` | Minimal mixed-batch loop: H becomes J |
-| `09_Mouse_Move_Horizontal` | Send a signed relative mouse X movement through the driver |
+| [01_Keyboard_Swap_H_J.cpp](01_Keyboard_Swap_H_J.cpp) | Swap H and J, including key presses and releases. |
+| [02_Keyboard_Ctrl_H_Hello.cpp](02_Keyboard_Ctrl_H_Hello.cpp) | Ctrl+H types hello. The shortcut H is consumed; other keys keep working. |
+| [03_Mouse_Invert_Y.cpp](03_Mouse_Invert_Y.cpp) | Invert mouse Y. X, buttons, wheels and other devices stay unchanged. |
+| [04_Mouse_Invert_X_Hold_HK.cpp](04_Mouse_Invert_X_Hold_HK.cpp) | Invert mouse X. Hold J or mouse X1/X2 to hold H+K instead. |
+| [05_Keyboard_Block_And_Print.cpp](05_Keyboard_Block_And_Print.cpp) | Print and block keyboard input. Press Escape to stop and restore normal input. |
+| [06_Mouse_Block_And_Print.cpp](06_Mouse_Block_And_Print.cpp) | Print and block mouse input. Keyboard and controller input keep working. |
+| [08_Keyboard_Minimal.cpp](08_Keyboard_Minimal.cpp) | Minimal example: capture inputs, change H to J, then forward them. |
+| [09_Mouse_Move_Horizontal.cpp](09_Mouse_Move_Horizontal.cpp) | Enter relative mouse X counts: 300 moves right, -485 moves left. Enter q to quit. |
+| [Controller_01_Invert_Vertical.cpp](Controller_01_Invert_Vertical.cpp) | Invert every identified stick Y axis. Supports HID, XInput/XUSB, XInputHID and GIP. |
+| [Controller_02_Swap_Buttons.cpp](Controller_02_Swap_Buttons.cpp) | Swap controller buttons in pairs: 1/2, 3/4, and so on. Supports all controller families. |
+| [Controller_03_Instant_Triggers.cpp](Controller_03_Instant_Triggers.cpp) | Make any positive trigger pressure 100%. Supports HID, XInput/XUSB, XInputHID and GIP. |
+| [Controller_04_Deadzone_50.cpp](Controller_04_Deadzone_50.cpp) | Apply a 50% deadzone per stick axis and rescale the remaining range. Supports all families. |
+| [Controller_05_Inverse_Exponential.cpp](Controller_05_Inverse_Exponential.cpp) | Apply an inverse exponential stick curve (square root by default). Supports all families. |
 
-Examples 01-06 use a countdown. Release controls, then focus the target app.
-Physical Ctrl+Alt+Delete revokes capture if a blocking monitor suppresses ordinary
-shortcuts. The `hello` example uses scan codes; it is not a text/IME API.
+## Receive, change, forward
 
-### Move the mouse using raw relative X input
-
-Extract the examples ZIP and run `ExamplesConsole/09_Mouse_Move_Horizontal.exe`
-as administrator after installing this edition's driver. When building from
-source, the EXE is in `bin/Native/`. Type `300` and Enter to send X = +300, or
-`-485` and Enter to send X = -485. `0` does nothing. Esc, `q` and Enter, or Ctrl+C
-exits.
-
-The value is sent directly as a relative mouse input through Interceptor:
+The essential mouse Y operation is easy to follow:
 
 ```cpp
-Interceptor::Mouse_Input input{};
-input.device = mouse.id;        // A mouse returned by Get_Devices().
-auto& state = input.stroke;
-state.x = 300;                 // Relative X; Y, buttons and flags remain zero.
-auto result = Interceptor::Send_Input(input);
+auto inputs = Get_Input_With_Timeout(INFINITE);
+for (auto& input : inputs)
+    if (auto* mouse = input.Get<Mouse_Input>())
+        mouse->stroke.y = -mouse->stroke.y;
+auto result = Send_Input(inputs);
 ```
 
-`state` is a local reference to the SDK's `stroke` field. There is no cursor
-position query, absolute coordinate conversion or screen-bound clamping. These
-are raw movement counts, not a guaranteed number of screen pixels: Windows and
-applications apply their own sensitivity/acceleration. The example also checks
-the send result and handles queue backpressure.
+The complete examples also handle absolute coordinates and signed endpoints,
+check initialization/send failures, and forward unrelated fields/families.
+`INFINITE` sleeps until input arrives; there is no polling, countdown, FPS limit,
+per-packet descriptor query or manually managed context. Buffers and capture
+lifetime belong to the library. Process exit closes capture in the driver.
 
-Physical input is forwarded while you enter commands. The console and driver
-share an event-driven loop with no idle busy polling. Run one capture app at a
-time. The installed demo's one-hour allowance still applies; no driver update
-is required. The compiled EXE is distributed inside the examples ZIP.
+Build from the repository root with `./Build.ps1 -Target ExamplesConsole`.
+EXEs are written to `bin/Native/`. Download precompiled programs from the release's
+**examples ZIP**; the **SDK ZIP** includes their complete sources.
 
-[Source](09_Mouse_Move_Horizontal.cpp)
-## Controller examples
+The demo is limited to **one hour per boot**, shared across applications.
 
-Run **one capture program at a time**, as administrator, after installing this
-edition. All five programs receive **HID, XInput/XUSB, XInputHID and GIP** in the
-same automatic SDK session. Other input families and untouched fields are forwarded.
-The examples use physical device reports; they do not create virtual controllers.
+## Controller fields
 
-| Source / executable | Behavior |
-| --- | --- |
-| `Controller_01_Invert_Vertical` | Invert every identified stick Y axis, including repeated HID Y controls |
-| `Controller_02_Swap_Buttons` | Swap buttons in pairs; native A/B, X/Y, LB/RB, Back/Start, LS/RS, Up/Down, Left/Right |
-| `Controller_03_Instant_Triggers` | Any positive trigger pressure becomes 100%; released remains 0% |
-| `Controller_04_Deadzone_50` | 50% deadzone on each stick axis; rescale the remaining range to 0-100% |
-| `Controller_05_Inverse_Exponential` | Apply a root curve to sticks; default exponent 2 (square root) |
+All five controller examples handle HID, XInput/XUSB, XInputHID and GIP in the
+same receive loop. HID uses dynamic `state.axes`, `state.triggers` and
+`state.buttons`; XUSB/GIP use their native `state` fields. Only the current
+report's decoded controls are edited; unknown fields and raw extensions pass through.
 
-Each `.cpp` is a complete, independent program with only `Interceptor.h` and
-system/standard headers. Compile it with `Interceptor/Interceptor.cpp` and C++17;
-no shared behavior header is required. Build all with:
+HID descriptors do not universally identify stick/trigger roles. Auto selects
+X/Y + Z/Rz when present in the same report/collection/element, otherwise X/Y + Rx/Ry.
+Use `--hid-layout xy-rxry` or `--hid-layout xy-zrz` for an ambiguous descriptor.
+A lone combined-trigger Z, hats, null/relative controls and vendor data are preserved.
+Button pairing stays within each report/collection/usage page; an odd last button stays unchanged.
 
-```powershell
-.\Build.ps1 -Target ExamplesConsole
-```
+The 50% deadzone is per axis, not radial: 40% -> 0%, 75% -> 50%, 100% -> 100%.
+The inverse exponential uses `sign(x) * abs(x)^(1/exponent)`; use `--exponent 2`
+(default), or a matching value from 1 to 16. It only compensates a game applying
+the matching power curve, without additional deadzones/acceleration.
 
-Run the EXEs from `bin/Native/`. Each checks its own product's installed driver
-service, initializes devices, receives a batch, transforms it and calls
-`Send_Input(inputs)`. The loop has no sleep, FPS limit or per-report console
-logging. A send error or incomplete batch stops the process with its error.
-Closing the process / Ctrl+C releases capture and restores passthrough.
-The shared one-hour per-boot demo allowance applies.
+## Raw mouse movement
 
-### HID layouts
-
-Native XUSB/GIP sticks and triggers have defined fields. Generic HID controls
-come from the descriptor, with their report and collection identities preserved.
-Explicit HID trigger controls are supported. For conventional unlabelled axes,
-the default `auto` layout uses X/Y for the left stick and Z/Rz for the right stick
-when both exist; otherwise it uses Rx/Ry. With a Z/Rz stick, Rx/Ry are treated as
-separate triggers. Repeated controls in the current report are processed too.
-
-Some descriptors use the same usages for different purposes. Select the layout
-matching the descriptor rather than a device VID/PID:
-
-```powershell
-.\Controller_01_Invert_Vertical.exe --hid-layout xy-rxry
-.\Controller_03_Instant_Triggers.exe --hid-layout xy-zrz
-```
-
-`xy-rxry` means X/Y + Rx/Ry sticks, with Z/Rz as separate triggers;
-`xy-zrz` means X/Y + Z/Rz sticks, with Rx/Ry triggers.
-Relative/null/constant-range fields, hats, unknown usages and opaque extensions
-remain unchanged. A lone Z in automatic mode is not guessed to be a trigger:
-it may encode two combined triggers. Vendor encodings or stick pairs split across
-reports may require adapting the clearly marked axis selection in the example.
-Descriptor decoding alone cannot establish a universal stick/trigger meaning.
-
-HID button swaps pair consecutive declared controls within the same report,
-usage page and collection. An odd trailing button stays unchanged. Native Guide
-and reserved bits stay unchanged. A D-pad represented as a HID hat is not a
-button pair; it is preserved.
-
-### Response curves
-
-The deadzone is **per axis**, not radial:
-`out = sign(in) * max(0, (abs(in) - 0.5) / 0.5)`.
-For example, 40% becomes 0%, 75% becomes 50%, and 100% stays 100%.
-
-```powershell
-.\Controller_05_Inverse_Exponential.exe --exponent 2
-```
-
-The inverse curve is `out = sign(in) * abs(in)^(1/exponent)`, with an exponent
-from 1 to 16. It compensates a game curve `sign(x) * abs(x)^exponent` only when
-the exponents match and no other deadzone, acceleration or response processing
-intervenes. There is no universal inverse for every game's "exponential" setting.
-
-The former **Controller Minimal** only received and forwarded all families
-unchanged. It was a developer skeleton, not a remap. These five examples replace
-its EXE; the [main README](../README.md#minimal-example-receive-read-forward)
-keeps the basic receive/read/forward loop.
+`09_Mouse_Move_Horizontal` sends `Mouse_Input` with `state.x` equal to the number
+you type. These are relative input counts, not guaranteed screen pixels; sensitivity
+and acceleration are applied by Windows/the game. `state.y`, buttons and flags stay
+zero. The console input handle wakes `Get_Input_With_Timeout` when typing, while
+physical input is forwarded; no forwarding thread, idle polling or cursor-position API
+is needed. Escape or `q` followed by Enter exits.

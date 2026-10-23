@@ -1,105 +1,57 @@
 #include "Interceptor.h"
+#include <iostream>
+#include <string_view>
+#include <system_error>
 #include <algorithm>
 #include <cmath>
-#include <iostream>
-#include <stdexcept>
-#include <string>
-#include <system_error>
-#include <winsvc.h>
-
-namespace {
 using namespace Interceptor;
-// HID descriptors do not always label which axes are sticks or triggers.
-// auto: X/Y + Z/Rz if available, otherwise X/Y + Rx/Ry.
-// Override ambiguous descriptors with --hid-layout xy-rxry or xy-zrz.
-enum class Layout { Auto, RxRy, ZRz };
-enum class Role { Other, Horizontal, Vertical, Trigger };
-struct Options { Layout layout=Layout::Auto; double exponent=2.0; };
-
-void Transform(Hid_State& state,const Options&) {
-    // Pair consecutive declared buttons within the same report and collection.
-    // A trailing unpaired button remains unchanged. Hats are axes, not buttons.
-    for(std::size_t i=0;i+1<state.buttons.size();) {
-        auto& a=state.buttons[i];auto& b=state.buttons[i+1];
-        if(a.report_id==b.report_id && a.link_collection==b.link_collection && a.usage_page==b.usage_page) {
-            std::swap(a.pressed,b.pressed);i+=2;
-        } else ++i;
+void Change(Hid_State& state) {
+    for (std::size_t i = 0; i + 1 < state.buttons.size();) {
+        auto& a = state.buttons[i]; auto& b = state.buttons[i + 1];
+        if (a.report_id == b.report_id && a.link_collection == b.link_collection && a.usage_page == b.usage_page) {
+            std::swap(a.pressed, b.pressed); i += 2;
+        } else ++i; // Do not pair buttons from different collections; preserve an odd last button.
     }
 }
-void Transform(IC_NATIVE_GAMEPAD_STATE& state,bool gip,const Options&) {
-    // A/B, X/Y, LB/RB, Back/Start, LS/RS, Up/Down, Left/Right.
-    // Guide is the odd last button; unknown/reserved bits remain untouched.
-    static constexpr unsigned xusb[]={12,13,14,15,8,9,5,4,6,7,0,1,2,3};
-    static constexpr unsigned gips[]={4,5,6,7,12,13,3,2,14,15,8,9,10,11};
-    const auto* bits=gip?gips:xusb;
-    const auto original=state.buttons;
-    for(std::size_t i=0;i<14;i+=2) {
-        const unsigned a=1u<<bits[i],b=1u<<bits[i+1];
-        state.buttons=static_cast<std::uint16_t>((state.buttons&~(a|b))|
-            ((original&a)?b:0)|((original&b)?a:0));
+void Change(IC_NATIVE_GAMEPAD_STATE& state, bool gip) {
+    // A/B, X/Y, LB/RB, Back/Start, LS/RS, Up/Down, Left/Right. Guide/reserved bits are preserved.
+    constexpr unsigned xusb[] = {12,13,14,15,8,9,5,4,6,7,0,1,2,3}, gips[] = {4,5,6,7,12,13,3,2,14,15,8,9,10,11};
+    const auto* bits = gip ? gips : xusb; const auto original = state.buttons;
+    for (unsigned i = 0; i < 14; i += 2) {
+        const auto a = 1u << bits[i], b = 1u << bits[i + 1];
+        state.buttons = static_cast<std::uint16_t>((state.buttons & ~(a | b)) | ((original & a) ? b : 0) | ((original & b) ? a : 0));
     }
 }
 
-// One loop for every controller family. No per-packet logging, timer or FPS cap.
-int Run(const Options& options) {
-    const auto manager=OpenSCManagerW(nullptr,nullptr,SC_MANAGER_CONNECT);
-    if(!manager)throw std::system_error(GetLastError(),std::system_category(),"Check driver installation");
-    const auto service=OpenServiceW(manager,L"Interceptor",SERVICE_QUERY_STATUS);
-    const DWORD error=service?ERROR_SUCCESS:GetLastError();
-    if(service)CloseServiceHandle(service);
-    CloseServiceHandle(manager);
-    if(error==ERROR_SERVICE_DOES_NOT_EXIST) {
-        std::cerr<<"Interceptor is not installed.\n"
-            <<"Run InterceptorSetup.exe or InterceptorSetupConsole.exe /install first.\n";
-        return static_cast<int>(error);
+int main(int argc, char** argv) try {
+    std::cout << "Swap controller buttons in pairs: 1/2, 3/4, and so on. Supports all controller families.\n"
+                 "Run one example at a time as administrator. Close this window or press Ctrl+C to stop.\n" << std::flush;
+    if (argc == 2 && std::string_view(argv[1]) == "--help") return 0;
+    if (argc != 1) throw std::invalid_argument("Run without arguments, or use --help.");
+    Get_Status(); // Read-only check: this edition's installed driver must respond.
+    const auto init = Init_AllDevices();
+    if (!init.ready) {
+        std::cerr << "Initialization failed. Error: " << init.error << ". Restart required: " << init.reboot_required << "\n";
+        return 1;
     }
-    if(error)throw std::system_error(error,std::system_category(),"Check driver installation");
-    const auto init=Init_AllDevices();
-    if(!init.ready) {
-        std::cerr<<"Initialization: error="<<init.error<<", restart="<<init.reboot_required
-                 <<" "<<init.error_detail<<"\n";
-        return static_cast<int>(init.error?init.error:ERROR_SUCCESS_REBOOT_REQUIRED);
-    }
-    DWORD mode=0;const auto console=GetStdHandle(STD_INPUT_HANDLE);
-    if(GetConsoleMode(console,&mode))SetConsoleMode(console,(mode|ENABLE_EXTENDED_FLAGS)&~ENABLE_QUICK_EDIT_MODE);
-    std::cout<<"Swap buttons in pairs. HID, XUSB, XInputHID and GIP.\n"
-             <<"Run as administrator. Close this process / Ctrl+C to restore passthrough.\n";
-    for(;;) {
-        auto inputs=Get_Input_With_Timeout(INFINITE);
-        for(auto& event:inputs) {
-            if(auto* hid=event.Get<Controller_Hid_Input>())Transform(hid->state,options);
-            else if(auto* xusb=event.Get<Controller_Xinput_Input>())Transform(xusb->state,false,options);
-            else if(auto* xih=event.Get<Controller_XinputHid_Input>())Transform(xih->state,options);
-            else if(auto* gip=event.Get<Controller_GIP_Input>())Transform(gip->state,true,options);
+    DWORD consoleMode = 0; // Avoid Quick Edit pausing capture in the classic Windows console.
+    if (GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), &consoleMode))
+        SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), (consoleMode | ENABLE_EXTENDED_FLAGS) & ~ENABLE_QUICK_EDIT_MODE);
+    for (;;) {
+        auto inputs = Get_Input_With_Timeout(INFINITE); // Wait for a batch; the library owns the capture.
+        for (auto& input : inputs) {
+            if (auto* hid = input.Get<Controller_Hid_Input>()) Change(hid->state);
+            else if (auto* xinput = input.Get<Controller_Xinput_Input>()) Change(xinput->state, false);
+            else if (auto* xinputHid = input.Get<Controller_XinputHid_Input>()) Change(xinputHid->state);
+            else if (auto* gip = input.Get<Controller_GIP_Input>()) Change(gip->state, true);
         }
-        const auto sent=Send_Input(inputs);
-        if(!sent || sent.accepted!=inputs.size())
-            throw std::system_error(sent.error?sent.error:ERROR_WRITE_FAULT,std::system_category(),"Send_Input (incomplete batch)");
+        const auto sent = Send_Input(inputs); // Forward every unblocked entry, including other device types.
+        if (!sent) throw std::system_error(sent.error, std::system_category(), "Send_Input");
     }
-}
-} // namespace
-
-int wmain(int argc,wchar_t** argv) try {
-    Options options;
-    for(int i=1;i<argc;++i) {
-        const std::wstring argument=argv[i];
-        if(argument==L"--help") {
-            std::cout<<"Swap buttons in pairs\n"
-                <<"Options: --hid-layout auto|xy-rxry|xy-zrz\n";
-            return 0; // No driver access for help.
-        }
-        if(argument==L"--hid-layout" && i+1<argc) {
-            const std::wstring layout=argv[++i];
-            if(layout==L"auto")options.layout=Layout::Auto;
-            else if(layout==L"xy-rxry")options.layout=Layout::RxRy;
-            else if(layout==L"xy-zrz")options.layout=Layout::ZRz;
-            else throw std::invalid_argument("Unknown HID layout.");
-        }
-        else throw std::invalid_argument("Unknown argument. Use --help.");
-    }
-    return Run(options);
-} catch(const std::exception& error) {
-    std::cerr<<error.what()<<"\nCapture released; passthrough restored.\n";
+} catch (const std::system_error& error) {
+    std::cerr << "Driver error: " << error.code().value() << ". Install this edition with InterceptorSetup.exe, restart if requested, and run as administrator.\n";
+    return 1;
+} catch (const std::exception& error) {
+    std::cerr << error.what() << '\n';
     return 1;
 }
-

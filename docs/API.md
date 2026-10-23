@@ -58,7 +58,7 @@ const auto sent = Interceptor::Send_Input(inputs);
 // Check sent.error; sent.accepted counts entries accepted by this call.
 ```
 
-Use the [complete minimal example](../ExamplesConsole/08_Clavier_Minimal.cpp) for
+Use the [complete minimal example](../ExamplesConsole/08_Keyboard_Minimal.cpp) for
 initialization failure and exception handling.
 
 `Get_Input_With_Timeout(timeout = INFINITE, stopEvent = nullptr)` opens the internal
