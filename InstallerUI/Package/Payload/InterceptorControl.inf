@@ -4,7 +4,7 @@ Class=System
 ClassGuid={4D36E97D-E325-11CE-BFC1-08002BE10318}
 Provider=%Provider%
 CatalogFile=InterceptorControl.cat
-DriverVer=10/23/2026,1.4.21.0
+DriverVer=10/24/2026,1.4.22.0
 PnpLockdown=1
 [Manufacturer]
 %Provider%=Models,NTamd64.10.0...16299

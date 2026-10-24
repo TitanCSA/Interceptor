@@ -1,29 +1,24 @@
-# Signed demo validation - 1.4.21.0
+# Validation scope - 1.4.22.0
 
-The main driver and required `TitanDemoClock.sys` have valid Microsoft Windows
-Hardware Compatibility Publisher signatures. Every returned executable body and
-INF matches the prepared production candidate; kernel catalog membership was
-checked before integration. Kernel source and signing credentials are private.
+The embedded driver and required demo clock carry valid Microsoft Windows
+Hardware Compatibility Publisher signatures. Their executable bodies and INF
+files match the frozen production candidates. Kernel catalog membership is
+verified for every package, including the shared primary driver image.
 
-The allowance is **3,600 seconds per product per Windows kernel boot**, shared
-across applications. First capture, controller monitor subscription or raw GIP
-diagnostics start the Interceptor allowance; Vdevice starts on device creation.
-Status queries do not start it. Closing, unloading or reinstalling the main driver
-does not renew it. Expiry releases capture and restores physical passthrough;
-Vdevice removes its demo devices. Use **Windows Restart** for another allowance.
+The SDK, viewer and installers are rebuilt from this release's public sources.
+Installer and viewer self-tests perform no installation or capture. The input
+changes have passed extracted production-code regression, memory and stress
+tests; AddressSanitizer checks those user-mode fixtures, not a running kernel.
+An isolated Windows 10 VM exercised the combined candidate's keyboard, mouse
+and generic HID sends. These bounded results are not physical device-to-game
+latency measurements or proof of universal hardware compatibility.
 
-Exact production duration and non-starting status queries were checked in an
-isolated Windows 11 VM. Expiry, pending-reader cancellation and rejection of new
-sessions were exercised using 45-second laboratory variants. Clock and trial
-stress suites passed under AddressSanitizer; the prior Driver Verifier campaign
-covered the same lifecycle mechanisms. The one-hour change does not change input
-routing. The signed installers are additionally checked before publication.
+An independent native Windows XUSB/ViGEm removal fault (Verifier C9/7) reproduced
+with Interceptor absent. The unsafe virtual-XUSB benchmark scenario is disabled;
+its removal crash is not claimed fixed by this driver. No zero-crash guarantee
+or zero-latency claim is made.
 
-Upgrading from the previous two-hour clock requires a normal **Windows Restart**.
-An incompatible resident clock fails closed until that restart; reopening an app
-or unplugging a controller does not replace the loaded clock.
-
-These bounded tests are not a full one-hour wall-clock soak, exhaustive physical
-device testing, a zero-latency claim or proof of absence of every defect. Older
-signed releases already downloaded, kernel control and external VM rollback are
-outside this protection boundary.
+The demo remains 3,600 seconds per product per Windows kernel boot, shared by
+applications. The existing trial clock policy and expiry behavior are unchanged.
+Use Windows Restart after setup requests it. Kernel source and signing material
+are not distributed in this user-mode source SDK.
