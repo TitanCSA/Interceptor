@@ -1,12 +1,12 @@
 {
     "Schema":  1,
     "Product":  "Interceptor",
-    "DriverVersion":  "1.4.21.0",
-    "SdkVersion":  "1.4.17.0",
-    "BundleVersion":  "1.4.21.0",
-    "InstallerVersion":  "1.4.21.0",
-    "ViewerVersion":  "1.4.21.0",
-    "SigningPending":  false,
+    "DriverVersion":  "1.4.22.0",
+    "SdkVersion":  "1.4.22.0",
+    "BundleVersion":  "1.4.22.0",
+    "InstallerVersion":  "1.4.22.0",
+    "ViewerVersion":  "1.4.22.0",
+    "SigningPending":  true,
     "TrialSeconds":  3600,
     "TrialStorage":  "Kernel resident per-boot clock",
     "ClockRequired":  true,
@@ -18,5 +18,5 @@
                               "XInputHID",
                               "GIP"
                           ],
-    "Note":  "Microsoft-signed one-hour primary driver and resident clock; complete current user-mode SDK and installers."
+    "Note":  "Local performance source candidate awaiting the matching Microsoft-signed driver CAB. Existing embedded signed payloads are intentionally retained until that CAB returns; they are not the candidate driver. The one-hour trial is unchanged."
 }

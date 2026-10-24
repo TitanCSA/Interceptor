@@ -64,6 +64,7 @@ static __inline int IcXusbMirrorGroup(const uint16_t* text,uint32_t chars,int us
     return high*16+low;
 }
 #include <algorithm>
+#include <atomic>
 #include <string>
 #include <vector>
 
@@ -566,6 +567,7 @@ class Context {
 public:
     SourceHandles sources;
     Handle driver,events[IC_STREAM_COUNT],revoked;std::uint8_t mask=0;std::mutex readers[IC_STREAM_COUNT];
+    std::atomic<bool> multipleReady{false}; // Relaxed hint; Windows remains authoritative.
     std::vector<Detail::Wire<Controller_Hid_Input>> hid;
     std::vector<Controller_Xinput_Input> xusb;
     std::vector<Detail::Wire<Controller_XinputHid_Input>> xinputhid;
@@ -877,8 +879,20 @@ std::uint8_t Wait_For_Input(Context& c,DWORD timeout,HANDLE stop_event) {
     // known; only later streams need polling. Earlier arrivals remain signalled
     // for the next receive. Revocation and caller cancellation keep priority.
     std::uint8_t ready=streams[selected];
-    for(DWORD i=selected+1;i<count;++i)
-        if(WaitForSingleObject(events[i],0)==WAIT_OBJECT_0)ready|=streams[i];
+    // An empty tail needs one syscall. After finding another ready family,
+    // individual checks avoid repeated multi-object scans of a dense tail.
+    DWORD next=selected+1;
+    if(count-next>1 && !c.multipleReady.load(std::memory_order_relaxed)) {
+        const auto tail=WaitForMultipleObjects(count-next,events+next,FALSE,0);
+        if(tail==WAIT_TIMEOUT)return ready;
+        if(tail==WAIT_FAILED)Fail("WaitForMultipleObjects");
+        const auto offset=tail-WAIT_OBJECT_0;
+        if(offset>=count-next)Fail("Unexpected input wait result",ERROR_INVALID_DATA);
+        next+=offset;ready|=streams[next++];
+    }
+    for(;next<count;++next)
+        if(WaitForSingleObject(events[next],0)==WAIT_OBJECT_0)ready|=streams[next];
+    c.multipleReady.store((ready&(ready-1))!=0,std::memory_order_relaxed);
     return ready;
 }
 }
