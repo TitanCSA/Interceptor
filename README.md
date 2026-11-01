@@ -5,6 +5,17 @@ to Windows with a **Microsoft-signed kernel filter driver** and a **two-file
 C++17 SDK**. Supports keyboard, mouse and compatible HID, XInput/XUSB,
 XInputHID and GIP controllers on **Windows 10 1709+ / Windows 11 x64**.
 
+<!-- full-version-contact:start -->
+> [!IMPORTANT]
+> **Get the full version without demo restrictions**
+>
+> **Discord username: `titancsa`**
+>
+> Open Discord, choose **Friends > Add Friend**, enter **`titancsa`**, then send a direct message. Ask for the **full version without the demo time limit**, and mention **Interceptor**.
+>
+> Tell me whether you need personal use, business integration or OEM redistribution, and ask for pricing and license / activation instructions.
+<!-- full-version-contact:end -->
+
 **[Download](https://github.com/TitanCSA/Interceptor/releases/latest)** |
 [Installation](docs/INSTALLATION.md) | [C++ API](docs/API.md) |
 [Examples](ExamplesConsole/README.md) | [Compatibility](docs/COMPATIBILITY.md)
