@@ -72,6 +72,17 @@ Setup lists Windows device nodes, so one physical controller can have several ro
 
 ## C++ SDK
 
+### Choosing between Interceptor and Windows Input Bridge
+
+This edition uses `Get_Input_With_Timeout()` / `Send_Input()`.
+[Windows Input Bridge](https://github.com/StrikeFound/Windows-Input-Bridge)
+offers `Read()` / `Write()` and a move-only batch. The APIs are not drop-in
+replacements: use each edition's matching SDK, driver and examples. If an
+application already uses this API, keep its matching edition until you port and
+test it. Compare the published validation scope and test your real devices.
+Follow each edition's uninstall/restart instructions before switching overlapping
+input filters; changing headers alone does not switch the installed driver.
+
 Add [`Interceptor.h`](Interceptor/Interceptor.h) and
 [`Interceptor.cpp`](Interceptor/Interceptor.cpp) to a Windows x64 C++17 project.
 Include the header and compile the source once. No Interceptor DLL or prebuilt
