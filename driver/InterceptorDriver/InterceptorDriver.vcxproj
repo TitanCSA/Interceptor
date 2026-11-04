@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations"><ProjectConfiguration Include="Release|x64"><Configuration>Release</Configuration><Platform>x64</Platform></ProjectConfiguration></ItemGroup>
+  <PropertyGroup Label="Globals"><ProjectGuid>{A154C8B0-77A1-42E1-A062-07B14579B101}</ProjectGuid><WindowsTargetPlatformVersion>10.0.26100.0</WindowsTargetPlatformVersion></PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Label="Configuration"><ConfigurationType>Driver</ConfigurationType><DriverType>KMDF</DriverType><PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset><TargetVersion>Windows10</TargetVersion><_NT_TARGET_VERSION>0x0A00</_NT_TARGET_VERSION><KmdfVersion>1.15</KmdfVersion><DriverTargetPlatform>Desktop</DriverTargetPlatform><UseDebugLibraries>false</UseDebugLibraries></PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <PropertyGroup><OutDir>$(MSBuildThisFileDirectory)..\bin\Release\</OutDir><IntDir>$(MSBuildThisFileDirectory)..\obj\Driver\</IntDir><TargetName>Interceptor</TargetName><SignMode>Off</SignMode><EnableInf2cat>false</EnableInf2cat></PropertyGroup>
+  <PropertyGroup>
+    <ExperimentalXusb Condition="'$(ExperimentalXusb)'==''">true</ExperimentalXusb>
+    <ExperimentalXinputHid Condition="'$(ExperimentalXinputHid)'==''">true</ExperimentalXinputHid>
+    <ExperimentalGip Condition="'$(ExperimentalGip)'==''">true</ExperimentalGip>
+  </PropertyGroup>
+  <ItemDefinitionGroup><ClCompile><WarningLevel>Level4</WarningLevel><TreatWarningAsError>true</TreatWarningAsError><Optimization>MaxSpeed</Optimization></ClCompile><Link><AdditionalDependencies>hidparse.lib;%(AdditionalDependencies)</AdditionalDependencies><AdditionalOptions>/PDBALTPATH:%_PDB% %(AdditionalOptions)</AdditionalOptions></Link></ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(ExperimentalXusb)'=='true'"><ClCompile><PreprocessorDefinitions>INTERCEPTOR_EXPERIMENTAL_XUSB;%(PreprocessorDefinitions)</PreprocessorDefinitions></ClCompile></ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(ExperimentalXinputHid)'=='true'"><ClCompile><PreprocessorDefinitions>INTERCEPTOR_EXPERIMENTAL_XINPUTHID;%(PreprocessorDefinitions)</PreprocessorDefinitions></ClCompile></ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(ExperimentalGip)'=='true'"><ClCompile><PreprocessorDefinitions>INTERCEPTOR_EXPERIMENTAL_GIP;%(PreprocessorDefinitions)</PreprocessorDefinitions></ClCompile></ItemDefinitionGroup>
+  <!-- Accelerated expiry exists only in explicitly labelled laboratory builds. -->
+  <ItemDefinitionGroup Condition="'$(TrialLabSeconds)'!=''"><ClCompile><PreprocessorDefinitions>INTERCEPTOR_TRIAL_LAB_SECONDS=$(TrialLabSeconds);%(PreprocessorDefinitions)</PreprocessorDefinitions></ClCompile></ItemDefinitionGroup>
+  <ItemGroup Condition="'$(ExperimentalGip)'=='true'"><ClCompile Include="ControllerGip.c"/></ItemGroup>
+  
+  <ItemGroup><ClCompile Include="ControllerXinputHid.c"/><ClCompile Include="ControllerXusbUsb.c"/><ClCompile Include="ControllerMonitor.c"/><ClCompile Include="ControllerHid.c"/><ClCompile Include="Control.c"/><ClCompile Include="Trial.c"/><ClCompile Include="Device.c"/><ClCompile Include="HidMapper.c"/></ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <Target Name="BuildResidentTrialClock" AfterTargets="Build">
+    <PropertyGroup><ResidentClockOut Condition="'$(ResidentClockOut)'==''">$(MSBuildProjectDirectory)\..\bin\ResidentClock\$(Configuration)\$(TrialLabSeconds)\</ResidentClockOut></PropertyGroup>
+    <MSBuild Projects="$(MSBuildProjectDirectory)\..\TrialClock\TrialClock.vcxproj" Targets="Build" Properties="Configuration=$(Configuration);Platform=$(Platform);VCToolsVersion=$(VCToolsVersion);TrialLabSeconds=$(TrialLabSeconds);TargetName=TitanDemoClock;OutDir=$(ResidentClockOut);IntDir=$(ResidentClockOut)obj\" />
+    <Copy SourceFiles="$(ResidentClockOut)TitanDemoClock.sys;$(ResidentClockOut)TitanDemoClock.pdb" DestinationFolder="$(OutDir)" SkipUnchangedFiles="true" />
+  </Target>
+</Project>
+

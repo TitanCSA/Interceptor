@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+ <ItemGroup Label="ProjectConfigurations"><ProjectConfiguration Include="Release|x64"><Configuration>Release</Configuration><Platform>x64</Platform></ProjectConfiguration></ItemGroup>
+ <PropertyGroup Label="Globals"><ProjectGuid>{9ECA1EAD-00B2-4DAD-B8A7-55D73116B8B0}</ProjectGuid><WindowsTargetPlatformVersion>10.0.26100.0</WindowsTargetPlatformVersion></PropertyGroup>
+ <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props"/>
+ <PropertyGroup Label="Configuration"><ConfigurationType>Driver</ConfigurationType><DriverType>WDM</DriverType><PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset><TargetVersion>Windows10</TargetVersion><_NT_TARGET_VERSION>0x0A00</_NT_TARGET_VERSION><DriverTargetPlatform>Desktop</DriverTargetPlatform><UseDebugLibraries>false</UseDebugLibraries></PropertyGroup>
+ <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props"/>
+ <PropertyGroup><OutDir>$(MSBuildThisFileDirectory)..\bin\TrialClock\</OutDir><IntDir>$(MSBuildThisFileDirectory)..\obj\TrialClock\</IntDir><TargetName>TitanDemoClock</TargetName><SignMode>Off</SignMode><EnableInf2cat>false</EnableInf2cat></PropertyGroup>
+ <ItemDefinitionGroup><ClCompile><WarningLevel>Level4</WarningLevel><TreatWarningAsError>true</TreatWarningAsError><Optimization>MaxSpeed</Optimization><SpectreMitigation>Spectre</SpectreMitigation></ClCompile><Link><AdditionalDependencies>wdmsec.lib;%(AdditionalDependencies)</AdditionalDependencies><AdditionalOptions>/PDBALTPATH:%_PDB% %(AdditionalOptions)</AdditionalOptions></Link></ItemDefinitionGroup>
+ <ItemDefinitionGroup Condition="'$(TrialLabSeconds)'!=''"><ClCompile><PreprocessorDefinitions>TITAN_TRIAL_LAB_SECONDS=$(TrialLabSeconds);%(PreprocessorDefinitions)</PreprocessorDefinitions></ClCompile></ItemDefinitionGroup>
+ <ItemGroup><ClCompile Include="Clock.c"/></ItemGroup>
+ <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets"/>
+</Project>

@@ -7,7 +7,7 @@ and supported-family masks remain those of the combined Interceptor product.
 
 The public SDK is exactly `Interceptor/Interceptor.h` and `Interceptor.cpp`.
 All eight console examples, the viewer and both installers use these same files.
-Kernel source and private signing material are not published.
+Demo driver source is documented in [driver/README.md](../driver/README.md); full/commercial implementation and private signing material are excluded.
 
 The Microsoft-signed return matches the submitted executable body and all three
 INF files. Both installers embed the same verified signed driver package. Build

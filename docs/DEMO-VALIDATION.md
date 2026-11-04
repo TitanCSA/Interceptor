@@ -20,5 +20,4 @@ or zero-latency claim is made.
 
 The demo remains 3,600 seconds per product per Windows kernel boot, shared by
 applications. The existing trial clock policy and expiry behavior are unchanged.
-Use Windows Restart after setup requests it. Kernel source and signing material
-are not distributed in this user-mode source SDK.
+Use Windows Restart after setup requests it. Demo driver source is documented separately in [driver/README.md](../driver/README.md). Full/commercial implementation and private signing material are excluded from this user-mode SDK distribution.

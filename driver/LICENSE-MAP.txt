@@ -1,0 +1,150 @@
+Interceptor driver source - file-level license map
+
+Paths below are relative to driver/. Each original source/notice file
+and the generated build wrapper/README is classified once.
+
+LicenseRef-Titan-Evaluation-1.0 denotes the separate Titan Demo Driver
+Source Evaluation License, version 1.0, supplied in LICENSE.txt.
+Only files explicitly marked with that identifier receive those terms.
+The repository root LICENSE and existing user-mode/SDK grants are unchanged.
+
+MIT and MS-PL rows retain their complete prior permissions. The custom
+evaluation license adds no production-use, commercial-use, modification,
+redistribution, timer-preservation or authorization-preservation restriction
+to MIT/MS-PL rows. This exception applies to the whole identified file,
+including interleaved Titan changes in a sample-derived source file.
+
+Retained-Notice rows are attribution/license records: keep them intact;
+the custom evaluation terms do not narrow the licenses they reproduce.
+This map and THIRD-PARTY-LICENSES/ may be reproduced with the source.
+
+Complete retained license texts:
+  THIRD-PARTY-LICENSES/MIT-Public-SDK.txt
+
+MIT:
+  Shared/CaptureAll.h
+    Prior public source: https://github.com/TitanCSA/Interceptor/blob/caaf0d0d79328ea6f391953df6b44a60e3ca96a3/Interceptor/Interceptor.cpp
+    Retained complete license: THIRD-PARTY-LICENSES/MIT-Public-SDK.txt
+    Evidence: Public SDK amalgamation marker internal/CaptureAll.h; 2 substantive source lines retained
+  Shared/ControllerDiscovery.h
+    Prior public source: https://github.com/TitanCSA/Interceptor/blob/caaf0d0d79328ea6f391953df6b44a60e3ca96a3/Interceptor/Interceptor.cpp
+    Retained complete license: THIRD-PARTY-LICENSES/MIT-Public-SDK.txt
+    Evidence: Public SDK amalgamation marker internal/ControllerDiscovery.h; 13 substantive source lines retained
+  Shared/ControllerGip.h
+    Prior public source: https://github.com/TitanCSA/Interceptor/blob/caaf0d0d79328ea6f391953df6b44a60e3ca96a3/Interceptor/Interceptor.h
+    Retained complete license: THIRD-PARTY-LICENSES/MIT-Public-SDK.txt
+    Evidence: Public SDK amalgamation marker internal/ControllerGip.h; 21 substantive source lines retained
+  Shared/ControllerGipDiagnostics.h
+    Prior public source: https://github.com/TitanCSA/Interceptor/blob/caaf0d0d79328ea6f391953df6b44a60e3ca96a3/Interceptor/Interceptor.h
+    Retained complete license: THIRD-PARTY-LICENSES/MIT-Public-SDK.txt
+    Evidence: Public SDK amalgamation marker internal/ControllerGipDiagnostics.h; 18 substantive source lines retained
+  Shared/ControllerHid.h
+    Prior public source: https://github.com/TitanCSA/Interceptor/blob/caaf0d0d79328ea6f391953df6b44a60e3ca96a3/Interceptor/Interceptor.h
+    Retained complete license: THIRD-PARTY-LICENSES/MIT-Public-SDK.txt
+    Evidence: Public SDK amalgamation marker internal/ControllerHid.h; 18 substantive source lines retained
+  Shared/ControllerNative.h
+    Prior public source: https://github.com/TitanCSA/Interceptor/blob/caaf0d0d79328ea6f391953df6b44a60e3ca96a3/Interceptor/Interceptor.h
+    Retained complete license: THIRD-PARTY-LICENSES/MIT-Public-SDK.txt
+    Evidence: Public SDK amalgamation marker internal/ControllerNative.h; 4 substantive source lines retained
+  Shared/ControllerNativeProtocol.h
+    Prior public source: https://github.com/TitanCSA/Interceptor/blob/caaf0d0d79328ea6f391953df6b44a60e3ca96a3/Interceptor/Interceptor.h
+    Retained complete license: THIRD-PARTY-LICENSES/MIT-Public-SDK.txt
+    Evidence: Public SDK amalgamation marker internal/ControllerNativeProtocol.h; 8 substantive source lines retained
+  Shared/ControllerXinputHid.h
+    Prior public source: https://github.com/TitanCSA/Interceptor/blob/caaf0d0d79328ea6f391953df6b44a60e3ca96a3/Interceptor/Interceptor.h
+    Retained complete license: THIRD-PARTY-LICENSES/MIT-Public-SDK.txt
+    Evidence: Public SDK amalgamation marker internal/ControllerXinputHid.h; 11 substantive source lines retained
+  Shared/ControllerXusb.h
+    Prior public source: https://github.com/TitanCSA/Interceptor/blob/caaf0d0d79328ea6f391953df6b44a60e3ca96a3/Interceptor/Interceptor.h
+    Retained complete license: THIRD-PARTY-LICENSES/MIT-Public-SDK.txt
+    Evidence: Public SDK amalgamation marker internal/ControllerXusb.h; 13 substantive source lines retained
+  Shared/ControllerXusbMirror.h
+    Prior public source: https://github.com/TitanCSA/Interceptor/blob/caaf0d0d79328ea6f391953df6b44a60e3ca96a3/Interceptor/Interceptor.cpp
+    Retained complete license: THIRD-PARTY-LICENSES/MIT-Public-SDK.txt
+    Evidence: Public SDK amalgamation marker internal/ControllerXusbMirror.h; 2 substantive source lines retained
+  Shared/DeviceAvailability.h
+    Prior public source: https://github.com/TitanCSA/Interceptor/blob/caaf0d0d79328ea6f391953df6b44a60e3ca96a3/Interceptor/Interceptor.cpp
+    Retained complete license: THIRD-PARTY-LICENSES/MIT-Public-SDK.txt
+    Evidence: Public SDK amalgamation marker internal/DeviceAvailability.h; 22 substantive source lines retained
+  Shared/DeviceQuery.h
+    Prior public source: https://github.com/TitanCSA/Interceptor/blob/caaf0d0d79328ea6f391953df6b44a60e3ca96a3/Interceptor/Interceptor.h
+    Retained complete license: THIRD-PARTY-LICENSES/MIT-Public-SDK.txt
+    Evidence: Public SDK amalgamation marker internal/DeviceQuery.h; 27 substantive source lines retained
+  Shared/HidGameProfile.h
+    Prior public source: https://github.com/TitanCSA/Interceptor/blob/caaf0d0d79328ea6f391953df6b44a60e3ca96a3/Interceptor/Interceptor.h
+    Retained complete license: THIRD-PARTY-LICENSES/MIT-Public-SDK.txt
+    Evidence: Public SDK amalgamation marker internal/HidGameProfile.h; 12 substantive source lines retained
+  Shared/HidMapperProfile.h
+    Prior public source: https://github.com/TitanCSA/Interceptor/blob/caaf0d0d79328ea6f391953df6b44a60e3ca96a3/Interceptor/Interceptor.h
+    Retained complete license: THIRD-PARTY-LICENSES/MIT-Public-SDK.txt
+    Evidence: Public SDK amalgamation marker internal/HidMapperProfile.h; 16 substantive source lines retained
+  Shared/InputRead.h
+    Prior public source: https://github.com/TitanCSA/Interceptor/blob/caaf0d0d79328ea6f391953df6b44a60e3ca96a3/Interceptor/Interceptor.cpp
+    Retained complete license: THIRD-PARTY-LICENSES/MIT-Public-SDK.txt
+    Evidence: Public SDK amalgamation marker internal/InputRead.h; 2 substantive source lines retained
+  Shared/InterceptorProtocol.h
+    Prior public source: https://github.com/TitanCSA/Interceptor/blob/caaf0d0d79328ea6f391953df6b44a60e3ca96a3/Interceptor/Interceptor.h
+    Retained complete license: THIRD-PARTY-LICENSES/MIT-Public-SDK.txt
+    Evidence: Public SDK amalgamation marker internal/InterceptorProtocol.h; 66 substantive source lines retained
+  Shared/Trial.h
+    Prior public source: https://github.com/TitanCSA/Interceptor/blob/caaf0d0d79328ea6f391953df6b44a60e3ca96a3/Interceptor/Interceptor.h
+    Retained complete license: THIRD-PARTY-LICENSES/MIT-Public-SDK.txt
+    Evidence: Public SDK amalgamation marker internal/Trial.h; 12 substantive source lines retained
+  Shared/XusbMirrorIdentity.h
+    Prior public source: https://github.com/TitanCSA/Interceptor/blob/caaf0d0d79328ea6f391953df6b44a60e3ca96a3/Interceptor/Interceptor.cpp
+    Retained complete license: THIRD-PARTY-LICENSES/MIT-Public-SDK.txt
+    Evidence: Public SDK amalgamation marker internal/XusbMirrorIdentity.h; 21 substantive source lines retained
+
+LicenseRef-Titan-Evaluation-1.0:
+  Build.ps1
+  InterceptorDriver/Control.c
+  InterceptorDriver/ControllerGip.c
+  InterceptorDriver/ControllerGip.h
+  InterceptorDriver/ControllerHid.c
+  InterceptorDriver/ControllerHid.h
+  InterceptorDriver/ControllerHidEngine.h
+  InterceptorDriver/ControllerMonitor.c
+  InterceptorDriver/ControllerMonitor.h
+  InterceptorDriver/ControllerXinputHid.c
+  InterceptorDriver/ControllerXinputHid.h
+  InterceptorDriver/ControllerXusb.c
+  InterceptorDriver/ControllerXusb.h
+  InterceptorDriver/ControllerXusbMirror.c
+  InterceptorDriver/ControllerXusbMirror.h
+  InterceptorDriver/ControllerXusbUsb.c
+  InterceptorDriver/ControllerXusbUsb.h
+  InterceptorDriver/Device.c
+  InterceptorDriver/Driver.h
+  InterceptorDriver/HidInputBuffers.h
+  InterceptorDriver/HidMapper.c
+  InterceptorDriver/InterceptorControl.inf
+  InterceptorDriver/InterceptorDriver.vcxproj
+  InterceptorDriver/InterceptorKeyboard.inf
+  InterceptorDriver/InterceptorMouse.inf
+  InterceptorDriver/Trial.c
+  InterceptorDriver/Trial.h
+  README.md
+  Shared/AxisCache.h
+  Shared/ControllerGipOut.h
+  Shared/ControllerGipProtocol.h
+  Shared/ControllerGipSequence.h
+  Shared/ControllerMonitor.h
+  Shared/ControllerXusbTrace.h
+  Shared/ControllerXusbUsbProtocol.h
+  Shared/DeviceRouting.h
+  Shared/HidCapture.h
+  Shared/HidKeyState.h
+  Shared/InputValidation.h
+  Shared/MonitorCursor.h
+  Shared/MouseReportMode.h
+  Shared/PrepareStatus.h
+  Shared/Product.h
+  Shared/Ring.h
+  Shared/TrialState.h
+  Shared/XusbDelivery.h
+  Shared/XusbMirrorProfile.h
+  Shared/XusbMirrorValues.h
+  TrialClock/Client.h
+  TrialClock/Clock.c
+  TrialClock/Protocol.h
+  TrialClock/TrialClock.vcxproj

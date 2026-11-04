@@ -1,0 +1,57 @@
+Titan Demo Driver Source Evaluation License, version 1.0
+Copyright (c) 2026 TitanCSA and the respective contributors.
+
+1. Scope
+These terms apply only to Titan-authored demo/evaluation driver source in this
+directory that is not covered by a separately identified license. The license
+map and retained file notices identify exceptions. Existing SDK, protocol-header,
+Microsoft sample and other third-party licenses remain in force for their
+respective files and contributions. This license does not narrow those rights.
+It does not change the license of the repository's user-mode applications/SDKs
+or the separate terms of previously distributed driver binaries.
+Entire files identified as MIT or MS-PL, including Titan changes in those files,
+are excluded from sections 2 through 4 below.
+
+2. Evaluation permission
+You may inspect, copy, compile, and modify the covered source for education,
+security review, compatibility testing, and internal evaluation. Evaluation
+may include assessing an integration for a business. You may share complete,
+unmodified source snapshots for those purposes with this license, the license
+map, and all copyright, attribution and other license notices intact.
+Locally built or modified covered drivers may be used for those internal
+evaluation purposes; they are not licensed here for production deployment.
+You may also publish evaluation-only source patches or modified source forks
+for review and contribution to this project, provided that the conditions in
+section 3 and all license/attribution notices are preserved, modifications are
+identified, and no production or unrestricted rights are represented as granted.
+
+3. Demo boundaries
+Preserve the existing demo/evaluation identity and all applicable time budgets,
+authorization checks, expiry/recovery behavior, and integrity checks. This grant
+does not authorize disabling or extending those controls, enabling a full mode,
+or creating or distributing an unrestricted edition from the covered source.
+Some evaluation projects have no timer; these terms do not add one. Clearly
+identify modifications and do not represent modified/unsigned builds as the
+publisher's Microsoft-signed releases.
+
+4. Commercial deployment and redistribution
+Except for source review/contributions permitted in section 2, production use,
+distribution of modified covered source or derived driver binaries, OEM
+redistribution, and unrestricted/full-edition rights require a
+separate written agreement with the rights holder. Existing permissions for
+complete unmodified demo binary packages continue under their binary license.
+For a commercial agreement, contact the project owner: Discord username titancsa.
+
+5. Reserved rights
+No full/commercial driver source, private signing material, activation service,
+or permission to use another party's trademarks or signatures is granted.
+Rights not expressly granted for the covered source are reserved. Rights under
+the repository hosting service's applicable terms remain unaffected.
+This is a source-available evaluation license, not an open-source license.
+
+6. Disclaimer
+THE COVERED SOURCE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. TO THE EXTENT PERMITTED BY APPLICABLE LAW, THE RIGHTS HOLDERS
+ARE NOT LIABLE FOR CLAIMS OR DAMAGES ARISING FROM ITS USE. MANDATORY RIGHTS AND
+LIABILITY THAT CANNOT LAWFULLY BE EXCLUDED REMAIN UNAFFECTED.

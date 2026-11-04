@@ -78,7 +78,7 @@ for the matching **combined Interceptor** release. Start with its release
 packages and language examples; check the required runtime and driver version.
 The wrappers are not compatible with the split Keyboard & Mouse, controller-only
 or Interception V2 editions merely by changing headers. Wrapper/SDK source is
-MIT; the matching private driver keeps its own one-hour-per-kernel-boot demo and
+MIT; the matching demo driver keeps its own one-hour-per-kernel-boot demo and
 separate full-version terms.
 
 ## C++ SDK
@@ -109,6 +109,12 @@ you do not modify. [API reference](docs/API.md).
 
 ## Downloads and source
 
+Demo/evaluation driver source is available; see [driver/README.md](driver/README.md) for
+build instructions and separate evaluation-source terms. Those terms apply to
+Titan-authored driver code. Third-party source licenses and existing application/SDK
+licenses remain applicable. Full/commercial implementation and private signing or
+activation material are excluded.
+
 The [latest release](https://github.com/TitanCSA/Interceptor/releases/latest)
 contains both standalone installers, the standalone viewer, an examples ZIP,
 a source SDK ZIP and **SHA256SUMS.txt**. Use matching driver, SDK and examples
@@ -133,8 +139,7 @@ licenses/          Driver terms and attribution
 
 With Visual Studio 2022 C++ tools, a Windows SDK and CMake available, run
 `powershell -ExecutionPolicy Bypass -File .\Build.ps1` to build the user-mode tools.
-The signed driver and recovery binaries are supplied; **kernel source is not
-included**. User-mode source is [MIT](LICENSE); the driver has
+The signed driver and recovery binaries are supplied; **Demo/evaluation driver source is documented in [driver/README.md](driver/README.md)**. User-mode source is [MIT](LICENSE); the driver has
 [separate terms](licenses/BINARY-LICENSE.txt).
 
 For controller-only capture, use [Interceptor Gamepad & Controller](https://github.com/TitanCSA/Interceptor-Gamepad-Controller).
