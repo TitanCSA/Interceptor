@@ -70,6 +70,17 @@ Xbox 360, Xbox One and Xbox Series X|S**. Support depends on connection,
 descriptor and protocol; see the [controller matrix](docs/COMPATIBILITY.md#console-gamepads).
 Setup lists Windows device nodes, so one physical controller can have several rows.
 
+## Other application languages
+
+[Interceptor MultiLang](https://github.com/TitanCSA/Interceptor-MultiLang)
+provides a C ABI and Python, Node.js/TypeScript, .NET, Java, Go and Rust wrappers
+for the matching **combined Interceptor** release. Start with its release
+packages and language examples; check the required runtime and driver version.
+The wrappers are not compatible with the split Keyboard & Mouse, controller-only
+or Interception V2 editions merely by changing headers. Wrapper/SDK source is
+MIT; the matching private driver keeps its own one-hour-per-kernel-boot demo and
+separate full-version terms.
+
 ## C++ SDK
 
 ### Choosing between Interceptor and Windows Input Bridge
