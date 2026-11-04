@@ -24,7 +24,7 @@ $nativeTargets=switch($Target){
     'InstallerUI'{@('InterceptorExample','InterceptorDiagnosticWorker')}
     'InstallerConsole'{@('InterceptorExample')}
     'ExamplesUI'{@('InterceptorViewerBridge')}
-    'ExamplesConsole'{@(Get-ChildItem -LiteralPath (Join-Path $root 'ExamplesConsole') -Filter '*.cpp' -File | ForEach-Object BaseName)}
+    'ExamplesConsole'{@(Get-ChildItem -LiteralPath (Join-Path $root 'Examples\Console') -Filter '*.cpp' -File | ForEach-Object BaseName)}
     default{@()}
 }
 $nativeArguments=@('--build',$BuildDirectory,'--config','Release','--parallel')
@@ -39,13 +39,13 @@ if($Target -in @('All','Native','InstallerUI')){
     if($LASTEXITCODE){throw 'Diagnostic worker self-test failed.'}
 }
 if($Target -in @('All','ExamplesUI')){
-    & (Join-Path $root 'ExamplesUI\Build.ps1') -BridgePath (Join-Path $native 'InterceptorViewerBridge.dll') -OutputDirectory (Join-Path $root 'bin\ExampleUI') -IntermediateDirectory (Join-Path $BuildDirectory 'ExamplesUI')
+    & (Join-Path $root 'Examples\UI\Build.ps1') -BridgePath (Join-Path $native 'InterceptorViewerBridge.dll') -OutputDirectory (Join-Path $root 'bin\ExampleUI') -IntermediateDirectory (Join-Path $BuildDirectory 'ExamplesUI')
 }
 if($Target -eq 'All' -and $releaseState.SigningPending){
     Write-Host ('Installer EXEs are pending the matching Microsoft-signed '+$releaseState.DriverVersion+' package. SDK and examples built; old payloads were not repackaged.')
 }else{
-    if($Target -in @('All','InstallerUI')){& (Join-Path $root 'InstallerUI\Build.ps1') -SkipNative -BuildDirectory $BuildDirectory}
-    if($Target -in @('All','InstallerConsole')){& (Join-Path $root 'InstallerConsole\Build.ps1') -SkipNative -BuildDirectory $BuildDirectory}
+    if($Target -in @('All','InstallerUI')){& (Join-Path $root 'Installer\UI\Build.ps1') -SkipNative -BuildDirectory $BuildDirectory}
+    if($Target -in @('All','InstallerConsole')){& (Join-Path $root 'Installer\Console\Build.ps1') -SkipNative -BuildDirectory $BuildDirectory}
 }
 Write-Host "Build completed: $Target. Driver and recovery release binaries were not rebuilt."
 Write-Host 'All builds and self-tests were user-mode only. No driver installed and no Windows setting changed.'

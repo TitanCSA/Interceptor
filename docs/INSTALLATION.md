@@ -75,7 +75,7 @@ Inputs are forwarded while being displayed; **Stop** ends capture.
 Close other capture applications first. An idle controller is not an installation
 failure, and an unavailable protocol profile is reported separately.
 
-The [console examples](../ExamplesConsole/README.md) demonstrate H/J swapping,
+The [console examples](../Examples/Console/README.md) demonstrate H/J swapping,
 Ctrl+H typing `hello`, mouse axis
 inversion, combined keyboard/mouse mapping, keyboard/mouse blocking monitors,
 HID controller axis inversion and a minimal batch loop. Blocking monitors
@@ -136,14 +136,14 @@ choose the build you need:
 
 ```powershell
 .\Build.ps1 -Target All            # Everything
-.\InstallerUI\Build.ps1            # GUI installer only
-.\InstallerConsole\Build.ps1       # Console installer only
+.\Installer\UI\Build.ps1            # GUI installer only
+.\Installer\Console\Build.ps1       # Console installer only
 ```
 
 `All` is the default. The last two commands build the selected installer
 independently. The console installer uses the shared package engine without
 requiring a GUI installer EXE. Both reuse the supplied Microsoft-signed driver
-and precompiled recovery components under `InstallerUI/Package`; they do not
+and precompiled recovery components under `Installer/UI/Package`; they do not
 compile kernel code or install anything on the build computer.
 
 ## Setup safeguards and logs
@@ -182,7 +182,7 @@ automatically; restart only when requested.
 
 ## Installer regression checks
 
-The console installer build runs `InstallerUI/Tests/InstallerTests.ps1` automatically.
+The console installer build runs `Installer/UI/Tests/InstallerTests.ps1` automatically.
 It exercises the actual shared process runner and mocked installation/uninstallation
 transactions: immediate exits, concurrent stdout/stderr, argument quoting, bounded
 timeouts, PnP startup states, restart-required rollback and retention of recovery.
@@ -192,7 +192,7 @@ callback failures and process lifetime. These tests do not install a driver.
 To run them independently:
 
 ```powershell
-.\InstallerUI\Tests\InstallerTests.ps1 -ReportDirectory .\obj\InstallerTests
+.\Installer\UI\Tests\InstallerTests.ps1 -ReportDirectory .\obj\InstallerTests
 ```
 
 Real installation, reinstall, deferred uninstall and edition coexistence are also

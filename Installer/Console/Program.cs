@@ -88,7 +88,7 @@ namespace InterceptorSetup {
      Log("Interceptor · driver " + Package.DriverVersion() + " · signature " + Package.SigningMode());
      string selected = SelectAction(action, action == "Install" && Package.PendingControllerAssociation());
      if (selected == "CompleteAssociation") Log("Resuming associations requested by the previous installation.");
-     // Exactly the engine called by Dashboard.Operation in InstallerUI/App.cs.
+     // Exactly the engine called by Dashboard.Operation in Installer/UI/App.cs.
      int result = Package.Execute(selected, Log, Log);
      if (result == 0) Log("Operation completed.");
      else if (result == 3010) Log(action == "Install"

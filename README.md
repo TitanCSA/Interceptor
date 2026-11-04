@@ -18,7 +18,7 @@ XInputHID and GIP controllers on **Windows 10 1709+ / Windows 11 x64**.
 
 **[Download](https://github.com/TitanCSA/Interceptor/releases/latest)** |
 [Installation](docs/INSTALLATION.md) | [C++ API](docs/API.md) |
-[Examples](ExamplesConsole/README.md) | [Compatibility](docs/COMPATIBILITY.md)
+[Examples](Examples/Console/README.md) | [Compatibility](docs/COMPATIBILITY.md)
 
 | Setup and diagnostics | Input viewer |
 | --- | --- |
@@ -115,16 +115,18 @@ a source SDK ZIP and **SHA256SUMS.txt**. Use matching driver, SDK and examples
 from the same release. Updating the viewer alone does not update the driver.
 
 For raw relative mouse movement, extract the examples ZIP and run
-`ExamplesConsole/09_Mouse_Move_Horizontal.exe` as administrator. Enter `300` or
+`09_Mouse_Move_Horizontal.exe` as administrator. Enter `300` or
 `-485`, then press Enter to send that value directly as mouse X input.
-See the [example instructions](ExamplesConsole/README.md#move-the-mouse-using-raw-relative-x-input).
+See the [example instructions](Examples/Console/README.md#move-the-mouse-using-raw-relative-x-input).
 
 ```text
 Interceptor/       Interceptor.h and Interceptor.cpp
-ExamplesConsole/   Independent keyboard, mouse and controller C++ examples
-ExamplesUI/        Graphical input viewer
-InstallerConsole/  Console installer
-InstallerUI/       GUI, shared setup engine and compiled driver/recovery binaries
+Examples/
+  Console/         Independent keyboard, mouse and controller C++ examples
+  UI/              Graphical input viewer
+Installer/
+  Console/         Console installer
+  UI/              GUI, shared setup engine and compiled driver/recovery binaries
 docs/              Installation, API, compatibility and screenshots
 licenses/          Driver terms and attribution
 ```

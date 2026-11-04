@@ -1,6 +1,6 @@
 $ErrorActionPreference='Stop'
 $script:InstallerSourceRoot=$PSScriptRoot
-$script:InstallerRepositoryRoot=Split-Path $PSScriptRoot -Parent
+$script:InstallerRepositoryRoot=Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 
 function Get-InstallerReferenceDirectory([string]$Requested='') {
     $references=if($Requested){[IO.Path]::GetFullPath($Requested)}else{Join-Path ${env:ProgramFiles(x86)} 'Reference Assemblies\Microsoft\Framework\.NETFramework\v4.6'}

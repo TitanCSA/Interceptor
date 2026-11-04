@@ -1,7 +1,7 @@
 ﻿param([switch]$SkipNative,[string]$BuildDirectory)
 $ErrorActionPreference='Stop'
 $source=$PSScriptRoot
-$root=Split-Path $source -Parent
+$root=Split-Path (Split-Path $source -Parent) -Parent
 if(!$BuildDirectory){$BuildDirectory=Join-Path $root 'obj\PublicBuild'}
 $BuildDirectory=[IO.Path]::GetFullPath($BuildDirectory)
 if(!$SkipNative){& (Join-Path $root 'Build.ps1') -Target InstallerUI -BuildDirectory $BuildDirectory;return}
@@ -63,7 +63,7 @@ if($LASTEXITCODE){throw 'Installer UI compile failed.'}
 $buildInfo=[ordered]@{ builtAt=(Get-Date).ToString('o');framework='Microsoft .NET Framework 4.6 (inbox on Windows 10/11)';architecture='x64';driverSigningMode=$signingMode;payloadFiles=$hashes.Count;payloadZipSha256=(Get-FileHash -LiteralPath $zipPath -Algorithm SHA256).Hash;exeSha256=(Get-FileHash -LiteralPath (Join-Path $out 'InterceptorSetup.exe') -Algorithm SHA256).Hash;sourceHashes=[ordered]@{} }
 $buildInfo.diagnosticWorkerSha256=$workerHash
 $buildInfo.recoveryBinaries=$prepared.RecoveryHashes
-$buildInfo.sourcePackage='InstallerUI/Package'
+$buildInfo.sourcePackage='Installer/UI/Package'
 foreach($file in (Get-ChildItem -LiteralPath $source -File -Recurse)){$buildInfo.sourceHashes[$file.FullName.Substring($source.Length+1)]=(Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash}
 $buildInfo | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $out 'build-manifest.json') -Encoding UTF8
 $testPath=Join-Path $out 'self-test.json'

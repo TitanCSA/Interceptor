@@ -1,7 +1,7 @@
 # Catalog membership depends on exact file bytes, including INF line endings.
-InstallerUI/Package/Payload/** -text
-InstallerUI/Package/Payload/*.inf -diff
-InstallerUI/Package/Payload/*.sys -diff
-InstallerUI/Package/Payload/*.cat -diff
-InstallerUI/Package/Payload/*.json whitespace=cr-at-eol
-InstallerUI/Package/Recovery/** -text
+Installer/UI/Package/Payload/** -text
+Installer/UI/Package/Payload/*.inf -diff
+Installer/UI/Package/Payload/*.sys -diff
+Installer/UI/Package/Payload/*.cat -diff
+Installer/UI/Package/Payload/*.json whitespace=cr-at-eol
+Installer/UI/Package/Recovery/** -text

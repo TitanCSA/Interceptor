@@ -1,6 +1,6 @@
 ﻿param([Parameter(Mandatory=$true)][string]$BridgePath,[string]$OutputDirectory,[string]$IntermediateDirectory)
 $ErrorActionPreference='Stop'
-$root=Split-Path $PSScriptRoot -Parent
+$root=Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 $source=$PSScriptRoot
 $build=if($IntermediateDirectory){[IO.Path]::GetFullPath($IntermediateDirectory)}else{Join-Path $root 'obj\ExampleUI'}
 $out=if($OutputDirectory){[IO.Path]::GetFullPath($OutputDirectory)}else{Join-Path $root 'bin\ExampleUI'}
