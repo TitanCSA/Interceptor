@@ -23,9 +23,14 @@
     "CPP/vcpkg": {
       "status": "published_custom_registry",
       "registry": "https://github.com/TitanCSA/vcpkg-registry",
-      "baseline": "2a5f4f4037f5fbd911344250e43e7a1d48e04fe6",
-      "port": "interceptor-sdk",
-      "microsoft_curated_registry": false
+      "baseline": "33fd43f72d7137f6ebaac4c1eeab001f66bf3a98",
+      "port": "interceptor",
+      "microsoft_curated_registry": false,
+      "legacy_port": "interceptor-sdk",
+      "registry_selection_packages": [
+        "interceptor",
+        "interceptor-sdk"
+      ]
     },
     "CPP/conan": {
       "status": "public_recipe_builds_locally",
