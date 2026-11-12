@@ -1,0 +1,17 @@
+{
+  "name": "interceptor-sdk",
+  "version-string": "1.4.22",
+  "description": "Public native SDK for Interceptor; Windows x64, no driver installer.",
+  "license": "MIT",
+  "supports": "windows & x64 & !uwp",
+  "dependencies": [
+    {
+      "name": "vcpkg-cmake",
+      "host": true
+    },
+    {
+      "name": "vcpkg-cmake-config",
+      "host": true
+    }
+  ]
+}

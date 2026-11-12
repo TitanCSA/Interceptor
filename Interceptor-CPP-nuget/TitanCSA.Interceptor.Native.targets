@@ -1,0 +1,9 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemDefinitionGroup>
+    <ClCompile><AdditionalIncludeDirectories>$(MSBuildThisFileDirectory)sdk;$(MSBuildThisFileDirectory)sdk\Interceptor;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories><PreprocessorDefinitions>;UNICODE;_UNICODE;NOMINMAX;WIN32_LEAN_AND_MEAN;%(PreprocessorDefinitions)</PreprocessorDefinitions><AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions></ClCompile>
+    <Link><AdditionalDependencies>advapi32.lib;bcrypt.lib;cfgmgr32.lib;comctl32.lib;hid.lib;newdev.lib;ole32.lib;setupapi.lib;user32.lib;%(AdditionalDependencies)</AdditionalDependencies></Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="$(MSBuildThisFileDirectory)sdk\Interceptor\Interceptor.cpp"><ObjectFileName>$(IntDir)TitanInterceptor_%(Filename).obj</ObjectFileName></ClCompile>
+  </ItemGroup>
+</Project>
