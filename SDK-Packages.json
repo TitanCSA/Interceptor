@@ -43,6 +43,13 @@
       "coordinates": "io.github.titancsa:interceptor-sdk:1.0.0",
       "jitpack_coordinates": "com.github.TitanCSA:Interceptor:java-sdk-v1.0.0",
       "distribution": "One Java source directory with registry-specific POM descriptors"
+    },
+    {
+      "directory": "Interceptor-PowerShell-gallery",
+      "registry": "PowerShell Gallery",
+      "name": "Interceptor",
+      "version": "1.0.0",
+      "distribution": "Compiled helper, native DLL, cmdlet help and API documentation"
     }
   ],
   "notes": "Registry accounts or community acceptance are separate. No missing language binding is represented as implemented.",
@@ -116,7 +123,11 @@
       "status": "binding_not_implemented"
     },
     "PowerShell/gallery": {
-      "status": "binding_not_implemented"
+      "status": "built_fixture_and_production_verified",
+      "name": "Interceptor",
+      "version": "1.0.0",
+      "directory": "Interceptor-PowerShell-gallery",
+      "registry_published": false
     },
     "Dart/pub-dev": {
       "status": "analyzed_fixture_and_production_verified",
