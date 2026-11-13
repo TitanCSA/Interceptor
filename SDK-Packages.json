@@ -50,6 +50,13 @@
       "name": "Interceptor",
       "version": "1.0.0",
       "distribution": "Compiled helper, native DLL, cmdlet help and API documentation"
+    },
+    {
+      "directory": "Interceptor-Go-modules",
+      "registry": "Go Modules",
+      "module": "github.com/TitanCSA/Interceptor/Interceptor-Go-modules",
+      "version": "v1.0.0",
+      "distribution": "Public Go module with embedded product DLL"
     }
   ],
   "notes": "Registry accounts or community acceptance are separate. No missing language binding is represented as implemented.",
@@ -117,7 +124,11 @@
       "registry_published": false
     },
     "Go/modules": {
-      "status": "binding_not_implemented"
+      "status": "build_fixture_and_embedded_production_verified",
+      "module": "github.com/TitanCSA/Interceptor/Interceptor-Go-modules",
+      "version": "v1.0.0",
+      "directory": "Interceptor-Go-modules",
+      "registry_published": false
     },
     "Go/pkg-go-dev": {
       "status": "binding_not_implemented"
