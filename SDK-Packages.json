@@ -17,14 +17,14 @@
       "directory": "Interceptor-Python-pypi",
       "registry": "pypi",
       "name": "interceptor-sdk",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "distribution": "Source and GitHub release; registry publication tracked separately"
     },
     {
       "directory": "Interceptor-Ruby-rubygems",
       "registry": "rubygems",
       "name": "interceptor-sdk",
-      "version": "1.0.0",
+      "version": "2.0.0",
       "distribution": "Source and GitHub release; registry publication tracked separately"
     }
   ],

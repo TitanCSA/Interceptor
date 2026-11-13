@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name = 'interceptor-sdk'
-  s.version = '1.0.0'
+  s.version = '2.0.0'
   s.summary = 'Direct Windows x64 Interceptor input SDK'
   s.description = 'Native bindings to the product SDK: receive, edit, send, descriptors, injection and cancellation. Matching driver installed separately.'
   s.authors = ['TitanCSA']

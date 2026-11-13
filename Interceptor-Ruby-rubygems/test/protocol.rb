@@ -1,6 +1,6 @@
-require 'interceptor'
+require 'interceptor_sdk'
 require 'fiddle'
-sdk=Interceptor
+sdk=InterceptorSDK
 fixture=ARGV.fetch(0)
 mode=Fiddle::Function.new(Fiddle::Handle.new(fixture)['interceptor_test_mode'],[Fiddle::TYPE_INT],Fiddle::TYPE_VOID)
 def check(value);raise 'Product Ruby SDK contract failed' unless value;end

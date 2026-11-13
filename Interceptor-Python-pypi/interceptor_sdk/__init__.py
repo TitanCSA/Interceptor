@@ -85,7 +85,7 @@ class Interceptor:
         self._lock=threading.Lock()
         if os.name!='nt' or C.sizeof(C.c_void_p)!=8:raise OSError('Interceptor requires a 64-bit Windows process')
         root=Path(__file__).resolve();candidates=[root.parent/'InterceptorBridge.dll',root.parents[3]/'runtimes/win-x64/InterceptorBridge.dll']
-        chosen=library or os.environ.get('INTERCEPTOR_NATIVE_PATH') or next((p for p in candidates if p.is_file()),None)
+        chosen=library or os.environ.get('INTERCEPTOR_SDK_NATIVE_PATH') or next((p for p in candidates if p.is_file()),None)
         if chosen is None:raise OSError('InterceptorBridge.dll not found. Download the complete Interceptor release or build it first.')
         self._dll=C.CDLL(str(Path(chosen).resolve()));self._handle=C.c_uint64();self._ticket=0
         signatures={'open':[C.POINTER(C.c_uint64)],'close':[C.c_uint64],'cancel':[C.c_uint64],'initialize':[C.c_uint64,C.POINTER(_Init)],'info_get':[C.c_uint64,C.POINTER(_Info)],'devices_get':[C.c_uint64,C.POINTER(C.POINTER(_Devices))],'receive':[C.c_uint64,C.c_uint32,C.POINTER(C.POINTER(_Batch))],'send':[C.c_uint64,C.c_uint64],'discard':[C.c_uint64,C.c_uint64],'descriptor':[C.c_uint64,C.c_char_p,C.c_uint32,C.POINTER(_Blob)],'inject':[C.c_uint64,C.POINTER(_Event),C.c_uint32]}

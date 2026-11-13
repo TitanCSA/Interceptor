@@ -1,6 +1,6 @@
 # Interceptor API
 
-Create `Client(library=None)`, use it as a context manager, or call `close()`. The native library is bundled with the wheel. A custom library path or `INTERCEPTOR_NATIVE_PATH` may select a compatible product DLL.
+Create `Client(library=None)`, use it as a context manager, or call `close()`. The native library is bundled with the wheel. A custom library path or `INTERCEPTOR_SDK_NATIVE_PATH` may select a compatible product DLL.
 
 Methods: `initialize()`, `info()`, `devices()`, `receive(timeout=None)`, `send(batch)`, `discard(batch)`, `cancel()`, `descriptor(token, report=False)`, `inject(kind, token=None, report=None, **state)`, `close()`.
 

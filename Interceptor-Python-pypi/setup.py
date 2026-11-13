@@ -11,6 +11,6 @@ class Wheel(bdist_wheel):
         self.root_is_pure = False
     def get_tag(self): return "py3", "none", "win_amd64"
 
-if not (Path(__file__).parent / "interceptor/InterceptorBridge.dll").is_file():
+if not (Path(__file__).parent / "interceptor_sdk/InterceptorBridge.dll").is_file():
     raise RuntimeError("Build the native bridge first with the product's native C ABI folder")
 setup(distclass=Binary, cmdclass={"bdist_wheel": Wheel})

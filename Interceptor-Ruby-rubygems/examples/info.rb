@@ -1,2 +1,2 @@
-require 'interceptor'
-Interceptor::Interceptor.open { |client| p client.info }
+require 'interceptor_sdk'
+InterceptorSDK::Interceptor.open { |client| p client.info }

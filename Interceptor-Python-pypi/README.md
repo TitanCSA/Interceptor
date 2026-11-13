@@ -5,7 +5,7 @@
 Windows x64, Python 3.10+. This package uses the product's own native SDK and driver identity. Supported families: keyboard, mouse, hid, xinput, xinputhid, gip. No Python dependencies and no automatic driver installation.
 
 ```python
-from interceptor import Client
+from interceptor_sdk import Client
 with Client() as client:
     print(client.info())
     # Input operations require the matching driver installed separately.

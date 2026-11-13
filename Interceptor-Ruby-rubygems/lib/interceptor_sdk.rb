@@ -2,8 +2,8 @@
 require 'fiddle'
 require 'thread'
 
-module Interceptor
-  VERSION = '1.0.0'
+module InterceptorSDK
+  VERSION = '2.0.0'
   KINDS = ['', 'keyboard', 'mouse', 'hid', 'xinput', 'xinputhid', 'gip'].freeze
   class NativeError < StandardError
     attr_reader :code, :accepted
@@ -66,7 +66,7 @@ module Interceptor
   class Interceptor
     def initialize(library_path: nil)
       raise LoadError, 'Interceptor requires Windows x64 Ruby' unless /mswin|mingw/ =~ RUBY_PLATFORM && Fiddle::SIZEOF_VOIDP == 8
-      path = library_path || ENV['INTERCEPTOR_NATIVE_PATH'] || File.expand_path('../native/InterceptorBridge.dll', __dir__)
+      path = library_path || ENV['INTERCEPTOR_SDK_NATIVE_PATH'] || File.expand_path('../native/InterceptorBridge.dll', __dir__)
       @native = Native.load(File.expand_path(path)); @mutex = Mutex.new; @session = 0; @current = nil
       raise LoadError, 'Incompatible native ABI' unless @native.call(:version) == 1 && [120,64,24,40,776,56].each_with_index.all? { |size,index| @native.call(:sizeof,index+1) == size }
       out = Native.buffer(8); checked(:open,out); @session = Native.u64(out,0)
