@@ -98,7 +98,7 @@
       "github_directory": "packaging/native"
     },
     "CPP/nuget": {
-      "status": "paused_pending_owner_email_confirmation",
+      "status": "account_email_confirmed_requires_matching_trusted_publishing_policy",
       "name": "Interceptor.Native",
       "version": "1.4.22",
       "registry_published": false,
