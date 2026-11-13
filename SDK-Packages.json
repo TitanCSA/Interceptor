@@ -170,14 +170,14 @@
       "api_prefix": "interceptor_"
     },
     "JavaScript/npm": {
-      "status": "submitted_requires_indexing",
+      "status": "published_install_verified",
       "name": "interceptor-sdk",
       "version": "1.0.0",
       "directory": "Interceptor-JavaScript-npm",
-      "registry_published": false,
+      "registry_published": true,
       "documentation_bundled": true,
-      "url": null,
-      "public_consumer_verified": false,
+      "url": "https://www.npmjs.com/package/interceptor-sdk",
+      "public_consumer_verified": true,
       "module": "interceptor",
       "dll_name": "InterceptorSDKBridge.dll",
       "api_prefix": "interceptor_"
