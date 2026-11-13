@@ -1,0 +1,10 @@
+name: interceptor
+description: Direct native Windows x64 Interceptor SDK with typed input edits, bounded ownership, partial sends and isolate cancellation.
+version: 1.0.0
+homepage: https://github.com/TitanCSA/Interceptor
+repository: https://github.com/TitanCSA/Interceptor
+documentation: https://github.com/TitanCSA/Interceptor/tree/main/Interceptor-Dart-pub-dev/doc
+environment:
+  sdk: ">=3.4.0 <4.0.0"
+platforms:
+  windows:

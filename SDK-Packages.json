@@ -26,6 +26,13 @@
       "name": "interceptor-sdk",
       "version": "2.0.0",
       "distribution": "Source and GitHub release; registry publication tracked separately"
+    },
+    {
+      "directory": "Interceptor-Dart-pub-dev",
+      "registry": "pub.dev",
+      "name": "interceptor",
+      "version": "1.0.0",
+      "distribution": "Native Dart FFI SDK; explicit DLL bundling for deployed Flutter apps"
     }
   ],
   "notes": "Registry accounts or community acceptance are separate. No missing language binding is represented as implemented.",
@@ -96,7 +103,13 @@
       "status": "binding_not_implemented"
     },
     "Dart/pub-dev": {
-      "status": "binding_not_implemented"
+      "status": "analyzed_fixture_and_production_verified",
+      "name": "interceptor",
+      "version": "1.0.0",
+      "directory": "Interceptor-Dart-pub-dev",
+      "registry_published": false,
+      "cross_isolate_cancellation_verified": true,
+      "documentation_bundled": true
     },
     "Ruby/rubygems": {
       "status": "built_fixture_and_production_verified",
