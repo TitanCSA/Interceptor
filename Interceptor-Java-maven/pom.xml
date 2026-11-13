@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='utf-8'?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+<modelVersion>4.0.0</modelVersion><groupId>io.github.titancsa</groupId><artifactId>interceptor-sdk</artifactId><version>1.0.0</version>
+<name>Interceptor Java SDK</name><description>Windows x64 Interceptor Java 22+ FFM SDK, also usable from Kotlin. Driver installation and demo restrictions are unchanged.</description><url>https://github.com/TitanCSA/Interceptor</url>
+<licenses><license><name>MIT License</name><url>https://opensource.org/license/mit/</url></license></licenses>
+<developers><developer><id>TitanCSA</id><name>TitanCSA</name><url>https://github.com/TitanCSA</url></developer></developers>
+<scm><connection>scm:git:https://github.com/TitanCSA/Interceptor.git</connection><developerConnection>scm:git:ssh://git@github.com/TitanCSA/Interceptor.git</developerConnection><url>https://github.com/TitanCSA/Interceptor</url></scm>
+<properties><maven.compiler.release>22</maven.compiler.release><project.build.sourceEncoding>UTF-8</project.build.sourceEncoding></properties>
+<build><plugins>
+<plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-compiler-plugin</artifactId><version>3.14.1</version></plugin>
+<plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-source-plugin</artifactId><version>3.3.1</version><executions><execution><id>sources</id><goals><goal>jar-no-fork</goal></goals></execution></executions></plugin>
+<plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-javadoc-plugin</artifactId><version>3.11.3</version><configuration><doclint>none</doclint></configuration><executions><execution><id>javadoc</id><goals><goal>jar</goal></goals></execution></executions></plugin>
+</plugins><resources><resource><directory>src/main/resources</directory><includes><include>**/*</include></includes></resource><resource><directory>.</directory><targetPath>META-INF</targetPath><includes><include>LICENSE</include><include>README.md</include><include>docs/**</include><include>examples/**</include></includes></resource></resources></build>
+</project>

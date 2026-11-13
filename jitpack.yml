@@ -1,0 +1,14 @@
+jdk:
+  - openjdk17
+before_install:
+  - sdk install java 25.0.2-tem
+  - sdk use java 25.0.2-tem
+  - mkdir -p .jitpack-tools
+  - curl -fsSL https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/3.9.16/apache-maven-3.9.16-bin.zip -o .jitpack-tools/maven.zip
+  - echo "ed41650d42485cfc243fad22158caf9cbb5dc408ce7a09ddb94dd42a019de929ca43065bfa450612cf12bf78b5cafa3884b96c090de326ff590448c933454af3 .jitpack-tools/maven.zip" | sha512sum -c -
+  - unzip -q .jitpack-tools/maven.zip -d .jitpack-tools
+  - chmod +x .jitpack-tools/apache-maven-3.9.16/bin/mvn
+  - export PATH="$PWD/.jitpack-tools/apache-maven-3.9.16/bin:$PATH"
+install:
+  - mvn -f Interceptor-Java-maven/pom-jitpack.xml org.codehaus.mojo:versions-maven-plugin:2.19.1:set -DnewVersion=$VERSION -DgenerateBackupPoms=false
+  - mvn -f Interceptor-Java-maven/pom-jitpack.xml clean install -DskipTests
