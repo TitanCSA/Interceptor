@@ -98,29 +98,28 @@
       "github_directory": "packaging/native"
     },
     "CPP/nuget": {
-      "status": "account_email_confirmed_requires_matching_trusted_publishing_policy",
+      "status": "published_payload_verified",
       "name": "Interceptor.Native",
       "version": "1.4.22",
-      "registry_published": false,
-      "consumer_build_verified": true,
+      "url": "https://www.nuget.org/packages/Interceptor.Native/1.4.22",
+      "public_payload_verified": true,
+      "public_consumer_verified": false,
+      "local_consumer_verified": true,
+      "registry_published": true,
       "documentation_bundled": true,
-      "publication_on_hold_by_owner": false,
-      "nuget_publication_status": "ready_requires_trusted_publishing_policy"
+      "publication_on_hold_by_owner": false
     },
     "NET/nuget": {
-      "status": "built_verified_requires_trusted_publishing_policy",
+      "status": "published_payload_verified",
       "name": "Interceptor.SDK",
       "version": "1.0.0",
-      "directory": "Interceptor-NET-nuget",
-      "registry_published": false,
-      "documentation_bundled": true,
-      "url": null,
+      "url": "https://www.nuget.org/packages/Interceptor.SDK/1.0.0",
+      "public_payload_verified": true,
       "public_consumer_verified": false,
-      "module": "interceptor",
-      "dll_name": "InterceptorSDKBridge.dll",
-      "api_prefix": "interceptor_",
-      "publication_on_hold_by_owner": false,
-      "nuget_publication_status": "ready_requires_trusted_publishing_policy"
+      "local_consumer_verified": true,
+      "registry_published": true,
+      "documentation_bundled": true,
+      "publication_on_hold_by_owner": false
     },
     "Python/pypi": {
       "status": "built_fixture_and_production_verified",
@@ -171,13 +170,13 @@
       "api_prefix": "interceptor_"
     },
     "JavaScript/npm": {
-      "status": "registry_publication_requires_action",
+      "status": "submitted_requires_indexing",
       "name": "interceptor-sdk",
       "version": "1.0.0",
       "directory": "Interceptor-JavaScript-npm",
       "registry_published": false,
       "documentation_bundled": true,
-      "url": "https://www.npmjs.com/package/interceptor-sdk",
+      "url": null,
       "public_consumer_verified": false,
       "module": "interceptor",
       "dll_name": "InterceptorSDKBridge.dll",
