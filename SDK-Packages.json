@@ -153,7 +153,8 @@
       "recipe_format": "v1",
       "v1_source_build_tests_passed": true,
       "personal_maintainer_confirmation_required": true,
-      "official_review_status": "v1_recipe_prepared_requires_submission_or_existing_pr_update",
+      "pull_request": "https://github.com/conda-forge/staged-recipes/pull/35627",
+      "official_review_status": "submitted_requires_ci_review_and_personal_maintainer_confirmation",
       "github_directory": "packaging/conda"
     },
     "Rust/cargo": {
