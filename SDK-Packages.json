@@ -3,66 +3,43 @@
   "packages": [
     {
       "directory": "packaging/native",
-      "build_system": "CMake",
-      "registry_recipes": {
-        "vcpkg": "packaging/native/portfile.cmake",
-        "Conan": "packaging/native/conanfile.py",
-        "NuGet": [
-          "packaging/native/TitanCSA.Interceptor.Native.nuspec"
-        ]
-      },
-      "distribution": "Shared native source; registry publication is reported separately below"
+      "source_url": "https://github.com/TitanCSA/sdk-packages/tree/main/projects/Interceptor/packaging/native",
+      "location": "central_sdk_repository"
     },
     {
       "directory": "Interceptor-Python-pypi",
-      "registry": "pypi",
-      "name": "interceptor-sdk",
-      "version": "1.0.1",
-      "distribution": "Source and GitHub release; registry publication tracked separately"
+      "source_url": "https://github.com/TitanCSA/sdk-packages/tree/main/projects/Interceptor/Interceptor-Python-pypi",
+      "location": "central_sdk_repository"
     },
     {
       "directory": "Interceptor-Ruby-rubygems",
-      "registry": "rubygems",
-      "name": "interceptor-sdk",
-      "version": "2.0.0",
-      "distribution": "Source and GitHub release; registry publication tracked separately"
+      "source_url": "https://github.com/TitanCSA/sdk-packages/tree/main/projects/Interceptor/Interceptor-Ruby-rubygems",
+      "location": "central_sdk_repository"
     },
     {
       "directory": "Interceptor-Dart-pub-dev",
-      "registry": "pub.dev",
-      "name": "interceptor",
-      "version": "1.0.0",
-      "distribution": "Native Dart FFI SDK; explicit DLL bundling for deployed Flutter apps"
+      "source_url": "https://github.com/TitanCSA/sdk-packages/tree/main/projects/Interceptor/Interceptor-Dart-pub-dev",
+      "location": "central_sdk_repository"
     },
     {
       "directory": "Interceptor-Java-maven",
-      "registries": [
-        "Maven Central",
-        "JitPack"
-      ],
-      "coordinates": "io.github.titancsa:interceptor-sdk:1.0.0",
-      "jitpack_coordinates": "com.github.TitanCSA:Interceptor:java-sdk-v1.0.0",
-      "distribution": "One Java source directory with registry-specific POM descriptors"
+      "source_url": "https://github.com/TitanCSA/sdk-packages/tree/main/projects/Interceptor/Interceptor-Java-maven",
+      "location": "central_sdk_repository"
     },
     {
       "directory": "Interceptor-PowerShell-gallery",
-      "registry": "PowerShell Gallery",
-      "name": "Interceptor",
-      "version": "1.0.0",
-      "distribution": "Compiled helper, native DLL, cmdlet help and API documentation"
+      "source_url": "https://github.com/TitanCSA/sdk-packages/tree/main/projects/Interceptor/Interceptor-PowerShell-gallery",
+      "location": "central_sdk_repository"
     },
     {
       "directory": "Interceptor-Go-modules",
-      "registry": "Go Modules",
-      "module": "github.com/TitanCSA/Interceptor/Interceptor-Go-modules",
-      "version": "v1.0.0",
-      "distribution": "Public Go module with embedded product DLL"
+      "source_url": "https://github.com/TitanCSA/sdk-packages/tree/main/projects/Interceptor/Interceptor-Go-modules",
+      "location": "central_sdk_repository"
     },
     {
       "directory": "packaging/conda",
-      "language": "Python",
-      "registry": "conda-forge",
-      "distribution": "Source-build recipe; official review and custom channel availability reported separately"
+      "source_url": "https://github.com/TitanCSA/sdk-packages/tree/main/projects/Interceptor/packaging/conda",
+      "location": "central_sdk_repository"
     }
   ],
   "notes": "Registry accounts or community acceptance are separate. No missing language binding is represented as implemented.",
@@ -153,8 +130,7 @@
       "v1_source_build_tests_passed": true,
       "personal_maintainer_confirmation_required": true,
       "pull_request": "https://github.com/conda-forge/staged-recipes/pull/35627",
-      "official_review_status": "submitted_requires_ci_review_and_personal_maintainer_confirmation",
-      "github_directory": "packaging/conda"
+      "official_review_status": "submitted_requires_ci_review_and_personal_maintainer_confirmation"
     },
     "Rust/cargo": {
       "status": "published_install_verified",
@@ -284,7 +260,7 @@
       "repository": "https://github.com/TitanCSA/interceptor-php"
     }
   },
-  "coverage_note": "Missing language bindings are explicitly listed. Published GitHub archives are distinct from central registry acceptance. Local organized SDK folders are retained.",
+  "coverage_note": "SDK source directories moved to central repository. Product source, prior tags and original releases are separate.",
   "input_c_abi": {
     "directory": "Interceptor-C-ffi",
     "dll": "InterceptorBridge.dll",
@@ -292,5 +268,8 @@
     "input_mask": 3,
     "controller_mask": 15,
     "synthetic_and_production_tests_passed": true
-  }
+  },
+  "central_sdk_repository": "https://github.com/TitanCSA/sdk-packages",
+  "central_sdk_directory": "projects/Interceptor",
+  "central_sdk_source_commit": "5da8260cfafc42181dbcca6196868d049f2b3ebb"
 }
