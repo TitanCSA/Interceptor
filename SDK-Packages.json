@@ -12,6 +12,20 @@
         ]
       },
       "distribution": "Shared native source; registry publication is reported separately below"
+    },
+    {
+      "directory": "Interceptor-Python-pypi",
+      "registry": "pypi",
+      "name": "interceptor-sdk",
+      "version": "1.0.0",
+      "distribution": "Source and GitHub release; registry publication tracked separately"
+    },
+    {
+      "directory": "Interceptor-Ruby-rubygems",
+      "registry": "rubygems",
+      "name": "interceptor-sdk",
+      "version": "1.0.0",
+      "distribution": "Source and GitHub release; registry publication tracked separately"
     }
   ],
   "notes": "Registry accounts or community acceptance are separate. No missing language binding is represented as implemented.",
@@ -50,7 +64,12 @@
       "status": "binding_not_implemented"
     },
     "Python/pypi": {
-      "status": "binding_not_implemented"
+      "status": "built_fixture_and_production_verified",
+      "name": "interceptor-sdk",
+      "version": "1.0.0",
+      "directory": "Interceptor-Python-pypi",
+      "registry_published": false,
+      "documentation_bundled": true
     },
     "Python/conda-forge": {
       "status": "binding_not_implemented"
@@ -80,11 +99,24 @@
       "status": "binding_not_implemented"
     },
     "Ruby/rubygems": {
-      "status": "binding_not_implemented"
+      "status": "built_fixture_and_production_verified",
+      "name": "interceptor-sdk",
+      "version": "1.0.0",
+      "directory": "Interceptor-Ruby-rubygems",
+      "registry_published": false,
+      "documentation_bundled": true
     },
     "PHP/packagist": {
       "status": "binding_not_implemented"
     }
   },
-  "coverage_note": "Missing language bindings are explicitly listed. Published GitHub archives are distinct from central registry acceptance. Local organized SDK folders are retained."
+  "coverage_note": "Missing language bindings are explicitly listed. Published GitHub archives are distinct from central registry acceptance. Local organized SDK folders are retained.",
+  "input_c_abi": {
+    "directory": "Interceptor-C-ffi",
+    "dll": "InterceptorBridge.dll",
+    "symbol_prefix": "interceptor_",
+    "input_mask": 3,
+    "controller_mask": 15,
+    "synthetic_and_production_tests_passed": true
+  }
 }

@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=77", "wheel>=0.43"]
+build-backend = "setuptools.build_meta"
+[project]
+name = "interceptor-sdk"
+version = "1.0.0"
+description = "Direct Windows x64 Interceptor input SDK with native receive, edit, send, descriptors and cancellation"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+[project.urls]
+Repository = "https://github.com/TitanCSA/Interceptor"
+Documentation = "https://github.com/TitanCSA/Interceptor/tree/main/Interceptor-Python-pypi/docs"
+[tool.setuptools]
+packages = ["interceptor"]
+[tool.setuptools.package-data]
+interceptor = ["InterceptorBridge.dll"]
+[tool.setuptools.data-files]
+"share/doc/interceptor-sdk" = ["docs/API.md", "examples/info.py", "LICENSE"]
