@@ -1,0 +1,18 @@
+[package]
+name = "interceptor-sdk"
+version = "1.0.0"
+edition = "2021"
+rust-version = "1.82"
+description = "Windows x64 Interceptor SDK with product-specific native bindings"
+license = "MIT"
+repository = "https://github.com/TitanCSA/Interceptor"
+readme = "README.md"
+build = "build.rs"
+include = ["src/**", "build.rs", "native/**", "README.md", "LICENSE", "docs/**", "examples/**"]
+
+[lib]
+name = "interceptor_sdk"
+
+[package.metadata.docs.rs]
+default-target = "x86_64-pc-windows-msvc"
+targets = ["x86_64-pc-windows-msvc"]
