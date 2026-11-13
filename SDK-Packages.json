@@ -69,9 +69,9 @@
       "registry_published": true,
       "name": "interceptor",
       "version": "1.4.22",
-      "url": "https://github.com/TitanCSA/sdk-packages/tree/089bc73095aa8eda89bacbe10d0b9e58394b0207/conan-index",
+      "url": "https://github.com/TitanCSA/sdk-packages/tree/776bbd32e2dd7c1ffb484bea0121ef6558af3069/conan-index",
       "index_type": "local-recipes-index",
-      "index_commit": "089bc73095aa8eda89bacbe10d0b9e58394b0207",
+      "index_commit": "776bbd32e2dd7c1ffb484bea0121ef6558af3069",
       "github_directory": "packaging/native"
     },
     "CPP/nuget": {
