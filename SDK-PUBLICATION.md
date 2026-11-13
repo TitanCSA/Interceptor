@@ -6,24 +6,24 @@ Choisis le paquet a installer. Installe son outil habituel (Node.js/npm, Python/
 
 Les SDK natifs sont destines a Windows x64. Java utilise Java22+ (Kotlin passe par le SDK Java). Flutter utilise le SDK Dart ; le chargement de la DLL doit etre configure dans l application. AutoHotInterceptor .NET utilise .NET Framework4.8.
 
-| Paquet | Registre | Disponibilite | Installation / utilisation |
-| --- | --- | --- | --- |
-| `interceptor` | vcpkg | Registre TitanCSA disponible (configuration ci-dessous) | `vcpkg install interceptor:x64-windows` |
-| `interceptor` | Conan | Registre TitanCSA disponible (configuration ci-dessous) | `conan install --requires=interceptor/1.4.22 -r titancsa --build=missing -s compiler.cppstd=17` |
-| `Interceptor.Native` | NuGet | Publie et verifie | `Install-Package Interceptor.Native -Version 1.4.22` |
-| `Interceptor.SDK` | NuGet | Publie et verifie | `dotnet add package Interceptor.SDK --version 1.0.0` |
-| `interceptor_sdk` | PyPI | Pas encore disponible / validation en cours | Commande prevue apres publication : `python -m pip install interceptor-sdk==1.0.1` |
-| `interceptor-sdk` | Conda | Canal TitanCSA disponible ; acceptation conda-forge encore en attente | `conda install --override-channels -c https://raw.githubusercontent.com/TitanCSA/sdk-packages/089bc73095aa8eda89bacbe10d0b9e58394b0207/conda-channel -c conda-forge interceptor-sdk` |
-| `interceptor` | crates.io | Publie et verifie | `cargo add interceptor-sdk@1.0.0` |
-| `interceptor` | npm | Publie et verifie | `npm install interceptor-sdk@1.0.0` |
-| `io.github.titancsa:interceptor-sdk` | Maven Central | Publie et verifie | `io.github.titancsa:interceptor-sdk:1.0.0 (pom.xml / Gradle)` |
-| `com.github.TitanCSA:Interceptor` | JitPack | Publie et verifie | `com.github.TitanCSA:Interceptor:java-sdk-v1.0.0 (avec le depot JitPack)` |
-| `github.com/TitanCSA/Interceptor/Interceptor-Go-modules` | Go Modules | Publie et verifie | `go get github.com/TitanCSA/Interceptor/Interceptor-Go-modules@v1.0.0` |
-| `github.com/TitanCSA/Interceptor/Interceptor-Go-modules` | pkg.go.dev | Publie et verifie | `Documentation : https://pkg.go.dev/github.com/TitanCSA/Interceptor/Interceptor-Go-modules@v1.0.0` |
-| `interceptor` | PowerShell Gallery | Publie et verifie | `Install-Module Interceptor -RequiredVersion 1.0.0 -Scope CurrentUser` |
-| `interceptor` | pub.dev | Publie et verifie | `dart pub add interceptor:1.0.0` |
-| `interceptor_sdk` | RubyGems | Publie et verifie | `gem install interceptor-sdk -v 2.0.0` |
-| `interceptor` | Packagist | Pas encore disponible / validation en cours | Commande prevue apres publication : `composer require titancsa/interceptor:1.0.0` |
+| Registre | Paquet | Installation / utilisation |
+| --- | --- | --- |
+| vcpkg | `interceptor` | `vcpkg install interceptor:x64-windows` |
+| Conan | `interceptor` | `conan install --requires=interceptor/1.4.22 -r titancsa --build=missing -s compiler.cppstd=17` |
+| NuGet | `Interceptor.Native` | `Install-Package Interceptor.Native -Version 1.4.22` |
+| NuGet | `Interceptor.SDK` | `dotnet add package Interceptor.SDK --version 1.0.0` |
+| PyPI | `interceptor_sdk` | Commande prevue apres publication : `python -m pip install interceptor-sdk==1.0.1` |
+| Conda | `interceptor-sdk` | `conda install --override-channels -c https://raw.githubusercontent.com/TitanCSA/sdk-packages/089bc73095aa8eda89bacbe10d0b9e58394b0207/conda-channel -c conda-forge interceptor-sdk` (canal TitanCSA) |
+| crates.io | `interceptor` | `cargo add interceptor-sdk@1.0.0` |
+| npm | `interceptor` | `npm install interceptor-sdk@1.0.0` |
+| Maven Central | `io.github.titancsa:interceptor-sdk` | `io.github.titancsa:interceptor-sdk:1.0.0 (pom.xml / Gradle)` |
+| JitPack | `com.github.TitanCSA:Interceptor` | `com.github.TitanCSA:Interceptor:java-sdk-v1.0.0 (avec le depot JitPack)` |
+| Go Modules | `github.com/TitanCSA/Interceptor/Interceptor-Go-modules` | `go get github.com/TitanCSA/Interceptor/Interceptor-Go-modules@v1.0.0` |
+| pkg.go.dev | `github.com/TitanCSA/Interceptor/Interceptor-Go-modules` | `Documentation : https://pkg.go.dev/github.com/TitanCSA/Interceptor/Interceptor-Go-modules@v1.0.0` |
+| PowerShell Gallery | `interceptor` | `Install-Module Interceptor -RequiredVersion 1.0.0 -Scope CurrentUser` |
+| pub.dev | `interceptor` | `dart pub add interceptor:1.0.0` |
+| RubyGems | `interceptor_sdk` | `gem install interceptor-sdk -v 2.0.0` |
+| Packagist | `interceptor` | Commande prevue apres publication : `composer require titancsa/interceptor:1.0.0` |
 
 ## Configuration vcpkg et Conan
 
