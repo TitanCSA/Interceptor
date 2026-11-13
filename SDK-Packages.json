@@ -171,7 +171,7 @@
       "api_prefix": "interceptor_"
     },
     "JavaScript/npm": {
-      "status": "awaiting_browser_publication_authentication",
+      "status": "registry_publication_requires_action",
       "name": "interceptor-sdk",
       "version": "1.0.0",
       "directory": "Interceptor-JavaScript-npm",
