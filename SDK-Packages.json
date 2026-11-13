@@ -51,7 +51,7 @@
     "CPP/vcpkg": {
       "status": "published_custom_registry",
       "registry": "https://github.com/TitanCSA/vcpkg-registry",
-      "baseline": "9a706cf6992544778eb26a8b4244e303292f1ce6",
+      "baseline": "9a4b8cb920d4cfc97ce6d7af461bcc7508392a68",
       "port": "interceptor",
       "microsoft_curated_registry": false,
       "legacy_port": "interceptor-sdk",

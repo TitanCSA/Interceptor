@@ -37,7 +37,7 @@ Pour vcpkg, ajoute un fichier `vcpkg-configuration.json` a cote de ton manifeste
     {
       "kind": "git",
       "repository": "https://github.com/TitanCSA/vcpkg-registry",
-      "baseline": "9a706cf6992544778eb26a8b4244e303292f1ce6",
+      "baseline": "9a4b8cb920d4cfc97ce6d7af461bcc7508392a68",
       "packages": [
         "interceptor",
         "interceptor-sdk"
