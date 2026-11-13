@@ -84,11 +84,17 @@
       ]
     },
     "CPP/conan": {
-      "status": "public_recipe_builds_locally",
+      "status": "published_custom_source_index",
       "conan_center": false,
       "directory": "Interceptor-CPP-conan",
       "local_recipe_consumer_verified": true,
       "minimum_cppstd": 17,
+      "registry_published": true,
+      "name": "interceptor",
+      "version": "1.4.22",
+      "url": "https://github.com/TitanCSA/sdk-packages/tree/089bc73095aa8eda89bacbe10d0b9e58394b0207/conan-index",
+      "index_type": "local-recipes-index",
+      "index_commit": "089bc73095aa8eda89bacbe10d0b9e58394b0207",
       "github_directory": "packaging/native"
     },
     "CPP/nuget": {
@@ -128,17 +134,20 @@
       "api_prefix": "interceptor_"
     },
     "Python/conda-forge": {
-      "status": "built_tested_requires_official_review",
+      "status": "custom_channel_install_verified_requires_conda_forge_review",
       "name": "interceptor-sdk",
       "version": "1.0.1",
       "directory": "Interceptor-Python-conda-forge",
       "registry_published": false,
       "documentation_bundled": true,
-      "url": null,
+      "url": "https://raw.githubusercontent.com/TitanCSA/sdk-packages/089bc73095aa8eda89bacbe10d0b9e58394b0207/conda-channel",
       "public_consumer_verified": false,
       "module": "interceptor_sdk",
       "dll_name": "InterceptorBridge.dll",
       "api_prefix": "interceptor_",
+      "custom_channel": "https://raw.githubusercontent.com/TitanCSA/sdk-packages/089bc73095aa8eda89bacbe10d0b9e58394b0207/conda-channel",
+      "custom_channel_install_verified": true,
+      "custom_channel_is_conda_forge": false,
       "recipe_format": "v1",
       "v1_source_build_tests_passed": true,
       "personal_maintainer_confirmation_required": true,

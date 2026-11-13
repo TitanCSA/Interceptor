@@ -1,6 +1,6 @@
 # Interceptor .NET SDK
 
-.NET 8+ Windows x64. Package ID: `Interceptor.SDK`; NuGet publication is on hold at the owner request. Local installation: `dotnet add package Interceptor.SDK --version 1.0.0 --source PATH_TO_LOCAL_PACKAGES`.
+.NET 8+ Windows x64. Package ID: `Interceptor.SDK`; Installation: `dotnet add package Interceptor.SDK --version 1.0.0`.
 
 ```csharp
 using TitanCSA.Products.Interceptor;
