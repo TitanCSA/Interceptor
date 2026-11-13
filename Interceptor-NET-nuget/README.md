@@ -5,7 +5,7 @@
 ```csharp
 using TitanCSA.Products.Interceptor;
 using var client = new Interceptor();
-var info = client.Info();
+var info = client.GetInfo();
 ```
 
 Native DLL bundled as runtime asset. No driver installation or capture on construction. [API](docs/API.md). Original licensing/trial prerequisites remain unchanged.
