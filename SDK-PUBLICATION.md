@@ -7,7 +7,7 @@ Current source layout and registry coverage. A GitHub download is distinct from 
 | CPP/vcpkg | published_custom_registry | interceptor |
 | CPP/conan | published_custom_source_index | [interceptor](https://github.com/TitanCSA/sdk-packages/tree/089bc73095aa8eda89bacbe10d0b9e58394b0207/conan-index) [Source](packaging/native/) |
 | CPP/nuget | paused_pending_owner_email_confirmation | Interceptor.Native |
-| NET/nuget | built_verified_publication_on_hold_by_owner | Interceptor.SDK [Source](Interceptor-NET-nuget/) |
+| NET/nuget | built_verified_requires_trusted_publishing_policy | Interceptor.SDK [Source](Interceptor-NET-nuget/) |
 | Python/pypi | built_fixture_and_production_verified | interceptor-sdk [Source](Interceptor-Python-pypi/) |
 | Python/conda-forge | custom_channel_install_verified_requires_conda_forge_review | [interceptor-sdk](https://raw.githubusercontent.com/TitanCSA/sdk-packages/089bc73095aa8eda89bacbe10d0b9e58394b0207/conda-channel) [Source](packaging/conda/) |
 | Rust/cargo | published_install_verified | [interceptor-sdk](https://crates.io/crates/interceptor-sdk) [Source](Interceptor-Rust-cargo/) |
