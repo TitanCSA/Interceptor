@@ -62,7 +62,7 @@ Version **1.4.17.0** passes local kernel builds, static analysis, transport
 and lifecycle fixtures, keyboard/mouse regression tests, and SDK tests in Release
 and with AddressSanitizer. The returned Microsoft signatures and catalog membership
 are verified; physical-device validation of this combined release is not claimed.
-See [the current validation record](INPUT-UPDATE.md). These local
+The tests in this paragraph describe 1.4.17.0. See [the 1.4.22.0 validation record](DEMO-VALIDATION.md) for the current release and [recorded runtime measurements](https://titancsa.github.io/TitanCSA-Benchmarks/interceptor/results/) for their separate scoped fixtures. These local
 tests do not establish compatibility with every controller, application or game.
 
 The 1.4.15 development campaign exercised six-family capture, modification,
