@@ -1,5 +1,7 @@
 # Combined driver synchronization
 
+This is the historical integration record for **1.4.17.0**. Current 1.4.22.0 release qualification is recorded in [DEMO-VALIDATION.md](DEMO-VALIDATION.md); the version-specific claims below are retained for provenance.
+
 Version **1.4.17.0** combines keyboard/mouse capture with the controller fixes in
 Interceptor Gamepad & Controller kernel **1.0.5.0**, SDK **1.0.4.2** and installer
 revision **1.0.7.0**. Product names, service identity, device-interface identifiers
