@@ -240,18 +240,18 @@ Les sources, licences, guides API et exemples sont regroupes dans [le depot SDK 
 | Conan | `interceptor` | `conan install --requires=interceptor/1.4.22 -r titancsa --build=missing -s compiler.cppstd=17` |
 | NuGet | `Interceptor.Native` | `Install-Package Interceptor.Native -Version 1.4.22` |
 | NuGet | `Interceptor.SDK` | `dotnet add package Interceptor.SDK --version 1.0.0` |
-| PyPI | `interceptor_sdk` | Commande prevue apres publication : `python -m pip install interceptor-sdk==1.0.1` |
+| PyPI | `interceptor-sdk` | Commande prevue apres publication : `python -m pip install interceptor-sdk==1.0.1` |
 | Conda | `interceptor-sdk` | `conda install --override-channels -c https://raw.githubusercontent.com/TitanCSA/sdk-packages/089bc73095aa8eda89bacbe10d0b9e58394b0207/conda-channel -c conda-forge interceptor-sdk` (canal TitanCSA) |
-| crates.io | `interceptor` | `cargo add interceptor-sdk@1.0.0` |
-| npm | `interceptor` | `npm install interceptor-sdk@1.0.0` |
+| crates.io | `interceptor-sdk` | `cargo add interceptor-sdk@1.0.0` |
+| npm | `interceptor-sdk` | `npm install interceptor-sdk@1.0.0` |
 | Maven Central | `io.github.titancsa:interceptor-sdk` | `io.github.titancsa:interceptor-sdk:1.0.0 (pom.xml / Gradle)` |
 | JitPack | `com.github.TitanCSA:Interceptor` | `com.github.TitanCSA:Interceptor:java-sdk-v1.0.0 (avec le depot JitPack)` |
 | Go Modules | `github.com/TitanCSA/Interceptor/Interceptor-Go-modules` | `go get github.com/TitanCSA/Interceptor/Interceptor-Go-modules@v1.0.0` |
 | pkg.go.dev | `github.com/TitanCSA/Interceptor/Interceptor-Go-modules` | `Documentation : https://pkg.go.dev/github.com/TitanCSA/Interceptor/Interceptor-Go-modules@v1.0.0` |
-| PowerShell Gallery | `interceptor` | `Install-Module Interceptor -RequiredVersion 1.0.0 -Scope CurrentUser` |
+| PowerShell Gallery | `Interceptor` | `Install-Module Interceptor -RequiredVersion 1.0.0 -Scope CurrentUser` |
 | pub.dev | `interceptor` | `dart pub add interceptor:1.0.0` |
-| RubyGems | `interceptor_sdk` | `gem install interceptor-sdk -v 2.0.0` |
-| Packagist | `interceptor` | Commande prevue apres publication : `composer require titancsa/interceptor:1.0.0` |
+| RubyGems | `interceptor-sdk` | `gem install interceptor-sdk -v 2.0.0` |
+| Packagist | `titancsa/interceptor` | Commande prevue apres publication : `composer require titancsa/interceptor:1.0.0` |
 
 Pour vcpkg et Conan, configure d abord le registre TitanCSA avec [le guide complet](https://github.com/TitanCSA/sdk-packages/tree/main/projects/Interceptor/README.md). Le guide explique aussi Maven/Gradle, les prerequis et le chargement des DLL. Les pilotes/applications du produit sont installes separement. Les commandes marquees prevues ne sont pas encore disponibles.
 
