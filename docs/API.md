@@ -6,7 +6,7 @@ The library targets Windows x64 and C++17. It consists of exactly two files:
 compile the source once with your application. Public functions are in
 `namespace Interceptor`. Install the signed kernel driver before capturing input.
 
-The **1.4.17.0** SDK requires the matching Microsoft-signed 1.4.17.0 driver.
+The packaged **1.4.22.0** SDK requires the matching 1.4.22.0 driver and client files.
 Do not combine this SDK or its viewer with an older release.
 The public API remains automatic: initialization, session ownership, source tokens
 and type-specific forwarding do not require user-managed contexts.
