@@ -75,8 +75,8 @@ separate full-version terms.
 ### Choosing between Interceptor and Windows Input Bridge
 
 This edition uses `Get_Input_With_Timeout()` / `Send_Input()`.
-[Windows Input Bridge](https://github.com/StrikeFound/Windows-Input-Bridge)
-offers `Read()` / `Write()` and a move-only batch. The APIs are not drop-in
+The historical Windows Input Bridge edition uses `Read()` / `Write()`
+and a move-only batch; its public repository is currently unavailable. The APIs are not drop-in
 replacements: use each edition's matching SDK, driver and examples. If an
 application already uses this API, keep its matching edition until you port and
 test it. Compare the published validation scope and test your real devices.
