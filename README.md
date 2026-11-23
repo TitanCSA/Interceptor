@@ -9,6 +9,8 @@ XInputHID and GIP controllers on **Windows 10 1709+ / Windows 11 x64**.
 [Installation](docs/INSTALLATION.md) | [C++ API](docs/API.md) |
 [Examples](Examples/Console/README.md) | [Compatibility](docs/COMPATIBILITY.md)
 
+[Project overview and edition guide](https://titancsa.github.io/projects/interceptor/)
+
 | Setup and diagnostics | Input viewer |
 | --- | --- |
 | ![Installer dashboard](docs/images/installer.png) | ![Viewer with simulated controller input](docs/images/controllers.png) |
