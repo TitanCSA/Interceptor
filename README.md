@@ -146,7 +146,7 @@ Sleep time counts; closing or reinstalling does not reset the allowance.
 Diagnostics that capture input can start it. At expiry, capture stops and
 physical input passes through normally. Use Windows **Restart** for a new
 allowance; Fast Startup shutdown does not reset the kernel boot.
-For the unrestricted version, DM **`titancsa`** on Discord.
+[Get the licensed Release](https://licences.configcsa.com/interceptor).
 
 Interceptor independently evolves the input-interception workflow popularized by
 [oblitum/Interception](https://github.com/oblitum/Interception), with its own
