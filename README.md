@@ -261,14 +261,9 @@ Les anciens imports Go et versions JitPack gardent leurs tags. Pour les ancienne
 <!-- central-sdk-packages:end -->
 
 <!-- full-version-contact:start -->
-> [!IMPORTANT]
-> **Get the full version without demo restrictions**
+> **Licensed Release** · [Buy Interceptor directly](https://licences.configcsa.com/interceptor).
 >
-> **Discord username: `titancsa`**
->
-> Open Discord, choose **Friends > Add Friend**, enter **`titancsa`**, then send a direct message. Ask for the **full version without the demo time limit**, and mention **Interceptor**.
->
-> Tell me whether you need personal use, business integration or OEM redistribution, and ask for pricing and license / activation instructions.
+> For integration, OEM and support questions, contact `titancsa` on Discord.
 <!-- full-version-contact:end -->
 
 ## Performance & Benchmarks
@@ -281,4 +276,4 @@ Selected virtual input transformations are independently observed; controller re
 |---|---|
 | Virtual XUSB modification to XInput observation | 3 validated runs; median run P50 51.10 microseconds |
 
-**Stability limitation:** the Vdevice-backed controller campaign reproduced an unresolved guest WDF queue-purge bugcheck. Successful timings do not establish safe repeated teardown. See the [incident and test limits](https://titancsa.github.io/TitanCSA-Benchmarks/methodology/incident-wdf-001/).
+**Vdevice benchmark status.** The original campaign recorded a controller teardown crash with demo 1.0.5.0. The signed 1.0.6.0 demo passed separate teardown tests. Commercial Vdevice qualification remains pending. [Incident and edition status](https://titancsa.github.io/TitanCSA-Benchmarks/methodology/incident-wdf-001/).
