@@ -1,0 +1,46 @@
+name: Interceptor installation or activation
+description: Report a Interceptor setup, driver readiness or activation problem.
+title: "[Setup] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Check the [installation and activation guide](https://titancsa.github.io/guides/release-activation-help/) and search existing issues before submitting.
+        This report is public. Remove activation keys, order links, email addresses and other personal details. Use [official support](https://titancsa.github.io/about/evidence/) for purchase and key information.
+  - type: dropdown
+    id: edition
+    attributes:
+      label: Edition
+      options:
+        - Microsoft-signed demo
+        - Commercial Release
+        - Unknown
+    validations:
+      required: true
+  - type: input
+    id: package
+    attributes:
+      label: ZIP name or demo release tag
+  - type: input
+    id: windows
+    attributes:
+      label: Windows version and build
+      description: Use winver. Include the build number if available.
+  - type: input
+    id: driver-sdk
+    attributes:
+      label: Installed driver and SDK versions
+      description: Copy the version lines from the error or setup diagnostics if shown.
+  - type: textarea
+    id: behavior
+    attributes:
+      label: What happened?
+      description: Explain which setup or activation step you reached, what you expected and whether Windows requested a restart.
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostic
+    attributes:
+      label: Error stage, reason and Windows code
+      description: Include the exact message with personal details and the activation key removed. Optional setup diagnostics can help.
+      placeholder: Stage, reason, Windows error code and exact message
