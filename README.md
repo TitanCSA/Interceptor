@@ -9,8 +9,8 @@ If another Interceptor edition is installed, follow [the removal steps](docs/INS
 
 **Try it**
 
-1. Run [InterceptorSetup.exe](https://github.com/TitanCSA/Interceptor/releases/download/v1.4.22.0-demo/InterceptorSetup.exe) and choose **Install / reinstall**. If setup asks for a restart, restart Windows and reopen it.
-2. Open [InterceptorExampleUI.exe](https://github.com/TitanCSA/Interceptor/releases/download/v1.4.22.0-demo/InterceptorExampleUI.exe).
+1. Run [InterceptorSetup.exe](https://github.com/TitanCSA/Interceptor/releases/latest/download/InterceptorSetup.exe) and choose **Install / reinstall**. If setup asks for a restart, restart Windows and reopen it.
+2. Open [InterceptorExampleUI.exe](https://github.com/TitanCSA/Interceptor/releases/latest/download/InterceptorExampleUI.exe).
 3. Press a key or move a stick. The viewer should show input from your device. Click **Stop** when you finish.
 <!-- simple-start:end -->
 
