@@ -1,14 +1,28 @@
 # Interceptor - Windows Kernel Filter Driver for Keyboard, Mouse and Gamepad
 
+<!-- simple-start:start -->
+Read or change input from a real keyboard, mouse or compatible gamepad.
+
+**64-bit Windows 10 version 1709 or later, or Windows 11.**
+
+If another Interceptor edition is installed, follow [the removal steps](docs/INSTALLATION.md) first.
+
+**Try it**
+
+1. Run [InterceptorSetup.exe](https://github.com/TitanCSA/Interceptor/releases/download/v1.4.22.0-demo/InterceptorSetup.exe) and choose **Install / reinstall**. If setup asks for a restart, restart Windows and reopen it.
+2. Open [InterceptorExampleUI.exe](https://github.com/TitanCSA/Interceptor/releases/download/v1.4.22.0-demo/InterceptorExampleUI.exe).
+3. Press a key or move a stick. The viewer should show input from your device. Click **Stop** when you finish.
+<!-- simple-start:end -->
+
 <!-- full-version-contact:start -->
 > [!IMPORTANT]
-> **Get the version without the one-hour demo limit**
+> **Version without the one-hour demo limit**
 >
-> **Discord · `titancsa`**. Open [Discord](https://discord.com/app), choose **Friends → Add Friend**, enter **`titancsa`** and send a message.
-> Send the project name and ask for its full version. TitanCSA will share the purchase details privately.
->
-> **FR · Version sans la limite d’une heure.** Ajoute **`titancsa`** sur Discord et envoie le nom du projet. Le lien d’achat est communiqué en privé.
+> In [Discord](https://discord.com/app), choose **Add Friend** and enter **`titancsa`**. Send the project name. Purchase details are sent privately.
 <!-- full-version-contact:end -->
+
+<details>
+<summary>Project details and screenshots</summary>
 
 Capture physical input, identify its source, modify or block it, and forward it
 to Windows with a **Microsoft-signed kernel filter driver** and a **two-file
@@ -19,13 +33,14 @@ XInputHID and GIP controllers on **Windows 10 1709+ / Windows 11 x64**.
 [Installation](docs/INSTALLATION.md) | [C++ API](docs/API.md) |
 [Examples](Examples/Console/README.md) | [Compatibility](docs/COMPATIBILITY.md)
 
-[Project overview and edition guide](https://titancsa.github.io/projects/interceptor/) · [Contact titancsa on Discord](https://titancsa.github.io/about/evidence/#release-contact)
 
 | Setup and diagnostics | Input viewer |
 | --- | --- |
 | ![Installer dashboard](docs/images/installer.png) | ![Viewer with simulated controller input](docs/images/controllers.png) |
 
 Screenshots illustrate the interface; the controller preview uses simulated input.
+
+</details>
 
 <a id="quick-start"></a>
 
