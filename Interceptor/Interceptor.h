@@ -32,6 +32,7 @@
 #define NOMINMAX
 #endif
 #include <Windows.h>
+#include <winioctl.h>
 #include <cstdint>
 #include <string>
 #include <vector>
