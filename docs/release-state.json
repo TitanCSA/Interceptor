@@ -1,11 +1,11 @@
-{
+﻿{
     "Schema":  1,
     "Product":  "Interceptor",
-    "DriverVersion":  "1.4.22.0",
-    "SdkVersion":  "1.4.22.0",
-    "BundleVersion":  "1.4.22.0",
-    "InstallerVersion":  "1.4.22.0",
-    "ViewerVersion":  "1.4.22.0",
+    "DriverVersion":  "1.4.23.0",
+    "SdkVersion":  "1.4.23.0",
+    "BundleVersion":  "1.4.23.0",
+    "InstallerVersion":  "1.4.23.0",
+    "ViewerVersion":  "1.4.23.0",
     "SigningPending":  false,
     "TrialSeconds":  3600,
     "TrialStorage":  "Kernel resident per-boot clock",

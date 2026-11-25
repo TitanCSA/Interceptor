@@ -7,7 +7,7 @@ function Assert-Administrator {
     if([Environment]::OSVersion.Version.Build -lt 16299) { throw 'Windows 10 version 1709 ou plus recent, ou Windows 11 x64 requis.' }
 }
 function Assert-InterceptorInstallationBoundary {
-    foreach($name in @('InterceptorKeyboardMouse','InterceptorGamepadController')){
+    foreach($name in @('InterceptorKeyboardMouse','InterceptorKeyboardMouseRelease','InterceptorGamepadController','InterceptorGamepadControllerRelease')){
         if(Test-Path -LiteralPath ('HKLM:\SYSTEM\CurrentControlSet\Services\'+$name)){
             $script:InterceptorLastExitCode=1638
             throw ('Incompatible Interceptor edition is still installed or pending removal: '+$name+'. Uninstall that edition and restart Windows before installing this product. Its driver and services were not changed.')

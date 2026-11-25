@@ -11,6 +11,7 @@ namespace Interceptor {Init_Result Restore_Controller_Hid_Filters();}
 #include <iostream>
 #include <iomanip>
 #include <system_error>
+#include "SetupHealth.h"
 #include "SetupBinding.h"
 
 namespace {
@@ -42,6 +43,18 @@ bool IsControl(HDEVINFO set,SP_DEVINFO_DATA& d) {
     for(const auto* p=hardware;*p;p+=wcslen(p)+1)if(!_wcsicmp(p,ControlHardware))return true;
     return false;
 }
+bool IsUnboundControlStub(HDEVINFO set,SP_DEVINFO_DATA& device,const wchar_t* instance) {
+    if(_wcsicmp(instance,ControlInstance) || !IsEqualGUID(device.ClassGuid,GUID_DEVCLASS_SYSTEM))return false;
+    for(const auto property:{SPDRP_HARDWAREID,SPDRP_COMPATIBLEIDS,SPDRP_SERVICE,SPDRP_DRIVER,SPDRP_UPPERFILTERS,SPDRP_LOWERFILTERS}) {
+        if(!SetupHealth::Strings(set,device,property).empty())return false;
+    }
+    return true;
+}
+void SetControlHardwareId(HDEVINFO set,SP_DEVINFO_DATA& device) {
+    constexpr wchar_t hardware[]=L"ROOT\\InterceptorControl\0";
+    Check(SetupDiSetDeviceRegistryPropertyW(set,&device,SPDRP_HARDWAREID,
+        reinterpret_cast<const BYTE*>(hardware),sizeof(hardware)),"Set root control hardware ID");
+}
 bool RemoveControlDevice(HDEVINFO set,SP_DEVINFO_DATA& d) {
     SP_REMOVEDEVICE_PARAMS remove{};remove.ClassInstallHeader.cbSize=sizeof(SP_CLASSINSTALL_HEADER);
     remove.ClassInstallHeader.InstallFunction=DIF_REMOVE;remove.Scope=DI_REMOVEDEVICE_GLOBAL;
@@ -52,18 +65,21 @@ bool RemoveControlDevice(HDEVINFO set,SP_DEVINFO_DATA& d) {
     return (params.Flags&(DI_NEEDREBOOT|DI_NEEDRESTART))!=0;
 }
 bool ConfigureControl(const wchar_t* inf,bool remove) {
-    // Removing a package can leave its root instance without a setup class.
-    // Include those instances so retrying installation reuses the stable ID.
-    Devices scan{SetupDiGetClassDevsW(nullptr,nullptr,nullptr,DIGCF_ALLCLASSES)};
+    Devices scan{SetupDiGetClassDevsW(nullptr,nullptr,nullptr,DIGCF_ALLCLASSES|(remove?0:DIGCF_PRESENT))};
     Check(scan.value!=INVALID_HANDLE_VALUE,"Enumerate root control devices");
     std::vector<std::wstring> ids;
+    bool foundStub=false;
     for(DWORD index=0;;++index) {
         SP_DEVINFO_DATA d{};d.cbSize=sizeof(d);
         if(!SetupDiEnumDeviceInfo(scan.value,index,&d)){if(GetLastError()==ERROR_NO_MORE_ITEMS)break;Check(FALSE,"Enumerate root control device");}
-        if(!IsControl(scan.value,d))continue;
-        wchar_t id[MAX_DEVICE_ID_LEN]{};Check(SetupDiGetDeviceInstanceIdW(scan.value,&d,id,MAX_DEVICE_ID_LEN,nullptr),"Read root control ID");ids.emplace_back(id);
+        wchar_t id[MAX_DEVICE_ID_LEN]{};
+        if(!SetupDiGetDeviceInstanceIdW(scan.value,&d,id,MAX_DEVICE_ID_LEN,nullptr)) {
+            if(GetLastError()==ERROR_NO_SUCH_DEVINST)continue;
+            Check(FALSE,"Read root control ID");
+        }
+        if(IsControl(scan.value,d))ids.emplace_back(id);
+        else if(!remove && IsUnboundControlStub(scan.value,d,id))foundStub=true;
     }
-    // A class-specific set cannot open an unbound/classless root instance.
     Devices set{SetupDiCreateDeviceInfoList(nullptr,nullptr)};
     Check(set.value!=INVALID_HANDLE_VALUE,"Create root control information set");
     bool reboot=false;
@@ -74,26 +90,37 @@ bool ConfigureControl(const wchar_t* inf,bool remove) {
         }
         std::cout<<ids.size()<<" root control devices removed\n";return reboot;
     }
-    SP_DEVINFO_DATA created{};created.cbSize=sizeof(created);bool registered=false;
+    SP_DEVINFO_DATA device{};device.cbSize=sizeof(device);
+    bool registered=false,repairedStub=false;
     try {
         if(ids.empty()) {
-            // Stable instance ID makes repeated installation idempotent. Unlike
-            // DICD_GENERATE_ID, this cannot create a new device on every click.
-            Check(SetupDiCreateDeviceInfoW(set.value,ControlInstance,&GUID_DEVCLASS_SYSTEM,L"Interceptor Control",nullptr,0,&created),"Create root control device");
-            constexpr wchar_t hardware[]=L"ROOT\\InterceptorControl\0";
-            Check(SetupDiSetDeviceRegistryPropertyW(set.value,&created,SPDRP_HARDWAREID,reinterpret_cast<const BYTE*>(hardware),sizeof(hardware)),"Set root control hardware ID");
-            Check(SetupDiCallClassInstaller(DIF_REGISTERDEVICE,set.value,&created),"Register root control device");registered=true;
+            if(foundStub && SetupDiOpenDeviceInfoW(set.value,ControlInstance,nullptr,0,&device)
+                && IsUnboundControlStub(set.value,device,ControlInstance)) {
+                SetControlHardwareId(set.value,device);
+                repairedStub=true;
+                std::cout<<"Recovered the previously unbound root control device.\n";
+            }else{
+                device={};device.cbSize=sizeof(device);
+                if(!SetupDiCreateDeviceInfoW(set.value,ControlInstance,&GUID_DEVCLASS_SYSTEM,L"Interceptor Control",nullptr,0,&device)) {
+                    if(GetLastError()!=ERROR_DEVINST_ALREADY_EXISTS)Check(FALSE,"Create root control device");
+                    // A non-present or foreign instance occupies the stable ID.
+                    // Reuse any present owned instance on subsequent runs.
+                    constexpr wchar_t rootName[]=L"InterceptorControl";
+                    Check(SetupDiCreateDeviceInfoW(set.value,rootName,&GUID_DEVCLASS_SYSTEM,L"Interceptor Control",
+                        nullptr,DICD_GENERATE_ID,&device),"Allocate a free root control instance");
+                }
+                SetControlHardwareId(set.value,device);
+                Check(SetupDiCallClassInstaller(DIF_REGISTERDEVICE,set.value,&device),"Register root control device");
+                registered=true;
+            }
         }
         BOOL needsRestart=FALSE;
         Check(UpdateDriverForPlugAndPlayDevicesW(nullptr,ControlHardware,inf,INSTALLFLAG_FORCE|INSTALLFLAG_NONINTERACTIVE,&needsRestart),"Bind root control driver");
         reboot=needsRestart!=FALSE;
     } catch(...) {
-        if(registered)try {RemoveControlDevice(set.value,created);}
-        catch(const std::system_error& e){
-            const auto code=static_cast<unsigned long>(e.code().value());
-            std::cerr<<"Root rollback failed: "<<e.what()<<" [Win32 "<<std::dec<<code
-                <<" / 0x"<<std::hex<<std::uppercase<<std::setw(8)<<std::setfill('0')<<code<<std::dec<<"]\n";
-        }catch(const std::exception& e){std::cerr<<"Root rollback failed: "<<e.what()<<'\n';}
+        if(registered)try {RemoveControlDevice(set.value,device);}catch(const std::exception& e){std::cerr<<"Root rollback failed: "<<e.what()<<'\n';}
+        if(repairedStub && !SetupDiSetDeviceRegistryPropertyW(set.value,&device,SPDRP_HARDWAREID,nullptr,0))
+            std::cerr<<"Could not restore the original root hardware property; Windows error "<<GetLastError()<<'\n';
         throw;
     }
     std::cout<<"Root control configured; reboot="<<reboot<<'\n';return reboot;
@@ -162,12 +189,16 @@ int InstallDriver(const wchar_t* directory,bool restore,bool onlyNew,const wchar
         // service snapshot above prevents skipping this probe after a race back
         // to kbdhid/mouhid, or adopting a binding changed by another installer.
         if(!restore && _wcsicmp(target.service.c_str(),L"Interceptor")) {
+            if(!Interceptor::SetupDetail::UsesInboxInputMapper(devices.value,data,target.mouse)) {
+                std::wcout<<L"Preserved manufacturer HID driver package: "<<target.instance<<L"\n";continue;
+            }
             const auto profile=Interceptor::SetupDetail::ProbeMapperProfile(devices.value,data,target.mouse);
             if(!profile.supported) {
                 std::wcout<<L"Skipped mapper association; current driver unchanged: "<<target.instance
                     <<L"; "<<profile.reason<<L"; error="<<profile.error<<L"\n";continue;
             }
-            if(!RecheckMapper(devices.value,data,target,restore,onlyNew)) {
+            if(!RecheckMapper(devices.value,data,target,restore,onlyNew) ||
+                !Interceptor::SetupDetail::UsesInboxInputMapper(devices.value,data,target.mouse)) {
                 std::wcout<<L"Skipped changed mapper instance after profile inspection: "<<target.instance<<L"\n";continue;
             }
         }

@@ -22,7 +22,7 @@
 #define IC_SDK_SERVICE L"Interceptor"
 #define IC_SDK_DOS_DEVICE L"\\\\.\\Interceptor"
 
-// Interceptor SDK 1.4.22.0. Compile Interceptor.cpp once alongside your application.
+// Interceptor SDK 1.4.23.0. Compile Interceptor.cpp once alongside your application.
 // This header has no local-header dependencies. Windows x64, C++17.
 
 // ---- Interceptor.h ----
@@ -998,6 +998,19 @@ static __inline IC_MAPPER_PROFILE_RESULT IcMapperProfile(unsigned long descripto
 #pragma comment(lib,"setupapi.lib")
 
 namespace Interceptor::SetupDetail {
+inline std::wstring InstalledMapperProperty(HDEVINFO set,SP_DEVINFO_DATA& device,const wchar_t* name) {
+    HKEY key=SetupDiOpenDevRegKey(set,&device,DICS_FLAG_GLOBAL,0,DIREG_DRV,KEY_QUERY_VALUE);
+    if(key==INVALID_HANDLE_VALUE)return {};
+    wchar_t value[MAX_PATH]{};
+    DWORD bytes=sizeof(value);
+    const auto status=RegGetValueW(key,nullptr,name,RRF_RT_REG_SZ,nullptr,value,&bytes);
+    RegCloseKey(key);
+    return status==ERROR_SUCCESS?std::wstring(value):std::wstring{};
+}
+inline bool UsesInboxInputMapper(HDEVINFO set,SP_DEVINFO_DATA& device,bool mouse) {
+    const auto inf=InstalledMapperProperty(set,device,L"InfPath");
+    return !_wcsicmp(inf.c_str(),mouse?L"msmouse.inf":L"keyboard.inf");
+}
 struct MapperProfileProbe {
     bool supported=false;
     IC_MAPPER_PROFILE_RESULT profile=IC_MAPPER_PROFILE_OK;

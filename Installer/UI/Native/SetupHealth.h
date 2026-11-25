@@ -70,7 +70,9 @@ inline int Print(const wchar_t* controlHardware) {
         const auto service=Strings(set.value,device,SPDRP_SERVICE);
         const auto upper=Strings(set.value,device,SPDRP_UPPERFILTERS);
         const auto lower=Strings(set.value,device,SPDRP_LOWERFILTERS);
-        const bool control=_wcsnicmp(id,root.c_str(),root.size())==0;
+        const bool control=_wcsnicmp(id,root.c_str(),root.size())==0 &&
+            (Has(service,IC_SDK_SERVICE) || Has(upper,IC_SDK_SERVICE) || Has(lower,IC_SDK_SERVICE) ||
+             Has(Strings(set.value,device,SPDRP_HARDWAREID),controlHardware));
         const bool owned=Has(service,IC_SDK_SERVICE)||Has(upper,IC_SDK_SERVICE)||Has(lower,IC_SDK_SERVICE);
         if(!control&&!owned)continue;
         ULONG status=0,problem=0;

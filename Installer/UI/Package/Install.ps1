@@ -9,6 +9,15 @@ try {
     Get-InterceptorWindowsTool 'sc.exe'|Out-Null
     Enter-InterceptorOperation
     Assert-InterceptorInstallationBoundary
+    $serviceKey='HKLM:\SYSTEM\CurrentControlSet\Services\'+$script:InterceptorService
+    $pendingRemoval=if(Test-Path -LiteralPath $serviceKey){
+        (Get-ItemProperty -LiteralPath $serviceKey -ErrorAction Stop).DeleteFlag
+    }
+    if($pendingRemoval -eq 1){
+        Write-Host 'Windows is still removing a previous installation of this edition. Restart Windows normally, then reopen setup.'
+        $code=3010
+        exit $code
+    }
     Start-InterceptorLog 'install';$logged=$true
     Set-InterceptorPhase 'Snapshot original Windows device bindings'
     $baseline=Save-InterceptorBaseline
@@ -26,6 +35,8 @@ try {
     $bindingStarted=$true
     $code=Invoke-InterceptorSetupHelper $helper @('--install',$payload)
     if($code -notin @(0,3010)){throw ('Device association failed: '+$code)}
+    if($baseline.Devices -and (Restore-InterceptorManufacturerBindings $baseline)){$code=3010}
+    if($script:InterceptorNeedsReboot){$code=3010}
     if($code -eq 0){
         if((Invoke-InterceptorSetupHelper $helper @('--status') 20000) -ne 0){throw 'Driver API did not respond after installation.'}
         Set-InterceptorPhase 'Initialize supported input interfaces'
@@ -38,7 +49,11 @@ try {
     Set-InterceptorPendingControllers $code (Get-FileHash -LiteralPath (Join-Path $payload 'Interceptor.sys') -Algorithm SHA256).Hash
     Get-InterceptorPackages|Select-Object Driver,OriginalFileName|ConvertTo-Json|Set-Content -LiteralPath (Join-Path (Get-InterceptorDataRoot) 'packages.json') -Encoding UTF8
     Complete-InterceptorOperation $code
-    Write-Host 'Installation verified. Physical input passes through until an application opens capture.'
+    if($code -eq 3010){
+        Write-Host 'Restart Windows normally to finish installation, then reopen this installer.'
+    }else{
+        Write-Host 'Installation verified. Physical input passes through until an application opens capture.'
+    }
 }catch{
     $code=if($logged){Write-InterceptorFailure $_}else{Write-Host $_.Exception.ToString();if($script:InterceptorLastExitCode -notin @(0,3010)){$script:InterceptorLastExitCode}else{1}}
     $safeToRemove=$false

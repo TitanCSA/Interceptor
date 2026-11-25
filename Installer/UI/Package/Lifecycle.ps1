@@ -26,12 +26,12 @@ function Enter-InterceptorOperation {
     $familyCreated=$false
     $script:InterceptorFamilyOwned=$false
     $script:InterceptorFamilyOperation=New-Object Threading.Mutex($false,'Global\InterceptorSetup-Maintenance',[ref]$familyCreated,$security)
-    try{$family=$script:InterceptorFamilyOperation.WaitOne(0)}catch [Threading.AbandonedMutexException]{$family=$true}
+    try{$family=$script:InterceptorFamilyOperation.WaitOne([TimeSpan]::FromSeconds(30))}catch [Threading.AbandonedMutexException]{$family=$true}
     if(!$family){$script:InterceptorFamilyOperation.Dispose();$script:InterceptorFamilyOperation=$null;$script:InterceptorLastExitCode=1618;throw 'Another Interceptor edition is performing setup or recovery (Win32 1618). Wait for it to finish.'}
     $script:InterceptorFamilyOwned=$true
     $created=$false
     $script:InterceptorOperation=New-Object Threading.Mutex($false,'Global\InterceptorSetup-Installation',[ref]$created,$security)
-    try{$acquired=$script:InterceptorOperation.WaitOne(0)}catch [Threading.AbandonedMutexException]{$acquired=$true}
+    try{$acquired=$script:InterceptorOperation.WaitOne([TimeSpan]::FromSeconds(30))}catch [Threading.AbandonedMutexException]{$acquired=$true}
     if(!$acquired){$script:InterceptorOperation.Dispose();$script:InterceptorOperation=$null;$script:InterceptorLastExitCode=1618;throw 'Another setup or recovery operation for this product is active (Win32 1618). Wait for that operation to finish before retrying.'}
     $script:InterceptorOperationOwned=$true
 }
@@ -69,6 +69,25 @@ function Save-InterceptorBaseline {
     }
     Write-InterceptorState $state
     return $state
+}
+function Restore-InterceptorManufacturerBindings($State) {
+    $byInstance=@{}
+    foreach($entry in [InterceptorRecovery.Devices]::Snapshot()) {
+        if($entry.Service -eq $script:InterceptorService){$byInstance[$entry.Instance]=$entry}
+    }
+    $reboot=$false
+    $saved=[InterceptorRecovery.Devices]::Read((ConvertTo-Json -InputObject @($State.Devices) -Depth 10))
+    foreach($device in $saved) {
+        if(!$byInstance.ContainsKey($device.Instance) -or $device.Service -notin @('kbdhid','mouhid') -or
+            $device.Inf -notmatch '^oem[0-9]+\.inf$'){continue}
+        try {
+            $reboot=[InterceptorRecovery.Devices]::RestoreMapper($device,(Join-Path $PSScriptRoot 'Recovery\RecoveryBinding.dll')) -or $reboot
+            Write-Host ('Requested the original manufacturer input binding for '+$device.Instance)
+        } catch {
+            Write-Warning ('Manufacturer input binding could not be restored for '+$device.Instance+': '+$_.Exception.Message)
+        }
+    }
+    return $reboot
 }
 function Register-InterceptorCertificateAdds($State,[string]$Thumbprint) {
     foreach($store in @('Root','TrustedPublisher')){
@@ -185,8 +204,18 @@ function Invoke-InterceptorCleanUninstall([switch]$Finalize) {
     foreach($package in Get-InterceptorPackages){Remove-InterceptorPackage $package.Driver}
     $reboot=$reboot -or $script:InterceptorNeedsReboot
     $remaining=@(Get-InterceptorPackages)
-    $driver=Get-Service -Name Interceptor -ErrorAction SilentlyContinue
-    if($driver){$running=$driver.Status -ne 'Stopped';$driver.Dispose();$delete=Invoke-InterceptorProcess (Get-InterceptorWindowsTool 'sc.exe') @('delete','Interceptor') -TimeoutMs 30000;if($delete.ExitCode -notin @(0,1060,1072)){throw ('Driver service removal failed: '+$delete.ExitCode)};$reboot=$reboot -or $running -or $delete.ExitCode -eq 1072}
+    $service=$script:InterceptorService
+    $serviceKey='HKLM:\SYSTEM\CurrentControlSet\Services\'+$service
+    $driver=Get-Service -Name $service -ErrorAction SilentlyContinue
+    $running=$false
+    if($driver){$running=$driver.Status -ne 'Stopped';$driver.Dispose()}
+    # PnP can stop a driver and mark it for deletion without clearing its
+    # service key. A subsequent installer must not see success until it is gone.
+    if(Test-Path -LiteralPath $serviceKey){
+        $delete=Invoke-InterceptorProcess (Get-InterceptorWindowsTool 'sc.exe') @('delete',$service) -TimeoutMs 30000
+        if($delete.ExitCode -notin @(0,1060,1072)){throw ('Driver service removal failed: '+$delete.ExitCode)}
+        $reboot=$reboot -or $running -or $delete.ExitCode -eq 1072 -or (Test-Path -LiteralPath $serviceKey)
+    }
     if($remaining.Count){$reboot=$true}
     if($state){foreach($cert in $state.CertificatesAdded){
         if($cert.Store -notin @('Root','TrustedPublisher') -or $cert.Thumbprint -notmatch '^[A-Fa-f0-9]{40}$'){throw 'Invalid certificate restoration entry.'}

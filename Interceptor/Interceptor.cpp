@@ -1908,6 +1908,11 @@ void Associate(HDEVINFO set,SP_DEVINFO_DATA& device,bool mouse,Init_Result& resu
     if(ForeignStackFilters(set,device,result,instance))return;
     if(!_wcsicmp(service.c_str(),IC_SDK_SERVICE)) {++result.already_associated;CheckStarted(device,result);return;}
     if(_wcsicmp(service.c_str(),mouse?L"mouhid":L"kbdhid")) {++result.skipped;return;}
+    if(!SetupDetail::UsesInboxInputMapper(set,device,mouse)) {
+        ++result.skipped;
+        result.skipped_devices.push_back({instance,L"The manufacturer owns this input driver package",ERROR_NOT_SUPPORTED});
+        return;
+    }
     const auto profile=SetupDetail::ProbeMapperProfile(set,device,mouse);
     if(!profile.supported) {
         ++result.skipped;result.skipped_devices.push_back({instance,profile.reason,profile.error});return;
@@ -1932,7 +1937,8 @@ void Associate(HDEVINFO set,SP_DEVINFO_DATA& device,bool mouse,Init_Result& resu
     // A different installer or PnP may have changed the instance since the
     // metadata probe. Preserve a newly selected custom driver rather than bind.
     if(_wcsicmp(Property(set,device,SPDRP_SERVICE).c_str(),service.c_str()) ||
-       _wcsicmp(Property(set,device,SPDRP_HARDWAREID).c_str(),hardware.c_str())) {
+       _wcsicmp(Property(set,device,SPDRP_HARDWAREID).c_str(),hardware.c_str()) ||
+       !SetupDetail::UsesInboxInputMapper(set,device,mouse)) {
         ++result.skipped;result.skipped_devices.push_back({instance,L"Mapper identity/service changed before association",ERROR_RETRY});return;
     }
     BOOL reboot=FALSE;

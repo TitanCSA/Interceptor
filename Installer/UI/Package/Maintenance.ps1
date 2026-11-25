@@ -81,7 +81,7 @@ function Get-InterceptorSetupAssessment {
     if(!$roots){$rows+=[pscustomobject]@{Instance='ROOT\'+$script:InterceptorService+'Control\(missing)';State='Pending';Reason='The product control endpoint is not present.';Root=$true}}
     $disconnected=@($Before.devices|Where-Object {!$_.root -and $_.instance -cnotin @($State.devices.instance)}|ForEach-Object instance)
     $unresolved=@($rows|Where-Object {$_.State -in @('Pending','Failed')})
-    return [pscustomobject]@{Ready=($unresolved.Count -eq 0 -and !@($rows|Where-Object State -EQ 'Restart').Count);Settled=($unresolved.Count -eq 0);RestartRequired=([bool]$RestartRequested -or @($rows|Where-Object State -EQ 'Restart').Count -gt 0);Devices=$rows;Disconnected=$disconnected}
+    return [pscustomobject]@{Ready=(!$RestartRequested -and $unresolved.Count -eq 0 -and !@($rows|Where-Object State -EQ 'Restart').Count);Settled=($unresolved.Count -eq 0);RestartRequired=([bool]$RestartRequested -or @($rows|Where-Object State -EQ 'Restart').Count -gt 0);Devices=$rows;Disconnected=$disconnected}
 }
 function Wait-InterceptorSetupDevices {
     param([string]$Helper,$Before,[switch]$RestartRequested,[int]$TimeoutMs=20000,[int]$PollMs=250,[switch]$NoReport)
