@@ -1,4 +1,4 @@
-# Interceptor - Windows Kernel Filter Driver for Keyboard, Mouse and Gamepad
+# Interceptor
 
 <!-- simple-start:start -->
 Read or change input from a real keyboard, mouse or compatible gamepad.
