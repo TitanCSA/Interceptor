@@ -99,6 +99,8 @@ separate full-version terms.
 
 ## C++ SDK
 
+**First SDK check.** Extract the [starter ZIP](https://titancsa.github.io/downloads/first-sdk-checks.zip) and run `python scripts/test_first_sdk.py interceptor --run` from that folder. It reads the installed driver's status without opening a capture session. [Tools required](https://titancsa.github.io/guides/installer-and-sdk/).
+
 ### Choosing between Interceptor and Windows Input Bridge
 
 This edition uses `Get_Input_With_Timeout()` / `Send_Input()`.
