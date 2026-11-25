@@ -40,6 +40,11 @@
       "directory": "packaging/conda",
       "source_url": "https://github.com/TitanCSA/sdk-packages/tree/main/projects/Interceptor/packaging/conda",
       "location": "central_sdk_repository"
+    },
+    {
+      "directory": "Interceptor-JavaScript-npm",
+      "source_url": "https://github.com/TitanCSA/sdk-packages/tree/main/projects/Interceptor/Interceptor-JavaScript-npm",
+      "location": "central_sdk_repository"
     }
   ],
   "notes": "Registry accounts or community acceptance are separate. No missing language binding is represented as implemented.",
