@@ -1,0 +1,9 @@
+cff-version: 1.2.0
+message: "Please include the release tag or commit and edition you used when citing this repository."
+title: "Interceptor"
+type: software
+authors:
+  - name: TitanCSA
+repository-code: https://github.com/TitanCSA/Interceptor
+url: https://titancsa.github.io/projects/interceptor/
+abstract: "Windows C++ SDK and signed filter for supported physical keyboard, mouse and controller input."
