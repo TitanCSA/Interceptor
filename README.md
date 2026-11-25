@@ -3,11 +3,13 @@
 <!-- simple-start:start -->
 Read or change input from a real keyboard, mouse or compatible gamepad.
 
+[First steps](#first-steps) · [Develop](#sdk-and-packages) · [Maintain](https://github.com/TitanCSA/sdk-packages/blob/main/CONTRIBUTING.md)
+
+## First steps
+
 **64-bit Windows 10 version 1709 or later, or Windows 11.**
 
 If another Interceptor edition is installed, follow [the removal steps](docs/INSTALLATION.md) first.
-
-**Try it**
 
 1. Run [InterceptorSetup.exe](https://github.com/TitanCSA/Interceptor/releases/latest/download/InterceptorSetup.exe) and choose **Install / reinstall**. If setup asks for a restart, restart Windows and reopen it.
 2. Open [InterceptorExampleUI.exe](https://github.com/TitanCSA/Interceptor/releases/latest/download/InterceptorExampleUI.exe).
@@ -259,33 +261,13 @@ You are solely responsible for how you use, modify or distribute the software, f
 To the maximum extent permitted by applicable law, the software is provided "AS IS", without warranties of any kind, and TitanCSA and the contributors are not liable for claims, damages, data loss, system damage or other consequences arising from its use or misuse. Nothing in this notice excludes liability that cannot legally be excluded. Existing project and third-party license terms remain applicable.
 
 <!-- central-sdk-packages:start -->
-## Paquets et installation
+<a name="paquets-et-installation"></a>
 
-Les sources, licences, guides API et exemples sont regroupes dans [le depot SDK dedie](https://github.com/TitanCSA/sdk-packages/tree/main/projects/Interceptor). Choisis le paquet a installer puis execute sa commande dans son dossier.
+## SDK and packages
 
-| Registre | Paquet | Installation / utilisation |
-| --- | --- | --- |
-| vcpkg | `interceptor` | `vcpkg install interceptor:x64-windows` |
-| Conan | `interceptor` | `conan install --requires=interceptor/1.4.22 -r titancsa --build=missing -s compiler.cppstd=17` |
-| NuGet | `Interceptor.Native` | `Install-Package Interceptor.Native -Version 1.4.22` |
-| NuGet | `Interceptor.SDK` | `dotnet add package Interceptor.SDK --version 1.0.0` |
-| PyPI | `interceptor-sdk` | Commande prevue apres publication : `python -m pip install interceptor-sdk==1.0.1` |
-| Conda | `interceptor-sdk` | `conda install --override-channels -c https://raw.githubusercontent.com/TitanCSA/sdk-packages/089bc73095aa8eda89bacbe10d0b9e58394b0207/conda-channel -c conda-forge interceptor-sdk` (canal TitanCSA) |
-| crates.io | `interceptor-sdk` | `cargo add interceptor-sdk@1.0.0` |
-| npm | [`interceptor-sdk`](https://github.com/TitanCSA/sdk-packages/tree/main/projects/Interceptor/Interceptor-JavaScript-npm#readme) | `npm install interceptor-sdk@1.0.0` |
-| GitHub | [interceptor-sdk 1.0.1](https://github.com/TitanCSA/sdk-packages/releases/download/node-input-sdk-v1.0.1/interceptor-sdk-1.0.1.tgz) | `npm install ./interceptor-sdk-1.0.1.tgz` |
-| Maven Central | `io.github.titancsa:interceptor-sdk` | `io.github.titancsa:interceptor-sdk:1.0.0 (pom.xml / Gradle)` |
-| JitPack | `com.github.TitanCSA:Interceptor` | `com.github.TitanCSA:Interceptor:java-sdk-v1.0.0 (avec le depot JitPack)` |
-| Go Modules | `github.com/TitanCSA/Interceptor/Interceptor-Go-modules` | `go get github.com/TitanCSA/Interceptor/Interceptor-Go-modules@v1.0.0` |
-| pkg.go.dev | `github.com/TitanCSA/Interceptor/Interceptor-Go-modules` | `Documentation : https://pkg.go.dev/github.com/TitanCSA/Interceptor/Interceptor-Go-modules@v1.0.0` |
-| PowerShell Gallery | `Interceptor` | `Install-Module Interceptor -RequiredVersion 1.0.0 -Scope CurrentUser` |
-| pub.dev | `interceptor` | `dart pub add interceptor:1.0.0` |
-| RubyGems | `interceptor-sdk` | `gem install interceptor-sdk -v 2.0.0` |
-| Packagist | `titancsa/interceptor` | `composer require titancsa/interceptor:1.0.0` |
+Choose a language in the [SDK and package guide](https://github.com/TitanCSA/sdk-packages/tree/main/projects/Interceptor#readme) for exact install commands and examples. If your example requires a driver or app, install it separately.
 
-Pour vcpkg et Conan, configure d abord le registre TitanCSA avec [le guide complet](https://github.com/TitanCSA/sdk-packages/tree/main/projects/Interceptor/README.md). Le guide explique aussi Maven/Gradle, les prerequis et le chargement des DLL. Les pilotes/applications du produit sont installes separement. Les commandes marquees prevues ne sont pas encore disponibles.
-
-Les anciens imports Go et versions JitPack gardent leurs tags. Pour les anciennes archives SDK, utilise [les liens de remplacement](https://github.com/TitanCSA/sdk-packages/blob/main/release-assets/URL-MIGRATION.json).
+JavaScript and TypeScript: [`interceptor-sdk`](https://github.com/TitanCSA/sdk-packages/tree/main/projects/Interceptor/Interceptor-JavaScript-npm#readme) · `npm install interceptor-sdk@1.0.0`
 <!-- central-sdk-packages:end -->
 
 
