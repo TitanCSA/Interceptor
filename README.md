@@ -1,5 +1,15 @@
 # Interceptor - Windows Kernel Filter Driver for Keyboard, Mouse and Gamepad
 
+<!-- full-version-contact:start -->
+> [!IMPORTANT]
+> **Get the version without the one-hour demo limit**
+>
+> **Discord · `titancsa`**. Open [Discord](https://discord.com/app), choose **Friends → Add Friend**, enter **`titancsa`** and send a message.
+> Send the project name and ask for its full version. TitanCSA will share the purchase details privately.
+>
+> **FR · Version sans la limite d’une heure.** Ajoute **`titancsa`** sur Discord et envoie le nom du projet. Le lien d’achat est communiqué en privé.
+<!-- full-version-contact:end -->
+
 Capture physical input, identify its source, modify or block it, and forward it
 to Windows with a **Microsoft-signed kernel filter driver** and a **two-file
 C++17 SDK**. Supports keyboard, mouse and compatible HID, XInput/XUSB,
@@ -9,7 +19,7 @@ XInputHID and GIP controllers on **Windows 10 1709+ / Windows 11 x64**.
 [Installation](docs/INSTALLATION.md) | [C++ API](docs/API.md) |
 [Examples](Examples/Console/README.md) | [Compatibility](docs/COMPATIBILITY.md)
 
-[Project overview and edition guide](https://titancsa.github.io/projects/interceptor/) · [Buy Release · €400 Lifetime](https://licences.configcsa.com/interceptor)
+[Project overview and edition guide](https://titancsa.github.io/projects/interceptor/) · [Contact titancsa on Discord](https://titancsa.github.io/about/evidence/#release-contact)
 
 | Setup and diagnostics | Input viewer |
 | --- | --- |
@@ -146,7 +156,7 @@ Sleep time counts; closing or reinstalling does not reset the allowance.
 Diagnostics that capture input can start it. At expiry, capture stops and
 physical input passes through normally. Use Windows **Restart** for a new
 allowance; Fast Startup shutdown does not reset the kernel boot.
-[Get the licensed Release](https://licences.configcsa.com/interceptor).
+[Contact titancsa on Discord](https://titancsa.github.io/about/evidence/#release-contact).
 
 Interceptor independently evolves the input-interception workflow popularized by
 [oblitum/Interception](https://github.com/oblitum/Interception), with its own
@@ -261,11 +271,6 @@ Pour vcpkg et Conan, configure d abord le registre TitanCSA avec [le guide compl
 Les anciens imports Go et versions JitPack gardent leurs tags. Pour les anciennes archives SDK, utilise [les liens de remplacement](https://github.com/TitanCSA/sdk-packages/blob/main/release-assets/URL-MIGRATION.json).
 <!-- central-sdk-packages:end -->
 
-<!-- full-version-contact:start -->
-> **Licensed Release** · [Buy Interceptor directly](https://licences.configcsa.com/interceptor).
->
-> For integration, OEM and support questions, contact `titancsa` on Discord.
-<!-- full-version-contact:end -->
 
 ## Performance & Benchmarks
 
