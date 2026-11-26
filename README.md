@@ -281,7 +281,7 @@ Selected virtual input transformations are independently observed; controller re
 |---|---|
 | Virtual XUSB modification to XInput observation | 3 validated runs; median run P50 51.10 microseconds |
 
-**Vdevice benchmark status.** The original campaign recorded a controller teardown crash with demo 1.0.5.0. The signed 1.0.6.0 demo passed separate teardown tests. Commercial Vdevice qualification remains pending. [Incident and edition status](https://titancsa.github.io/TitanCSA-Benchmarks/methodology/incident-wdf-001/).
+**Vdevice benchmark status.** The original campaign recorded a controller teardown crash with Demo 1.0.5.0. Signed Demo 1.0.6.1 and Release 1.0.4.1 include the fix. Windows 10 and 11 tests verified the installers and removal. [Installation results](https://titancsa.github.io/assets/vdevice-signed-versions-2026-11-25.json) · [Incident record](https://titancsa.github.io/TitanCSA-Benchmarks/methodology/incident-wdf-001/)
 
 ## Switching the input driver for one device
 
