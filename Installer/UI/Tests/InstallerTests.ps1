@@ -133,7 +133,8 @@ function Stop-Transcript {}
 function Get-InterceptorDataRoot {return $PSScriptRoot}
 function Set-InterceptorPhase($p){$events.Add($p)}
 function Save-InterceptorBaseline {return [pscustomobject]@{PendingUninstall=$false;FinalizeAttempts=0;Devices=if($case.ManufacturerRestart){@('fixture')}else{@()}}}
-function Restore-InterceptorManufacturerBindings($s){$events.Add('restore-manufacturer');return [bool]$case.ManufacturerRestart}
+function Restore-InterceptorManufacturerBindings($s){return $false}
+function Enable-InterceptorManufacturerMappers($s,$helper){$events.Add('restore-manufacturer');return $(if($case.ManufacturerRestart){3010}else{0})}
 function Write-InterceptorState($s) {}
 function Get-InterceptorSetupState($h){return [pscustomobject]@{devices=@()}}
 function Get-InterceptorPackages {
@@ -271,5 +272,53 @@ try{UninstallCase 7 $false|Out-Null}catch{$failed=$true}
 Expect ($failed -and 'remove-package' -notin $script:uninstallEvents) 'Failed input restoration removed driver packages'
 
 [ordered]@{Passed=$true;Checks=$checks;FastProcessExits=75;WindowsProblemCodes=57;TransactionScenarios=6;NoHostDriverChanges=$true;MaintenanceSHA256=(Get-FileHash -LiteralPath (Join-Path $source 'Package\Maintenance.ps1')).Hash}|ConvertTo-Json|Set-Content -LiteralPath (Join-Path $ReportDirectory 'installer-tests.json') -Encoding UTF8
+# Exercise the real mode transaction with an isolated PnP and journal fixture.
+& {
+    . (Join-Path $source 'Package\MapperModes.ps1')
+    $instance='HID\VID_1532&PID_00AA\MODE_TEST'
+    $device=[pscustomobject]@{Instance=$instance;Service='mouhid';Inf='oem42.inf';ClassGuid='{4d36e96f-e325-11ce-bfc1-08002be10318}'}
+    $state=[pscustomobject]@{PendingUninstall=$false;MapperOriginals=@()}
+    $fixture=[pscustomobject]@{Paused=$false;Changes=0;Reboot=$false;Timeout=$false;Hash='original';JournalWrites=0}
+    function Get-PnpDevice {return [pscustomobject]@{Status='OK'}}
+    function Get-InterceptorInputMapper($id){if($id -cne $instance){throw 'Unexpected input instance'};return $device}
+    function Get-InterceptorMapperInfPath($name){return ([IO.Path]::Combine($ReportDirectory,$name))}
+    function Get-Item {return [pscustomobject]@{PSIsContainer=$false;Attributes=0}}
+    function Get-FileHash {return [pscustomobject]@{Hash=$fixture.Hash}}
+    function Write-InterceptorState($journal){$fixture.JournalWrites++}
+    function Test-InterceptorMapperPaused($id){return $fixture.Paused}
+    function Set-InterceptorMapperPreference($id,$original){$fixture.Paused=$original}
+    function Get-InterceptorCurrentMapperPackage($mouse){
+        if(!$mouse){throw 'Mouse package selection lost its input class'}
+        return [pscustomobject]@{Inf='oem99.inf';Path=(Get-InterceptorMapperInfPath 'oem99.inf')}
+    }
+    function Invoke-InterceptorMapperBind($helper,$before,$destination,$service,$inf) {
+        if($before.Instance -cne $instance -or !$state.MapperOriginals.Count){throw 'Mutation without a recorded original package'}
+        if($fixture.Timeout){$script:InterceptorProcessTimedOut=$true;throw 'Fixture timed out'}
+        $fixture.Changes++
+        $device.Service=$service;$device.Inf=$inf
+        if($fixture.Reboot){return 3010}
+        return 0
+    }
+    $script:InterceptorProcessTimedOut=$false
+    Expect ((Set-InterceptorMapperMode $state $instance Interceptor fixture) -eq 0 -and $device.Inf -eq 'oem99.inf' -and
+        $state.MapperOriginals[0].Inf -eq 'oem42.inf' -and $fixture.JournalWrites -eq 1) 'OEM baseline was not saved before switching'
+    $fixture.Hash='reused alias'
+    $refused=$false
+    try{Set-InterceptorMapperMode $state $instance Original fixture|Out-Null}catch{$refused=$true}
+    Expect ($refused -and $fixture.Changes -eq 1 -and !$fixture.Paused) 'Changed OEM INF accepted'
+    $fixture.Hash='original'
+    $fixture.Reboot=$true
+    Expect ((Set-InterceptorMapperMode $state $instance Original fixture) -eq 3010 -and $fixture.Paused -and
+        $device.Service -eq 'mouhid' -and $device.Inf -eq 'oem42.inf') 'Original mode or reboot result lost'
+    $fixture.Reboot=$false
+    Expect ((Set-InterceptorMapperMode $state $instance Interceptor fixture) -eq 0 -and !$fixture.Paused -and
+        $device.Service -eq $script:InterceptorService) 'Returning to Interceptor did not clear the original preference'
+    $fixture.Timeout=$true
+    $timedOut=$false
+    try{Set-InterceptorMapperMode $state $instance Original fixture|Out-Null}catch{$timedOut=$true}
+    Expect ($timedOut -and $fixture.Paused -and $fixture.Changes -eq 3) 'A timed-out switch incorrectly reset the original preference'
+    $script:InterceptorProcessTimedOut=$false
+}
+
 Write-Host ("PASS installer robustness: "+$checks+" checks; real process/quoting/timeout fixtures, PnP assessment and installation rollback scenarios. No host driver changed.")
 

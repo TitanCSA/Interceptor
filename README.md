@@ -282,3 +282,29 @@ Selected virtual input transformations are independently observed; controller re
 | Virtual XUSB modification to XInput observation | 3 validated runs; median run P50 51.10 microseconds |
 
 **Vdevice benchmark status.** The original campaign recorded a controller teardown crash with demo 1.0.5.0. The signed 1.0.6.0 demo passed separate teardown tests. Commercial Vdevice qualification remains pending. [Incident and edition status](https://titancsa.github.io/TitanCSA-Benchmarks/methodology/incident-wdf-001/).
+
+## Switching the input driver for one device
+
+Setup and **Associate new devices** use the Interceptor mapper for compatible
+HID keyboard and mouse instances, including original manufacturer INF packages
+that use the Windows HID mapper. Setup records the original binding before it
+changes a manufacturer package. The original package stays in the Driver Store.
+
+The common C++ SDK exposes Get_Input_Driver_Bindings() and
+Set_Input_Driver_Mode(instance, use_original). List the devices to obtain the
+Windows HID instance ID. Close the capture session and run the switch with
+administrator rights. The result is a Windows status code. Zero means ready.
+3010 means restart Windows before resuming capture. The original mode stays
+selected until you switch that instance back to Interceptor.
+
+The installed recovery helper also supports these commands in an elevated
+PowerShell. Replace the example ID with the exact value from the first command.
+
+    .\InterceptorExample.exe --list-input-drivers
+    .\InterceptorExample.exe --input-driver-mode original 'HID\VID_XXXX&PID_YYYY\INSTANCE'
+    .\InterceptorExample.exe --input-driver-mode interceptor 'HID\VID_XXXX&PID_YYYY\INSTANCE'
+
+Find the helper in the product's Recovery\Payload directory under Program Files.
+If a physical device exposes several input instances, select each required
+instance. If an old installation lacks a verified original binding, reinstall
+the manufacturer's current driver before using the switch for that instance.

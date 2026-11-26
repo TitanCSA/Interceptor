@@ -66,26 +66,30 @@ function Save-InterceptorBaseline {
     $known=@{};foreach($device in $state.Devices){$known[$device.Instance]=$true}
     foreach($device in [InterceptorRecovery.Devices]::Snapshot()){
         if(!$known.ContainsKey($device.Instance)){$state.Devices+= $device;$known[$device.Instance]=$true}
+        if($device.Instance -like 'HID\*' -and $device.Service -in @('kbdhid','mouhid') -and
+           $device.Inf -in @('keyboard.inf','msmouse.inf')){
+            Save-InterceptorMapperOriginal $state $device|Out-Null
+        }
     }
     Write-InterceptorState $state
     return $state
 }
 function Restore-InterceptorManufacturerBindings($State) {
-    $byInstance=@{}
-    foreach($entry in [InterceptorRecovery.Devices]::Snapshot()) {
-        if($entry.Service -eq $script:InterceptorService){$byInstance[$entry.Instance]=$entry}
+    $owned=@{}
+    foreach($entry in [InterceptorRecovery.Devices]::Snapshot()){
+        if($entry.Service -eq $script:InterceptorService){$owned[$entry.Instance]=$entry}
     }
     $reboot=$false
-    $saved=[InterceptorRecovery.Devices]::Read((ConvertTo-Json -InputObject @($State.Devices) -Depth 10))
-    foreach($device in $saved) {
-        if(!$byInstance.ContainsKey($device.Instance) -or $device.Service -notin @('kbdhid','mouhid') -or
-            $device.Inf -notmatch '^oem[0-9]+\.inf$'){continue}
-        try {
-            $reboot=[InterceptorRecovery.Devices]::RestoreMapper($device,(Join-Path $PSScriptRoot 'Recovery\RecoveryBinding.dll')) -or $reboot
-            Write-Host ('Requested the original manufacturer input binding for '+$device.Instance)
-        } catch {
-            Write-Warning ('Manufacturer input binding could not be restored for '+$device.Instance+': '+$_.Exception.Message)
+    foreach($saved in @($State.MapperOriginals)){
+        if(!$saved -or $saved.Inf -notmatch '^oem[0-9]+\.inf$' -or !$owned.ContainsKey($saved.Instance)){continue}
+        if($saved.ClassGuid -ine $owned[$saved.Instance].ClassGuid){throw 'The original input class changed.'}
+        $path=Get-InterceptorMapperInfPath $saved.Inf
+        if((Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash -ne $saved.Sha256){
+            throw 'The original manufacturer package changed. Recovery was retained.'
         }
+        $binding=[ordered]@{Instance=$saved.Instance;ClassGuid=$saved.ClassGuid;Service=$saved.Service;Inf=$saved.Inf}
+        $devices=[InterceptorRecovery.Devices]::Read((ConvertTo-Json -InputObject @($binding) -Depth 10))
+        $reboot=[InterceptorRecovery.Devices]::RestoreMapper($devices[0],(Join-Path $PSScriptRoot 'Recovery\RecoveryBinding.dll')) -or $reboot
     }
     return $reboot
 }
@@ -118,7 +122,7 @@ function Install-InterceptorRecovery {
     }
     $security=Get-Acl -LiteralPath (Get-InterceptorDataRoot)
     if(!(Test-Path -LiteralPath $root)){[IO.Directory]::CreateDirectory($root,$security)|Out-Null}else{Set-Acl -LiteralPath $root -AclObject $security}
-    foreach($relative in @('Common.ps1','Maintenance.ps1','Lifecycle.ps1','Uninstall.ps1','EmergencyRecover.ps1','FinalizeUninstall.ps1','Recovery\InterceptorRecovery.exe','Recovery\RecoveryBinding.dll','Payload\InterceptorExample.exe')){
+    foreach($relative in @('Common.ps1','Maintenance.ps1','Lifecycle.ps1','MapperModes.ps1','SetMapperMode.ps1','Uninstall.ps1','EmergencyRecover.ps1','FinalizeUninstall.ps1','Recovery\InterceptorRecovery.exe','Recovery\RecoveryBinding.dll','Payload\InterceptorExample.exe')){
         $source=Join-Path $PSScriptRoot $relative;$target=Join-Path $root $relative
         [IO.Directory]::CreateDirectory([IO.Path]::GetDirectoryName($target))|Out-Null
         if([IO.Path]::GetFullPath($source) -ine [IO.Path]::GetFullPath($target)){Copy-Item -LiteralPath $source -Destination $target -Force}
@@ -180,6 +184,7 @@ function Invoke-InterceptorCleanUninstall([switch]$Finalize) {
     $state=Read-InterceptorState
     $reboot=$false
     if($state){
+        if(Restore-InterceptorManufacturerBindings $state){return Set-InterceptorUninstallPending $state -Finalize:$Finalize}
         $saved=[InterceptorRecovery.Devices]::Read((ConvertTo-Json -InputObject @($state.Devices) -Depth 10))
         $owned=@{};foreach($current in [InterceptorRecovery.Devices]::Snapshot()){if($current.Service -eq 'Interceptor'){$owned[$current.Instance]=$true}}
         foreach($device in $saved){if($owned.ContainsKey($device.Instance) -and $device.Service -in @('kbdhid','mouhid')){
@@ -240,3 +245,5 @@ function Set-InterceptorUninstallPending($State,[switch]$Finalize) {
     Write-Host 'Input restoration or package removal requires a restart. Remaining packages and recovery are retained for automatic cleanup after the next normal boot.'
     return 3010
 }
+
+. (Join-Path $PSScriptRoot 'MapperModes.ps1')

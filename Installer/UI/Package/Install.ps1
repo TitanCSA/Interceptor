@@ -35,7 +35,7 @@ try {
     $bindingStarted=$true
     $code=Invoke-InterceptorSetupHelper $helper @('--install',$payload)
     if($code -notin @(0,3010)){throw ('Device association failed: '+$code)}
-    if($baseline.Devices -and (Restore-InterceptorManufacturerBindings $baseline)){$code=3010}
+    if((Enable-InterceptorManufacturerMappers $baseline $helper) -eq 3010){$code=3010}
     if($script:InterceptorNeedsReboot){$code=3010}
     if($code -eq 0){
         if((Invoke-InterceptorSetupHelper $helper @('--status') 20000) -ne 0){throw 'Driver API did not respond after installation.'}
@@ -62,7 +62,8 @@ try {
     }elseif($bindingStarted){
         try{
             Write-Host 'Restoring Windows input bindings after the failed installation...'
-            $restore=Invoke-InterceptorSetupHelper $helper @('--restore')
+            $oemRestart=Restore-InterceptorManufacturerBindings $baseline
+            $restore=if($oemRestart){3010}else{Invoke-InterceptorSetupHelper $helper @('--restore')}
             if($restore -eq 0){
                 $remaining=Get-InterceptorSetupState $helper
                 $safeToRemove=@($remaining.devices).Count -eq 0

@@ -1,3 +1,4 @@
+#include <string_view>
 #include "Interceptor.h"
 #include "SetupHealth.h"
 #include <iostream>
@@ -7,6 +8,7 @@
 #include <iomanip>
 
 int InstallDriver(const wchar_t* directory,bool restore,bool onlyNew=false,const wchar_t* mouseInf=nullptr,const wchar_t* controlInf=nullptr);
+int BindInputMapper(const wchar_t*,const wchar_t*,const wchar_t*,const wchar_t*,const wchar_t*);
 int ConfigureControlDriver(const wchar_t* inf,bool remove);
 namespace {
 void PrintInitializationFailure(const Interceptor::Init_Result& result) {
@@ -85,6 +87,28 @@ int wmain(int argc,wchar_t** argv) {
             PrintInitializationFailure(r);
             return r.error?static_cast<int>(r.error):r.ready?0:ERROR_SUCCESS_REBOOT_REQUIRED;
         }
+        if(mode==L"--list-input-drivers" && argc==2){
+            for(const auto& binding:Get_Input_Driver_Bindings()){
+                const wchar_t* label=L"Unknown";
+                switch(binding.mode){
+                case Input_Driver_Mode::Windows:label=L"Windows";break;
+                case Input_Driver_Mode::Manufacturer:label=L"Manufacturer";break;
+                case Input_Driver_Mode::Interceptor:label=L"Interceptor";break;
+                default:break;
+                }
+                std::wcout<<binding.instance<<L"\t"<<label<<L"\t"<<binding.service<<L"\t"<<binding.inf
+                    <<(binding.original_requested?L"\toriginal requested":L"")<<L'\n';
+            }
+            return 0;
+        }
+        if(mode==L"--input-driver-mode" && argc==4){
+            const std::wstring target=argv[2];
+            if(target!=L"original" && target!=L"interceptor")return ERROR_INVALID_PARAMETER;
+            const auto result=Set_Input_Driver_Mode(argv[3],target==L"original");
+            std::cout<<(result==0?"Input driver ready":result==3010?"Restart Windows to complete the input change":"Input driver change failed")<<"; Windows code "<<result<<'\n';
+            return static_cast<int>(result);
+        }
+        if(mode==L"--bind-mapper" && argc==7)return BindInputMapper(argv[2],argv[3],argv[4],argv[5],argv[6]);
         if(mode==L"--restore")return InstallDriver(nullptr,true);
         if(mode==L"--status") {
             auto s=Get_Status();
@@ -164,6 +188,13 @@ int wmain(int argc,wchar_t** argv) {
         }
         Destroy_Context();return 0;
     } catch(const std::system_error& e) {
+        const std::wstring_view command=argc>1?argv[1]:L"";
+        if(command==L"--install" || command==L"--install-control" || command==L"--associate" ||
+           command==L"--restore" || command==L"--remove-control" || command==L"--setup-state") {
+            const auto code=e.code().value();
+            std::cerr<<e.what()<<" (Windows code 0x"<<std::hex<<static_cast<unsigned>(code)<<std::dec<<")\n";
+            return code?code:ERROR_GEN_FAILURE;
+        }
         if(e.code().value()==ERROR_OPERATION_ABORTED) { std::cout<<"Capture revoked; normal input restored.\n";return 0; }
         std::cerr<<e.what()<<"\n";return 1;
     } catch(const std::exception& e) { std::cerr<<e.what()<<"\n";return 1; }
