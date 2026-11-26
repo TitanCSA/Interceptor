@@ -16,6 +16,8 @@ If another Interceptor edition is installed, follow [the removal steps](docs/INS
 3. Press a key or move a stick. The viewer should show input from your device. Click **Stop** when you finish.
 <!-- simple-start:end -->
 
+[Guide de premier essai en français](https://titancsa.github.io/fr/essayer-interceptor/) · [First SDK check](https://titancsa.github.io/projects/interceptor/#first-sdk-check)
+
 <!-- full-version-contact:start -->
 > [!IMPORTANT]
 > **Version without the one-hour demo limit**
