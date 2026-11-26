@@ -1,0 +1,46 @@
+name: "Installation ou activation (français)"
+description: "Signaler un problème d’installation ou d’activation avec Interceptor."
+title: "[Setup] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Consulte le [guide en français](https://titancsa.github.io/fr/activation-release/) et regarde si le problème a déjà été signalé.
+        Ce formulaire est public. Retire les clés de licence, reçus, liens de commande, adresses e-mail et autres données personnelles. Pour une question d’achat ou de clé, [contacte titancsa sur Discord](https://titancsa.github.io/fr/pilotes-entree-windows/#contact-release).
+  - type: dropdown
+    id: edition
+    attributes:
+      label: Édition
+      options:
+        - Démo signée par Microsoft
+        - Release commerciale
+        - Je ne sais pas
+    validations:
+      required: true
+  - type: input
+    id: package
+    attributes:
+      label: Nom du ZIP ou tag GitHub de la démo
+  - type: input
+    id: windows
+    attributes:
+      label: Version et build de Windows
+      description: Lance winver et indique le numéro de build.
+  - type: input
+    id: driver-sdk
+    attributes:
+      label: Versions du pilote installé et du SDK
+      description: Recopie les versions affichées par le programme ou son diagnostic.
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Que s’est-il passé ?
+      description: Décris la dernière étape, le résultat attendu, ce que tu as observé et si tu as redémarré Windows.
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostic
+    attributes:
+      label: Étape, raison et code d’erreur Windows
+      description: Recopie le message exact sans ta clé ni tes données personnelles. Ajoute le diagnostic de l’installateur si tu l’as.
+      placeholder: Étape, raison, code Windows et message exact
