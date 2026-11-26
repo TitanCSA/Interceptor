@@ -290,8 +290,8 @@ HID keyboard and mouse instances, including original manufacturer INF packages
 that use the Windows HID mapper. Setup records the original binding before it
 changes a manufacturer package. The original package stays in the Driver Store.
 
-The common C++ SDK exposes Get_Input_Driver_Bindings() and
-Set_Input_Driver_Mode(instance, use_original). List the devices to obtain the
+The [C++ SDK](docs/API.md#switch-the-driver-for-a-keyboard-or-mouse) exposes `Get_Input_Driver_Bindings()` and
+`Set_Input_Driver_Mode(instance, use_original)`. List the devices to obtain the
 Windows HID instance ID. Close the capture session and run the switch with
 administrator rights. The result is a Windows status code. Zero means ready.
 3010 means restart Windows before resuming capture. The original mode stays

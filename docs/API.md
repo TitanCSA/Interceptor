@@ -164,3 +164,27 @@ as stable hardware serial numbers. Descriptor results expose `applicable` and
 The first successful capture starts the shared one-hour demo allowance.
 Expiration revokes capture and rejects injection; Windows physical input continues.
 Use Windows Restart for a new allowance. [Installation and recovery](INSTALLATION.md).
+
+## Switch the driver for a keyboard or mouse
+
+The C++17 SDK provides these functions in both Demo and Release. Install the
+matching update before using the switch. Setup records the original Windows or
+manufacturer INF before associating a supported HID keyboard or mouse.
+
+| Function | Behavior |
+| --- | --- |
+| `Get_Input_Driver_Bindings()` | Lists present Windows HID keyboard and mouse instances without opening input capture. Each result includes the Windows instance ID, active service, INF, estimated `mode`, and the saved `original_requested` preference. Enumeration errors can throw `std::system_error`. |
+| `Set_Input_Driver_Mode(instance, true)` | Restores the recorded original binding and pauses automatic Interceptor association for that instance. Use this mode to access settings in compatible manufacturer software. |
+| `Set_Input_Driver_Mode(instance, false)` | Associates the selected instance with the installed Interceptor package and resumes automatic association. |
+
+Use the exact `binding.instance` string returned by enumeration. A capture token
+does not identify a Windows device instance. Close capture before switching and
+run the process as administrator. The call is synchronous and may restart the
+device, briefly interrupting its input.
+
+`0` means success. `3010` means Windows must restart before the change is
+complete. Other return values are Windows error codes. For example, `740` means
+the process needs elevation. A physical device can expose several HID instances.
+Switch each required instance separately. If an older installation has no
+recorded original manufacturer package, reinstall that package before associating
+the device again. See the [command-line examples](../README.md#switching-the-input-driver-for-one-device).
