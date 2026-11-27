@@ -3,7 +3,7 @@
 <!-- simple-start:start -->
 Read or change input from a real keyboard, mouse or compatible gamepad.
 
-[First steps](#first-steps) · [Develop](#sdk-and-packages) · [Maintain](https://github.com/TitanCSA/sdk-packages/blob/main/CONTRIBUTING.md)
+[Guide en français](https://titancsa.github.io/fr/essayer-interceptor/) · [SDK](#sdk-and-packages) · [Full version on Discord](https://titancsa.github.io/about/evidence/#release-contact)
 
 ## First steps
 
@@ -11,12 +11,10 @@ Read or change input from a real keyboard, mouse or compatible gamepad.
 
 If another Interceptor edition is installed, follow [the removal steps](docs/INSTALLATION.md) first.
 
-1. Run [InterceptorSetup.exe](https://github.com/TitanCSA/Interceptor/releases/latest/download/InterceptorSetup.exe) and choose **Install / reinstall**. If setup asks for a restart, restart Windows and reopen it.
-2. Open [InterceptorExampleUI.exe](https://github.com/TitanCSA/Interceptor/releases/latest/download/InterceptorExampleUI.exe).
+1. Run [InterceptorSetup.exe](https://github.com/TitanCSA/Interceptor/releases/download/v1.4.23.0-demo-r3/InterceptorSetup.exe) and choose **Install / reinstall**. If setup asks for a restart, restart Windows and reopen it.
+2. Open [InterceptorExampleUI.exe](https://github.com/TitanCSA/Interceptor/releases/download/v1.4.23.0-demo-r3/InterceptorExampleUI.exe).
 3. Press a key or move a stick. The viewer should show input from your device. Click **Stop** when you finish.
 <!-- simple-start:end -->
-
-[Guide de premier essai en français](https://titancsa.github.io/fr/essayer-interceptor/) · [First SDK check](https://titancsa.github.io/projects/interceptor/#first-sdk-check)
 
 <!-- full-version-contact:start -->
 > [!IMPORTANT]
@@ -269,7 +267,7 @@ To the maximum extent permitted by applicable law, the software is provided "AS 
 
 Choose a language in the [SDK and package guide](https://github.com/TitanCSA/sdk-packages/tree/main/projects/Interceptor#readme) for exact install commands and examples. If your example requires a driver or app, install it separately.
 
-JavaScript and TypeScript: [`interceptor-sdk`](https://github.com/TitanCSA/sdk-packages/tree/main/projects/Interceptor/Interceptor-JavaScript-npm#readme) · `npm install interceptor-sdk@1.0.0`
+[First SDK check](https://titancsa.github.io/projects/interceptor/#first-sdk-check) · [Package maintenance](https://github.com/TitanCSA/sdk-packages/blob/main/CONTRIBUTING.md)
 <!-- central-sdk-packages:end -->
 
 
